@@ -1,2 +1,2 @@
-# NESS
-NESS is a simple NES emulator written in C++ using the SDL library.
+# NESPrime
+NESPrime is a simple NES emulator written in C++ using the SDL library.
