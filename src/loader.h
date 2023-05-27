@@ -5,10 +5,12 @@
 #include <ios>
 #include <string>
 #include <vector>
+#include "memory.h"
 
 class loader {
 public:
-    loader() {};
+    loader() : mem(nullptr) {};
+    loader(memory &mem) : mem(&mem) {};
     ~loader() {};
     void load();
     bool open_file(const std::string& filename);
@@ -29,6 +31,8 @@ private:
 
     unsigned char* prg_rom;
     unsigned char* chr_rom;
+
+    memory* mem;
 };
 
 

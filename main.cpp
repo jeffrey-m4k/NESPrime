@@ -1,9 +1,10 @@
-#include "src/loader.h"
+#include "src/nes.h"
 
 #include <iostream>
 
 int main() {
-    loader* l = new loader();
+    nes sys;
+    loader* l = &sys.ldr;
 
     if (l->open_file("smb.nes")) {
         std::ifstream& file = l->get_file();

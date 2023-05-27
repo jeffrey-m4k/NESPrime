@@ -3,4 +3,4 @@ project(NESPrime)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(NESPrime main.cpp src/loader.cpp src/util.h)
+add_executable(NESPrime main.cpp src/loader.cpp src/util.h src/processor.cpp src/memory.cpp src/processor.cpp src/nes.cpp)
