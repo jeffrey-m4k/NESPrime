@@ -3,4 +3,4 @@ project(cpp_NESS)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(cpp_NESS main.cpp)
+add_executable(cpp_NESS main.cpp loader.cpp)
