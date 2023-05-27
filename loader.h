@@ -4,6 +4,7 @@
 #include <fstream>
 #include <ios>
 #include <string>
+#include <vector>
 
 class loader {
 public:
@@ -14,7 +15,7 @@ public:
     std::ifstream& get_file() { return file; }
 private:
     bool read_next(const int& bytes = 1);
-    bool read_next(char* into, const int& bytes = 1);
+    bool read_next(unsigned char* into, const int& bytes = 1);
     bool load_header();
     void print_metadata();
 private:
@@ -25,6 +26,10 @@ private:
     unsigned int prg_size, chr_size;
     unsigned char mapper;
     bool flags[2][4];
+
+    unsigned char* prg_rom;
+    unsigned char* chr_rom;
 };
+
 
 #endif //LOADER_H

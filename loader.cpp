@@ -1,17 +1,18 @@
 #include "loader.h"
+#include "util.h"
 
 #include <iostream>
 
 using std::ios;
 
 bool loader::read_next(const int &bytes) {
-    return read_next((char*)(&buffer), bytes);
+    return read_next(buffer, bytes);
 }
 
-bool loader::read_next(char* into, const int &bytes) {
+bool loader::read_next(unsigned char* into, const int &bytes) {
     if (!file.eof()) {
         file.seekg(pos);
-        file.read(into, bytes);
+        file.read((char*)into, bytes);
         pos += bytes;
         return true;
     }
@@ -31,7 +32,7 @@ bool loader::load_header() {
             return false;
 
         // Check if file is iNES, return false if not
-        // TODO add NES2.0 support
+        // TODO add NES2.0 support (low priority)
         if ((buffer[7] & 0xC) != 0x0)
             return false;
 
@@ -45,6 +46,7 @@ bool loader::load_header() {
             flags[1][i] = (buffer[7] >> i) & 0x1;
         }
 
+        print_hex(buffer, 16);
         return true;
     }
     return false;
@@ -55,12 +57,20 @@ void loader::load() {
         print_metadata();
 
         // If trainer is present, skip past it
-        // TODO add trainer support
+        // TODO add trainer support (low priority)
         if (flags[0][2]) {
             pos += 512;
         }
 
+        prg_rom = new unsigned char[prg_size]();
+        read_next(prg_rom, prg_size);
 
+        if (chr_size) {
+            chr_rom = new unsigned char[chr_size]();
+            read_next(chr_rom, chr_size);
+        }
+
+        // TODO add PlayChoice-10 support (low priority)
     }
     else
         std::cout << "Invalid NES file\n";
