@@ -22,7 +22,7 @@ private:
     bool read_next(const uint16_t& bytes = 1);
     bool read_next(uint8_t* into, const uint16_t& bytes = 1);
     bool read_next(Memory& into, const uint16_t& start, const uint16_t& bytes = 1);
-    bool load_header();
+    bool read_header();
     void print_metadata();
 private:
     static const int BUFFER_SIZE = 16;

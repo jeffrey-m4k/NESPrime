@@ -6,4 +6,5 @@ NES::NES(CPU* cpu) : cpu(cpu) {
 
 void NES::run() {
     cart->load();
+    cpu->run();
 }

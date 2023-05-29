@@ -23,7 +23,7 @@ bool Cartridge::read_next(uint8_t* into, const uint16_t &bytes) {
 bool Cartridge::read_next(Memory& into, const uint16_t &start, const uint16_t &bytes) {
     if (!file.eof()) {
         file.seekg(pos);
-        if (start + bytes >= into.get_size()) return false;
+        if (start + bytes > into.get_size()) return false;
         file.read((char*)into.get_mem(), bytes);
         pos += bytes;
         return true;
@@ -37,7 +37,7 @@ bool Cartridge::open_file(const std::string &filename) {
     return file.is_open();
 }
 
-bool Cartridge::load_header() {
+bool Cartridge::read_header() {
     if (read_next(16)) {
         // Check for valid NES header
         if (buffer[0] != 0x4E || buffer[1] != 0x45 || buffer[2] != 0x53 || buffer[3] != 0x1A)
@@ -60,14 +60,14 @@ bool Cartridge::load_header() {
             flags[1][i] = (buffer[7] >> i) & 0x1;
         }
 
-        print_hex(buffer, 16);
+        flush_hex(buffer, 16);
         return true;
     }
     return false;
 }
 
 void Cartridge::load() {
-    if (load_header()) {
+    if (read_header()) {
         print_metadata();
 
         // If trainer is present, skip past it
@@ -77,11 +77,11 @@ void Cartridge::load() {
         }
 
         prg_rom.init(prg_size);
-        read_next(prg_rom, prg_size);
+        read_next(prg_rom, 0, prg_size);
 
         if (chr_size) {
             chr_rom.init(chr_size);
-            read_next(chr_rom, chr_size);
+            read_next(chr_rom, 0, chr_size);
         }
 
         CPU* cpu = sys->get_cpu();
