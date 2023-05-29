@@ -1,13 +1,15 @@
-#include "src/nes.h"
+#include "src/NES.h"
 
 #include <iostream>
 
 int main() {
-    nes sys;
-    loader* l = &sys.ldr;
+    CPU cpu;
+    //PPU ppu;
+    NES sys(&cpu);
+    Cartridge* c = sys.cart;
 
-    if (l->open_file("smb.nes")) {
-        std::ifstream& file = l->get_file();
-        l->load();
+    if (c->open_file("smb.NES")) {
+        std::ifstream& file = c->get_file();
+        sys.run();
     }
 }

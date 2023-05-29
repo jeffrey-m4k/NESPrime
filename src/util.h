@@ -4,7 +4,7 @@
 #include <iostream>
 #include <iomanip>
 
-inline void print_hex(unsigned char* buffer, const int& size) {
+inline void print_hex(uint8_t* buffer, const uint16_t& size) {
     std::cout.fill('0');
     for (int row = 0; row < size / 16; row++) {
         for (int col = 0; col < 16; col++) {
