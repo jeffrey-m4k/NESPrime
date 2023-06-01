@@ -189,6 +189,7 @@ void CPU::exec(const uint8_t& opcode) {
         case Op::CMP: CMP(); break;
         case Op::CPX: CPX(); break;
         case Op::CPY: CPY(); break;
+        case Op::DCP: DCP(); break;
         case Op::DEC: DEC(); break;
         case Op::DEX: DEX(); break;
         case Op::DEY: DEY(); break;
@@ -196,8 +197,10 @@ void CPU::exec(const uint8_t& opcode) {
         case Op::INC: INC(); break;
         case Op::INX: INX(); break;
         case Op::INY: INY(); break;
+        case Op::ISB: ISB(); break;
         case Op::JMP: JMP(); break;
         case Op::JSR: JSR(); break;
+        case Op::LAX: LAX(); break;
         case Op::LDA: LDA(); break;
         case Op::LDX: LDX(); break;
         case Op::LDY: LDY(); break;
@@ -208,15 +211,19 @@ void CPU::exec(const uint8_t& opcode) {
         case Op::PHP: PHP(); break;
         case Op::PLA: PLA(); break;
         case Op::PLP: PLP(); break;
+        case Op::RLA: RLA(); break;
         case Op::ROL: ROL(); break;
         case Op::ROR: ROR(); break;
+        case Op::RRA: RRA(); break;
         case Op::RTI: RTI(); break;
         case Op::RTS: RTS(); break;
+        case Op::SAX: SAX(); break;
         case Op::SBC: SBC(); break;
         case Op::SEC: SEC(); break;
         case Op::SED: SED(); break;
         case Op::SEI: SEI(); break;
         case Op::SLO: SLO(); break;
+        case Op::SRE: SRE(); break;
         case Op::STA: STA(); break;
         case Op::STX: STX(); break;
         case Op::STY: STY(); break;
@@ -383,7 +390,7 @@ void CPU::BRK() {
     push_address(++reg.pc + 1);
     PHP();
     SEI();
-};
+}
 void CPU::BVC() { branch(STATUS::v, false); }
 void CPU::BVS() { branch(STATUS::v, true); }
 void CPU::CLC() { set_status(STATUS::c, false); }
@@ -393,6 +400,10 @@ void CPU::CLV() { set_status(STATUS::v, false); }
 void CPU::CMP() { compare(reg.acc, ops[0]); }
 void CPU::CPX() { compare(reg.x, ops[0]); }
 void CPU::CPY() { compare(reg.y, ops[0]); }
+void CPU::DCP() {
+    DEC();
+    CMP();
+}
 void CPU::DEC() {
     write(addrs[0], --ops[0]);
     set_value_status(ops[0]);
@@ -409,6 +420,10 @@ void CPU::INC() {
 }
 void CPU::INX() { set_value_status(++reg.x); }
 void CPU::INY() { set_value_status(++reg.y); }
+void CPU::ISB() {
+    INC();
+    SBC();
+}
 void CPU::JMP() {
     reg.pc = addrs[0];
     inc_pc = false;
@@ -416,6 +431,10 @@ void CPU::JMP() {
 void CPU::JSR() {
     push_address(reg.pc);
     JMP();
+}
+void CPU::LAX() {
+    LDA();
+    LDX();
 }
 void CPU::LDA() {
     set_value_status(ops[0]);
@@ -457,7 +476,11 @@ void CPU::PLP() {
     reg.p = status;
     set_status(STATUS::b, b);
     set_status(STATUS::bit_5, bit_5);
-};
+}
+void CPU::RLA() {
+    ROL();
+    AND();
+}
 void CPU::ROL() {
     if (curr_op.mode == Accumulator) {
         reg.acc = rot_left(reg.acc);
@@ -467,7 +490,7 @@ void CPU::ROL() {
         write(addrs[0], ops[0]);
         set_value_status(ops[0]);
     }
-};
+}
 void CPU::ROR() {
     if (curr_op.mode == Accumulator) {
         reg.acc = rot_right(reg.acc);
@@ -477,13 +500,20 @@ void CPU::ROR() {
         write(addrs[0], ops[0]);
         set_value_status(ops[0]);
     }
-};
+}
+void CPU::RRA() {
+    ROR();
+    ADC();
+}
 void CPU::RTI() {
     PLP();
     RTS();
     inc_pc = false;
 }
 void CPU::RTS() { reg.pc = pop_address(); }
+void CPU::SAX() {
+    write(addrs[0], reg.acc & reg.x);
+}
 void CPU::SBC() { add_with_carry(true); }
 void CPU::SEC() { set_status(STATUS::c, true); }
 void CPU::SED() { set_status(STATUS::d, true); }
@@ -491,6 +521,10 @@ void CPU::SEI() { set_status(STATUS::i, true); }
 void CPU::SLO() {
     ASL();
     ORA();
+}
+void CPU::SRE() {
+    LSR();
+    EOR();
 }
 void CPU::STA() {
     write(addrs[0], reg.acc);
