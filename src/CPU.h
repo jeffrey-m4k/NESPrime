@@ -1,0 +1,298 @@
+#ifndef CPU_H
+#define CPU_H
+
+#include <cstdint>
+#include <sstream>
+#include "Processor.h"
+
+enum ADDRESSING_MODE {
+    IndexedZeroX, IndexedZeroY, IndexedAbsoluteX, IndexedAbsoluteY, IndexedIndirectX, IndexedIndirectY,
+    Implicit, Accumulator, Immediate, ZeroPage, Absolute, Relative, Indirect
+};
+
+enum Op {
+    ADC, AND, ASL, BCC, BCS, BEQ, BIT, BMI, BNE, BPL, BRK, BVC, BVS, CLC, CLD, CLI, CLV, CMP, CPX,
+    CPY, DEC, DEX, DEY, EOR, INC, INX, INY, JMP, JSR, LDA, LDX, LDY, LSR, NOP, ORA, PHA, PHP, PLA,
+    PLP, ROL, ROR, RTI, RTS, SBC, SEC, SED, SEI, SLO, STA, STX, STY, TAX, TAY, TSX, TXA, TXS, TYA,
+    USBC
+};
+
+static const char OP_NAMES[][5] = {
+        "ADC", "AND", "ASL", "BCC", "BCS", "BEQ", "BIT", "BMI", "BNE", "BPL", "BRK", "BVC", "BVS", "CLC", "CLD", "CLI", "CLV", "CMP", "CPX",
+        "CPY", "DEC", "DEX", "DEY", "EOR", "INC", "INX", "INY", "JMP", "JSR", "LDA", "LDX", "LDY", "LSR", "NOP", "ORA", "PHA", "PHP", "PLA",
+        "PLP", "ROL", "ROR", "RTI", "RTS", "SBC", "SEC", "SED", "SEI", "SLO", "STA", "STX", "STY", "TAX", "TAY", "TSX", "TXA", "TXS", "TYA",
+        "USBC"
+};
+
+struct opcode_info {
+    Op id;
+    ADDRESSING_MODE mode;
+    uint8_t cycles;
+};
+
+struct registers_6502 {
+    uint8_t acc, x, y, p, s;
+    uint16_t pc;
+};
+
+enum STATUS {
+    c = 0x1, z = 0x2, i = 0x4, d = 0x8, b = 0x10, bit_5 = 0x20, v = 0x40, n = 0x80
+};
+
+//typedef void (CPU::*op_func)();
+class CPU : public Processor {
+public:
+    CPU();
+    ~CPU() {};
+    void reset() override;
+    void run() override;
+    bool map(const uint16_t& addr, uint8_t* block, const uint16_t& size);
+    void print_registers();
+    void print_stack();
+private:
+    void exec(const uint8_t& opcode);
+    void set_status(const STATUS& status, bool value);
+    bool get_status(const STATUS& status);
+    void set_value_status(const uint8_t& val);
+    void push_stack(const uint8_t& byte);
+    uint8_t pop_stack();
+    uint8_t peek_stack(const uint8_t& bytes);
+    void branch(const STATUS& status, const bool& check_against);
+    void compare(const uint8_t& a, const uint8_t& b);
+    void push_address(const uint16_t& addr);
+    uint16_t pop_address();
+    uint16_t read_address(const uint16_t& addr);
+    uint16_t create_address(const uint8_t& lo, const uint8_t& hi);
+    bool same_page(const uint16_t& addr1, const uint16_t& addr2);
+
+    uint8_t shift_right(uint8_t byte);
+    uint8_t shift_left(uint8_t byte);
+    uint8_t rot_right(uint8_t byte);
+    uint8_t rot_left(uint8_t byte);
+    void add_with_carry(bool sub = false);
+
+    //Opcode funcs
+    void ADC(), AND(), ASL();
+    void BCC(), BCS(), BEQ(), BIT(), BMI(), BNE(), BPL(), BRK(), BVC(), BVS();
+    void CLC(), CLD(), CLI(), CLV(), CMP(), CPX(), CPY();
+    void DEC(), DEX(), DEY();
+    void EOR();
+    void INC(), INX(), INY();
+    void JMP(), JSR();
+    void LDA(), LDX(), LDY(), LSR();
+    void NOP();
+    void ORA();
+    void PHA(), PHP(), PLA(), PLP();
+    void ROL(), ROR(), RTI(), RTS();
+    void SBC(), SEC(), SED(), SEI(), SLO(), STA(), STX(), STY();
+    void TAX(), TAY(), TSX(), TXA(), TXS(), TYA();
+    void USBC();
+
+private:
+    std::ostringstream oss;
+    constexpr static const int CLOCK_SPEED = 1789773;
+    constexpr static const double CPS = 1.0 / CLOCK_SPEED;
+
+    //Decode stage variables
+    opcode_info curr_op;
+    uint8_t ops[2];
+    uint16_t addrs[2];
+    int8_t offset;
+    bool inc_pc = true;
+
+    inline constexpr static const uint8_t PAGE_SENSITIVE = 0xF0;
+    inline static const std::unordered_map<uint8_t,opcode_info> OPCODES = {
+            {0x69, {Op::ADC, Immediate, 2}},
+            {0x65, {Op::ADC, ZeroPage, 3}},
+            {0x75, {Op::ADC, IndexedZeroX, 4}},
+            {0x6D, {Op::ADC, Absolute, 4}},
+            {0x7D, {Op::ADC, IndexedAbsoluteX, 4+PAGE_SENSITIVE}},
+            {0x79, {Op::ADC, IndexedAbsoluteY, 4+PAGE_SENSITIVE}},
+            {0x61, {Op::ADC, IndexedIndirectX, 6}},
+            {0x71, {Op::ADC, IndexedIndirectY, 5+PAGE_SENSITIVE}},
+            {0x29, {Op::AND, Immediate, 2}},
+            {0x25, {Op::AND, ZeroPage, 3}},
+            {0x35, {Op::AND, IndexedZeroX, 4}},
+            {0x2D, {Op::AND, Absolute, 4}},
+            {0x3D, {Op::AND, IndexedAbsoluteX, 4+PAGE_SENSITIVE}},
+            {0x39, {Op::AND, IndexedAbsoluteY, 4+PAGE_SENSITIVE}},
+            {0x21, {Op::AND, IndexedIndirectX, 6}},
+            {0x31, {Op::AND, IndexedIndirectY, 5+PAGE_SENSITIVE}},
+            {0x0A, {Op::ASL, Accumulator, 2}},
+            {0x06, {Op::ASL, ZeroPage, 5}},
+            {0x16, {Op::ASL, IndexedZeroX, 6}},
+            {0x0E, {Op::ASL, Absolute, 6}},
+            {0x1E, {Op::ASL, IndexedAbsoluteX, 7}},
+            {0x90, {Op::BCC, Relative, 2}},
+            {0xB0, {Op::BCS, Relative, 2}},
+            {0xF0, {Op::BEQ, Relative, 2}},
+            {0x24, {Op::BIT, ZeroPage, 3}},
+            {0x2C, {Op::BIT, Absolute, 4}},
+            {0x30, {Op::BMI, Relative, 2}},
+            {0xD0, {Op::BNE, Relative, 2}},
+            {0x10, {Op::BPL, Relative, 2}},
+            {0x00, {Op::BRK, Implicit, 7}},
+            {0x50, {Op::BVC, Relative, 2}},
+            {0x70, {Op::BVS, Relative, 2}},
+            {0x18, {Op::CLC, Implicit, 2}},
+            {0xD8, {Op::CLD, Implicit, 2}},
+            {0x58, {Op::CLI, Implicit, 2}},
+            {0xB8, {Op::CLV, Implicit, 2}},
+            {0xC9, {Op::CMP, Immediate, 2}},
+            {0xC5, {Op::CMP, ZeroPage, 3}},
+            {0xD5, {Op::CMP, IndexedZeroX, 4}},
+            {0xCD, {Op::CMP, Absolute, 4}},
+            {0xDD, {Op::CMP, IndexedAbsoluteX, 4+PAGE_SENSITIVE}},
+            {0xD9, {Op::CMP, IndexedAbsoluteY, 4+PAGE_SENSITIVE}},
+            {0xC1, {Op::CMP, IndexedIndirectX, 6}},
+            {0xD1, {Op::CMP, IndexedIndirectY, 5+PAGE_SENSITIVE}},
+            {0xE0, {Op::CPX, Immediate, 2}},
+            {0xE4, {Op::CPX, ZeroPage, 3}},
+            {0xEC, {Op::CPX, Absolute, 4}},
+            {0xC0, {Op::CPY, Immediate, 2}},
+            {0xC4, {Op::CPY, ZeroPage, 3}},
+            {0xCC, {Op::CPY, Absolute, 4}},
+            {0xC6, {Op::DEC, ZeroPage, 5}},
+            {0xD6, {Op::DEC, IndexedZeroX, 6}},
+            {0xCE, {Op::DEC, Absolute, 6}},
+            {0xDE, {Op::DEC, IndexedAbsoluteX, 7}},
+            {0xCA, {Op::DEX, Implicit, 2}},
+            {0x88, {Op::DEY, Implicit, 2}},
+            {0x49, {Op::EOR, Immediate, 2}},
+            {0x45, {Op::EOR, ZeroPage, 3}},
+            {0x55, {Op::EOR, IndexedZeroX, 4}},
+            {0x4D, {Op::EOR, Absolute, 4}},
+            {0x5D, {Op::EOR, IndexedAbsoluteX, 4+PAGE_SENSITIVE}},
+            {0x59, {Op::EOR, IndexedAbsoluteY, 4+PAGE_SENSITIVE}},
+            {0x41, {Op::EOR, IndexedIndirectX, 6}},
+            {0x51, {Op::EOR, IndexedIndirectY, 5+PAGE_SENSITIVE}},
+            {0xE6, {Op::INC, ZeroPage, 5}},
+            {0xF6, {Op::INC, IndexedZeroX, 6}},
+            {0xEE, {Op::INC, Absolute, 6}},
+            {0xFE, {Op::INC, IndexedAbsoluteX, 7}},
+            {0xE8, {Op::INX, Implicit, 2}},
+            {0xC8, {Op::INY, Implicit, 2}},
+            {0x4C, {Op::JMP, Absolute, 3}},
+            {0x6C, {Op::JMP, Indirect, 5}},
+            {0x20, {Op::JSR, Absolute, 6}},
+            {0xA9, {Op::LDA, Immediate, 2}},
+            {0xA5, {Op::LDA, ZeroPage, 3}},
+            {0xB5, {Op::LDA, IndexedZeroX, 4}},
+            {0xAD, {Op::LDA, Absolute, 4}},
+            {0xBD, {Op::LDA, IndexedAbsoluteX, 4+PAGE_SENSITIVE}},
+            {0xB9, {Op::LDA, IndexedAbsoluteY, 4+PAGE_SENSITIVE}},
+            {0xA1, {Op::LDA, IndexedIndirectX, 6}},
+            {0xB1, {Op::LDA, IndexedIndirectY, 5+PAGE_SENSITIVE}},
+            {0xA2, {Op::LDX, Immediate, 2}},
+            {0xA6, {Op::LDX, ZeroPage, 3}},
+            {0xB6, {Op::LDX, IndexedZeroY, 4}},
+            {0xAE, {Op::LDX, Absolute, 4}},
+            {0xBE, {Op::LDX, IndexedAbsoluteY, 4+PAGE_SENSITIVE}},
+            {0xA0, {Op::LDY, Immediate, 2}},
+            {0xA4, {Op::LDY, ZeroPage, 3}},
+            {0xB4, {Op::LDY, IndexedZeroX, 4}},
+            {0xAC, {Op::LDY, Absolute, 4}},
+            {0xBC, {Op::LDY, IndexedAbsoluteX, 4+PAGE_SENSITIVE}},
+            {0x4A, {Op::LSR, Accumulator, 2}},
+            {0x46, {Op::LSR, ZeroPage, 5}},
+            {0x56, {Op::LSR, IndexedZeroX, 6}},
+            {0x4E, {Op::LSR, Absolute, 6}},
+            {0x5E, {Op::LSR, IndexedAbsoluteX, 7}},
+            {0xEA, {Op::NOP, Implicit, 2}},
+            {0x09, {Op::ORA, Immediate, 2}},
+            {0x05, {Op::ORA, ZeroPage, 3}},
+            {0x15, {Op::ORA, IndexedZeroX, 4}},
+            {0x0D, {Op::ORA, Absolute, 4}},
+            {0x1D, {Op::ORA, IndexedAbsoluteX, 4+PAGE_SENSITIVE}},
+            {0x19, {Op::ORA, IndexedAbsoluteY, 4+PAGE_SENSITIVE}},
+            {0x01, {Op::ORA, IndexedIndirectX, 6}},
+            {0x11, {Op::ORA, IndexedIndirectY, 5+PAGE_SENSITIVE}},
+            {0x48, {Op::PHA, Implicit, 3}},
+            {0x08, {Op::PHP, Implicit, 3}},
+            {0x68, {Op::PLA, Implicit, 4}},
+            {0x28, {Op::PLP, Implicit, 4}},
+            {0x2A, {Op::ROL, Accumulator, 2}},
+            {0x26, {Op::ROL, ZeroPage, 5}},
+            {0x36, {Op::ROL, IndexedZeroX, 6}},
+            {0x2E, {Op::ROL, Absolute, 6}},
+            {0x3E, {Op::ROL, IndexedAbsoluteX, 7}},
+            {0x6A, {Op::ROR, Accumulator, 2}},
+            {0x66, {Op::ROR, ZeroPage, 5}},
+            {0x76, {Op::ROR, IndexedZeroX, 6}},
+            {0x6E, {Op::ROR, Absolute, 6}},
+            {0x7E, {Op::ROR, IndexedAbsoluteX, 7}},
+            {0x40, {Op::RTI, Implicit, 6}},
+            {0x60, {Op::RTS, Implicit, 6}},
+            {0xE9, {Op::SBC, Immediate, 2}},
+            {0xE5, {Op::SBC, ZeroPage, 3}},
+            {0xF5, {Op::SBC, IndexedZeroX, 4}},
+            {0xED, {Op::SBC, Absolute, 4}},
+            {0xFD, {Op::SBC, IndexedAbsoluteX, 4+PAGE_SENSITIVE}},
+            {0xF9, {Op::SBC, IndexedAbsoluteY, 4+PAGE_SENSITIVE}},
+            {0xE1, {Op::SBC, IndexedIndirectX, 6}},
+            {0xF1, {Op::SBC, IndexedIndirectY, 5+PAGE_SENSITIVE}},
+            {0x38, {Op::SEC, Implicit, 2}},
+            {0xF8, {Op::SED, Implicit, 2}},
+            {0x78, {Op::SEI, Implicit, 2}},
+            {0x07, {Op::SLO, ZeroPage, 5}},
+            {0x17, {Op::SLO, IndexedZeroX, 6}},
+            {0x0F, {Op::SLO, Absolute, 6}},
+            {0x1F, {Op::SLO, IndexedAbsoluteX, 7}},
+            {0x1B, {Op::SLO, IndexedAbsoluteY, 7}},
+            {0x03, {Op::SLO, IndexedIndirectX, 8}},
+            {0x13, {Op::SLO, IndexedIndirectY, 8}},
+            {0x85, {Op::STA, ZeroPage, 3}},
+            {0x95, {Op::STA, IndexedZeroX, 4}},
+            {0x8D, {Op::STA, Absolute, 4}},
+            {0x9D, {Op::STA, IndexedAbsoluteX, 5}},
+            {0x99, {Op::STA, IndexedAbsoluteY, 5}},
+            {0x81, {Op::STA, IndexedIndirectX, 6}},
+            {0x91, {Op::STA, IndexedIndirectY, 6}},
+            {0x86, {Op::STX, ZeroPage, 3}},
+            {0x96, {Op::STX, IndexedZeroY, 4}},
+            {0x8E, {Op::STX, Absolute, 4}},
+            {0x84, {Op::STY, ZeroPage, 3}},
+            {0x94, {Op::STY, IndexedZeroX, 4}},
+            {0x8C, {Op::STY, Absolute, 4}},
+            {0xAA, {Op::TAX, Implicit, 2}},
+            {0xA8, {Op::TAY, Implicit, 2}},
+            {0xBA, {Op::TSX, Implicit, 2}},
+            {0x8A, {Op::TXA, Implicit, 2}},
+            {0x9A, {Op::TXS, Implicit, 2}},
+            {0x98, {Op::TYA, Implicit, 2}},
+            {0xEB, {Op::USBC, Immediate, 2}}, //!//
+            // illegal NOPs
+            {0x1A, {Op::NOP, Implicit, 2}},
+            {0x3A, {Op::NOP, Implicit, 2}},
+            {0x5A, {Op::NOP, Implicit, 2}},
+            {0x7A, {Op::NOP, Implicit, 2}},
+            {0xDA, {Op::NOP, Implicit, 2}},
+            {0xFA, {Op::NOP, Implicit, 2}},
+            {0x80, {Op::NOP, Immediate, 2}},
+            {0x82, {Op::NOP, Immediate, 2}},
+            {0x89, {Op::NOP, Immediate, 2}},
+            {0xC2, {Op::NOP, Immediate, 2}},
+            {0xE2, {Op::NOP, Immediate, 2}},
+            {0x04, {Op::NOP, ZeroPage, 3}},
+            {0x44, {Op::NOP, ZeroPage, 3}},
+            {0x64, {Op::NOP, ZeroPage, 3}},
+            {0x14, {Op::NOP, IndexedZeroX, 4}},
+            {0x34, {Op::NOP, IndexedZeroX, 4}},
+            {0x54, {Op::NOP, IndexedZeroX, 4}},
+            {0x74, {Op::NOP, IndexedZeroX, 4}},
+            {0xD4, {Op::NOP, IndexedZeroX, 4}},
+            {0xF4, {Op::NOP, IndexedZeroX, 4}},
+            {0x0C, {Op::NOP, Absolute, 4}},
+            {0x1C, {Op::NOP, IndexedAbsoluteX, 4+PAGE_SENSITIVE}},
+            {0x3C, {Op::NOP, IndexedAbsoluteX, 4+PAGE_SENSITIVE}},
+            {0x5C, {Op::NOP, IndexedAbsoluteX, 4+PAGE_SENSITIVE}},
+            {0x7C, {Op::NOP, IndexedAbsoluteX, 4+PAGE_SENSITIVE}},
+            {0xDC, {Op::NOP, IndexedAbsoluteX, 4+PAGE_SENSITIVE}},
+            {0xFC, {Op::NOP, IndexedAbsoluteX, 4+PAGE_SENSITIVE}},
+    };;
+
+    registers_6502 reg{};
+};
+
+
+#endif //CPU_H

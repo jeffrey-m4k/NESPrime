@@ -8,6 +8,8 @@
 #include <cstdint>
 #include "Memory.h"
 #include "NES.h"
+#include "Processor.h"
+#include "CPU.h"
 
 class NES;
 
