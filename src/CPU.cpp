@@ -20,9 +20,9 @@ void CPU::run() {
     cycle = 7;
     cout.fill('0');
     reg.pc = read(0xFFFD) << 8 | read(0xFFFC);
-    reg.pc = 0xC000; // TODO remove, for nestest only
+    //reg.pc = 0xC000; uncomment for nestest
     reg.p = 0x24; // Initialize STATUS register to 00100100
-    reg.s = 0xFD; // Initialize stack head pointer TODO change to FF, for nestest only
+    reg.s = 0xFF; // Initialize stack head pointer - change to FD for nestest
     cout << "\n\n===== RUNNING =====";
     int z = 10000;
     for(;;) {
@@ -45,7 +45,7 @@ void CPU::run() {
     }
 }
 
-void CPU::exec(const uint8_t& opcode) {
+void CPU::exec(const uint8_t opcode) {
     oss.str("");
 
     auto it = OPCODES.find(opcode);
@@ -241,30 +241,20 @@ void CPU::exec(const uint8_t& opcode) {
     if (inc_pc) reg.pc++;
 }
 
-bool CPU::map(const uint16_t &addr, uint8_t *block, const uint16_t &size) {
-    // Validate that the mapped block would not intersect another before mapping
-    auto mb = MappedBlock{addr, block, size};
-    auto it = aspace.lower_bound(mb);
-    if (it != aspace.begin() && (--it)->start_addr + it->size > addr) return false;
-
-    aspace.insert(mb);
-    return true;
-}
-
-void CPU::set_status(const STATUS &status, bool value) {
+void CPU::set_status(const STATUS status, bool value) {
     reg.p = value ? reg.p | status : reg.p & ~status;
 }
 
-bool CPU::get_status(const STATUS &status) {
+bool CPU::get_status(const STATUS status) const {
     return (reg.p & status) == status;
 }
 
-void CPU::set_value_status(const uint8_t &val) {
+void CPU::set_value_status(const uint8_t val) {
     set_status(STATUS::z, val == 0);
     set_status(STATUS::n, (bool)(val>>7));
 }
 
-void CPU::push_stack(const uint8_t &byte) {
+void CPU::push_stack(const uint8_t byte) {
     write(create_address(reg.s--, 0x01), byte);
 }
 
@@ -273,11 +263,11 @@ uint8_t CPU::pop_stack() {
     return data;
 }
 
-uint8_t CPU::peek_stack(const uint8_t& bytes) {
+uint8_t CPU::peek_stack(const uint8_t bytes) {
     return read(create_address(reg.s + bytes, 0x01));
 }
 
-void CPU::branch(const STATUS &status, const bool &check_against) {
+void CPU::branch(const STATUS status, const bool check_against) {
     if (get_status(status) == check_against) {
         if (!same_page(reg.pc + 1, addrs[0]))
             cycle += 2;
@@ -288,7 +278,7 @@ void CPU::branch(const STATUS &status, const bool &check_against) {
     }
 }
 
-void CPU::compare(const uint8_t &a, const uint8_t &b) {
+void CPU::compare(const uint8_t a, const uint8_t b) {
     if (a == b) {
         set_status(STATUS::n, false);
         set_status(STATUS::z, true);
@@ -301,7 +291,7 @@ void CPU::compare(const uint8_t &a, const uint8_t &b) {
     }
 }
 
-void CPU::push_address(const uint16_t &addr) {
+void CPU::push_address(const uint16_t addr) {
     push_stack((uint8_t)((addr & 0xFF00) >> 8));
     push_stack((uint8_t)(addr & 0x00FF));
 }
@@ -312,15 +302,15 @@ uint16_t CPU::pop_address() {
     return create_address(a, b);
 }
 
-uint16_t CPU::read_address(const uint16_t& addr) {
+uint16_t CPU::read_address(const uint16_t addr) {
     return create_address(read(addr), read(addr+1));
 }
 
-uint16_t CPU::create_address(const uint8_t &lo, const uint8_t &hi) {
+uint16_t CPU::create_address(const uint8_t lo, const uint8_t hi) {
     return ((uint16_t)hi) << 8 | lo;
 }
 
-bool CPU::same_page(const uint16_t& addr1, const uint16_t& addr2) {
+bool CPU::same_page(const uint16_t addr1, const uint16_t addr2) {
     return (addr1 >> 8 == addr2 >> 8);
 }
 
@@ -558,4 +548,13 @@ void CPU::TYA() {
 }
 void CPU::USBC() {
     SBC();
+}
+
+// TODO PPU register handling
+uint8_t CPU::read(int addr) {
+    return Processor::read(addr);
+}
+
+bool CPU::write(const uint16_t addr, const uint8_t data) {
+    return Processor::write(addr, data);
 }

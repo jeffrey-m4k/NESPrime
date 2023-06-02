@@ -5,11 +5,11 @@
 
 using std::ios;
 
-bool Cartridge::read_next(const uint16_t &bytes) {
+bool Cartridge::read_next(const uint16_t bytes) {
     return read_next(buffer, bytes);
 }
 
-bool Cartridge::read_next(uint8_t* into, const uint16_t &bytes) {
+bool Cartridge::read_next(uint8_t* into, const uint16_t bytes) {
     // TODO better EOF checking, for now just assuming ROM is formatted correctly
     if (!file.eof()) {
         file.seekg(pos);
@@ -20,7 +20,7 @@ bool Cartridge::read_next(uint8_t* into, const uint16_t &bytes) {
     return false;
 }
 
-bool Cartridge::read_next(Memory& into, const uint16_t &start, const uint16_t &bytes) {
+bool Cartridge::read_next(Memory& into, const uint16_t start, const uint16_t bytes) {
     if (!file.eof()) {
         file.seekg(pos);
         if (start + bytes > into.get_size()) return false;
@@ -85,18 +85,27 @@ void Cartridge::load() {
         }
 
         CPU* cpu = sys->get_cpu();
+        PPU* ppu = sys->get_ppu();
         uint8_t* prg_mem = prg_rom.get_mem();
+
+        if (flags[0][3]) ppu->set_mirroring(FourScreen);
+        else ppu->set_mirroring(static_cast<MIRRORING>(flags[0][0]));
+        ppu->reset();
         switch (mapper) {
             case 0: {
                 bool nrom_256 = prg_size == 0x8000;
                 cpu->map(0x8000, prg_mem, prg_size);
                 if (!nrom_256)
                     cpu->map(0xC000, prg_mem, prg_size);
+                ppu->map(0x0, chr_rom.get_mem(), 0x2000);
                 break;
             }
             default:
                 break;
         }
+        /*uint8_t* ppu_regs = ppu->get_regs_addr();
+        cpu->map(0x2000, ppu_regs, 0x8);
+        cpu->map(0x4014, ppu_regs + 8, 0x1);*/
 
         // TODO add PlayChoice-10 support (low priority)
     }

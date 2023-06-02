@@ -12,17 +12,16 @@ class PPU;
 
 class NES {
 public:
-    //NES(CPU* cpu, PPU* ppu) : cpu(cpu), ppu(ppu) {};
-    NES(CPU* cpu);
+    NES(CPU* cpu, PPU* ppu);
     ~NES() {};
     void run();
     CPU* get_cpu() { return cpu; };
-    //PPU* get_ppu() { return ppu; };
+    PPU* get_ppu() { return ppu; };
 public:
     Cartridge* cart;
 private:
     CPU* cpu;
-    //PPU* ppu;
+    PPU* ppu;
 };
 
 

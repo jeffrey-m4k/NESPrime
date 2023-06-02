@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <sstream>
 #include "Processor.h"
+#include "PPU.h"
 
 enum ADDRESSING_MODE {
     IndexedZeroX, IndexedZeroY, IndexedAbsoluteX, IndexedAbsoluteY, IndexedIndirectX, IndexedIndirectY,
@@ -46,24 +47,26 @@ public:
     ~CPU() {};
     void reset() override;
     void run() override;
-    bool map(const uint16_t& addr, uint8_t* block, const uint16_t& size);
-    void print_registers();
-    void print_stack();
+    void link_ppu(PPU* ppu_ptr) { ppu = ppu_ptr; }
+protected:
+    uint8_t read(int addr) override;
+    bool write(const uint16_t addr, const uint8_t data) override;
 private:
-    void exec(const uint8_t& opcode);
-    void set_status(const STATUS& status, bool value);
-    bool get_status(const STATUS& status);
-    void set_value_status(const uint8_t& val);
-    void push_stack(const uint8_t& byte);
+    uint8_t addr_to_ppu(const uint16_t addr);
+    void exec(uint8_t opcode);
+    void set_status(STATUS status, bool value);
+    bool get_status(STATUS status) const;
+    void set_value_status(uint8_t val);
+    void push_stack(uint8_t byte);
     uint8_t pop_stack();
-    uint8_t peek_stack(const uint8_t& bytes);
-    void branch(const STATUS& status, const bool& check_against);
-    void compare(const uint8_t& a, const uint8_t& b);
-    void push_address(const uint16_t& addr);
+    uint8_t peek_stack(uint8_t bytes);
+    void branch(STATUS status, bool check_against);
+    void compare(uint8_t a, uint8_t b);
+    void push_address(uint16_t addr);
     uint16_t pop_address();
-    uint16_t read_address(const uint16_t& addr);
-    uint16_t create_address(const uint8_t& lo, const uint8_t& hi);
-    bool same_page(const uint16_t& addr1, const uint16_t& addr2);
+    uint16_t read_address(uint16_t addr);
+    static uint16_t create_address(uint8_t lo, uint8_t hi);
+    static bool same_page(uint16_t addr1, uint16_t addr2);
 
     uint8_t shift_right(uint8_t byte);
     uint8_t shift_left(uint8_t byte);
@@ -336,6 +339,7 @@ private:
             {0xFC, {Op::NOP, IndexedAbsoluteX, 4+PAGE_SENSITIVE}}, //*//
     };;
 
+    PPU* ppu;
     registers_6502 reg{};
 };
 

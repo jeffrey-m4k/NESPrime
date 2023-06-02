@@ -10,6 +10,7 @@
 #include "NES.h"
 #include "Processor.h"
 #include "CPU.h"
+#include "PPU.h"
 
 class NES;
 
@@ -21,9 +22,9 @@ public:
     bool open_file(const std::string& filename);
     std::ifstream& get_file() { return file; }
 private:
-    bool read_next(const uint16_t& bytes = 1);
-    bool read_next(uint8_t* into, const uint16_t& bytes = 1);
-    bool read_next(Memory& into, const uint16_t& start, const uint16_t& bytes = 1);
+    bool read_next(uint16_t bytes = 1);
+    bool read_next(uint8_t* into, uint16_t bytes = 1);
+    bool read_next(Memory& into, uint16_t start, uint16_t bytes = 1);
     bool read_header();
     void print_metadata();
 private:
