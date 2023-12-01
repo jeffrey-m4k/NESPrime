@@ -47,8 +47,10 @@ public:
     void reset() override;
     void init() override;
     bool run();
+    void trigger_nmi() { nmi = true; };
 protected:
     uint8_t read(int addr) override;
+    uint8_t read(int addr, bool physical_read);
     bool write(const uint16_t addr, const uint8_t data) override;
 private:
     uint8_t addr_to_ppu(const uint16_t addr);
@@ -92,8 +94,6 @@ private:
 
 private:
     std::ostringstream oss;
-    constexpr static const int CLOCK_SPEED = 1789773;
-    constexpr static const double CPS = 1.0 / CLOCK_SPEED;
 
     //Decode stage variables
     opcode_info curr_op;
@@ -101,6 +101,8 @@ private:
     uint16_t addrs[2];
     int8_t offset;
     bool inc_pc = true;
+
+    bool nmi = false;
 
     inline constexpr static const uint8_t PAGE_SENSITIVE = 0xF0;
     inline static const std::unordered_map<uint8_t,opcode_info> OPCODES = {

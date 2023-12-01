@@ -7,16 +7,8 @@
 
 int main() {
     NES* nes = new NES();
-    Cartridge* c = nes->get_cart();
 
-    /*if (c->open_file("dk.nes")) {
-        std::ifstream& file = c->get_file();
-        nes->run();
-    }*/
-    nes->run("dk.nes");
+    nes->run("donkey kong.nes");
 
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        SDL_Log("blah", SDL_GetError());
-        return 1;
-    }
+
 }

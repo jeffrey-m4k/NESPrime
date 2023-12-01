@@ -8,11 +8,12 @@ class CPU;
 class PPU;
 class Cartridge;
 class Bus;
+class Display;
 
 class NES {
 public:
     NES();
-    ~NES() {};
+    ~NES();
     void run();
     void run(const std::string& filename);
 
@@ -20,9 +21,11 @@ public:
     PPU* get_ppu() { return ppu; };
     Bus* get_bus() { return bus; };
     Cartridge* get_cart() { return cart; }
+    Display* get_display() { return display; }
     void set_cpu(CPU* cpu);
     void set_ppu(PPU* ppu);
     void set_cart(Cartridge* cart);
+    void set_display(Display* display);
 
     long get_clock() { return clock; };
 
@@ -32,8 +35,11 @@ private:
     Bus* bus;
     CPU* cpu;
     PPU* ppu;
+    Display* display;
 
     long clock = 0;
+    constexpr static const int CPS = 21477272;
+    constexpr static const double CLOCK_SPEED = 1.0 / CPS;
 };
 
 

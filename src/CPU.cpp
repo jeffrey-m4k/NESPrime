@@ -25,11 +25,19 @@ void CPU::init() {
     //reg.pc = 0xC000;// uncomment for nestest
     reg.p = 0x24; // Initialize STATUS register to 00100100
     reg.s = 0xFD; // Initialize stack head pointer
-    nes->out << "\n\n===== RUNNING =====";
+    nes->out << "\n\n===== CPU INITIALIZED =====";
 }
 
 bool CPU::run() {
     if (!this->Processor::run()) return false;
+    if (nmi) {
+        BRK();
+        uint16_t nmi_addr = read_address(0xFFFA);
+        nmi = false;
+        reg.pc = nmi_addr;
+        nes->out << "\n!!! NMI TRIGGERED !!!";
+    }
+
     std::ostringstream regs_log;
     regs_log << "A:"; print_hex(regs_log, reg.acc);
     regs_log << " X:"; print_hex(regs_log,reg.x);
@@ -39,10 +47,10 @@ bool CPU::run() {
     regs_log << " CYC:" << cycle;
     regs_log << " | PPU:";
     for (int i = 0; i < 9; i++) {
-        print_hex(regs_log, nes->get_ppu()->read_reg(i, cycle)); regs_log << " ";
+        print_hex(regs_log, nes->get_ppu()->read_reg(i, cycle, false)); regs_log << " ";
     }
-    regs_log << "CYC:" << nes->get_ppu()->get_cycle() << " ";
-    regs_log << "| CLOCK:" << nes->get_clock();
+    regs_log << "CYC:" << nes->get_ppu()->get_y() << "," << nes->get_ppu()->get_x() << " ";
+    regs_log << "| v:"; print_hex(regs_log, nes->get_ppu()->get_v());
 
     nes->out << "\n";
     uint8_t opcode = read(reg.pc);
@@ -72,6 +80,8 @@ void CPU::exec(const uint8_t opcode) {
     idle_cycles += (curr_op.cycles & ~PAGE_SENSITIVE);
     print_hex(oss, opcode, " ");
 
+    bool phys = true;
+    if (curr_op.id == Op::STA || curr_op.id == Op::STX || curr_op.id == Op::STY || curr_op.id == Op::INC) phys = false;
     switch (curr_op.mode) {
         case Accumulator:
             nes->out << setw(10) << std::left << oss.str(); oss.str("");
@@ -91,7 +101,7 @@ void CPU::exec(const uint8_t opcode) {
             uint8_t lo = read(++reg.pc);
             uint8_t hi = read(++reg.pc);
             addrs[0] = create_address(lo, hi);
-            ops[0] = read(addrs[0]);
+            ops[0] = read(addrs[0], false);
             print_hex(oss, lo, " ");
             print_hex(oss, hi, " ");
             nes->out << setw(10) << std::left << oss.str(); oss.str("");
@@ -561,10 +571,19 @@ void CPU::USBC() {
     SBC();
 }
 
-// TODO PPU register handling
 uint8_t CPU::read(int addr) {
+    return read(addr, true);
+}
+
+uint8_t CPU::read(int addr, bool physical_read) {
     if (addr >= 0x2000 && addr <= 0x3FFF) {
-        return nes->get_ppu()->read_reg(addr % 8, cycle);
+        // TODO hardcode special behavior into the read_reg function
+        uint8_t reg = nes->get_ppu()->read_reg(addr % 8, cycle, physical_read);
+        if (reg == PPUSTATUS && physical_read) {
+            nes->get_ppu()->write_reg(PPUSTATUS, reg & (~0x80), cycle);
+            nes->get_ppu()->reset_address();
+        }
+        return reg;
     }
     return Processor::read(addr);
 }
@@ -572,6 +591,16 @@ uint8_t CPU::read(int addr) {
 bool CPU::write(const uint16_t addr, const uint8_t data) {
     if (addr >= 0x2000 && addr <= 0x3FFF) {
         return nes->get_ppu()->write_reg(addr % 8, data, cycle);
+    } else if (addr == 0x4014) {
+        // OAM DMA
+        // TODO properly check get/put cycles using APU clock sync (using even-get odd-put for now)
+        idle_cycles == 513;
+        if (cycle % 2 != 0) idle_cycles++;
+
+        nes->get_ppu()->write_reg(OAMDMA, data, cycle);
+        for (int i = 0; i <= 0xFF; i++) {
+            nes->get_ppu()->write_oam(i, read(create_address(i, data)));
+        }
     }
     return Processor::write(addr, data);
 }

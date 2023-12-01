@@ -23,7 +23,7 @@ class AddressSpace : public std::set<MappedBlock> {
 public:
     uint8_t read(int addr);
     bool write(uint16_t addr, uint8_t data);
-private:
+protected:
     iterator get_block(uint16_t addr);
 };
 

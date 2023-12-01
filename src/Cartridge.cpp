@@ -35,6 +35,7 @@ bool Cartridge::read_next(Memory& into, const uint16_t start, const uint16_t byt
 
 bool Cartridge::open_file(const std::string &filename) {
     pos = 0;
+    nes->out << "===== " + filename + " =====\n\n";
     file.open(filename, ios::in | ios::binary);
     return file.is_open();
 }
@@ -62,7 +63,7 @@ bool Cartridge::read_header() {
             flags[1][i] = (buffer[7] >> i) & 0x1;
         }
 
-        flush_hex(buffer, 16);
+        flush_hex(nes->out, buffer, 16);
         return true;
     }
     return false;

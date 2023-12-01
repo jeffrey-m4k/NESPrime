@@ -13,16 +13,16 @@ inline void print_hex(std::ostream& out, const uint16_t& num, const std::string&
     out.fill(' ');
 }
 
-inline void flush_hex(uint8_t* buffer, const uint16_t& size) {
-    cout.fill('0');
+inline void flush_hex(std::ostream& out, uint8_t* buffer, const uint16_t& size) {
+    out.fill('0');
     for (int row = 0; row < size / 16; row++) {
         for (int col = 0; col < 16; col++) {
-            cout << setw(2) << hex << (int)buffer[row * 16 + col] << " ";
+            out << setw(2) << hex << (int)buffer[row * 16 + col] << " ";
         }
-        cout << endl;
+        out << endl;
     }
-    cout << dec << endl;
-    cout.fill(' ');
+    out << dec << endl;
+    out.fill(' ');
 }
 
 #endif //UTIL_H
