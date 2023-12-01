@@ -41,3 +41,14 @@ bool Processor::map(const uint16_t addr, uint8_t *block, const uint16_t size) {
     aspace.insert(mb);
     return true;
 }
+
+bool Processor::run() {
+    if (idle_cycles > 0) {
+        cycle++;
+        idle_cycles--;
+        return false;
+    }
+
+    idle_cycles = 0;
+    return true;
+}

@@ -1,5 +1,7 @@
 #include "Cartridge.h"
 #include "util.h"
+#include "CPU.h"
+#include "PPU.h"
 
 #include <iostream>
 
@@ -84,8 +86,8 @@ void Cartridge::load() {
             read_next(chr_rom, 0, chr_size);
         }
 
-        CPU* cpu = sys->get_cpu();
-        PPU* ppu = sys->get_ppu();
+        CPU* cpu = nes->get_cpu();
+        PPU* ppu = nes->get_ppu();
         uint8_t* prg_mem = prg_rom.get_mem();
 
         if (flags[0][3]) ppu->set_mirroring(FourScreen);
@@ -110,21 +112,21 @@ void Cartridge::load() {
         // TODO add PlayChoice-10 support (low priority)
     }
     else
-        std::cout << "Invalid NES file\n";
+        nes->out << "Invalid NES file\n";
 }
 
 void Cartridge::print_metadata() {
-    std::cout << "PRG ROM size: " << prg_size << " bytes\n";
-    std::cout << "CHR ROM size: " << chr_size << " bytes\n";
-    std::cout << "Mapper: " << (int)mapper << "\n";
-    std::cout << "Flags:\n";
-    std::cout << "0: ";
+    nes->out << "PRG ROM size: " << prg_size << " bytes\n";
+    nes->out << "CHR ROM size: " << chr_size << " bytes\n";
+    nes->out << "Mapper: " << (int)mapper << "\n";
+    nes->out << "Flags:\n";
+    nes->out << "0: ";
     for (int i = 0; i < 4; i++)
-        std::cout << flags[0][i] << " ";
-    std::cout << "\n1: ";
+        nes->out << flags[0][i] << " ";
+    nes->out << "\n1: ";
     for (int i = 0; i < 4; i++)
-        std::cout << flags[1][i] << " ";
-    std::cout << "\n";
+        nes->out << flags[1][i] << " ";
+    nes->out << "\n";
 }
 
 

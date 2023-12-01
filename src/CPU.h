@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <sstream>
 #include "Processor.h"
-#include "PPU.h"
 
 enum ADDRESSING_MODE {
     IndexedZeroX, IndexedZeroY, IndexedAbsoluteX, IndexedAbsoluteY, IndexedIndirectX, IndexedIndirectY,
@@ -46,8 +45,8 @@ public:
     CPU();
     ~CPU() {};
     void reset() override;
-    void run() override;
-    void link_ppu(PPU* ppu_ptr) { ppu = ppu_ptr; }
+    void init() override;
+    bool run();
 protected:
     uint8_t read(int addr) override;
     bool write(const uint16_t addr, const uint8_t data) override;
@@ -339,7 +338,6 @@ private:
             {0xFC, {Op::NOP, IndexedAbsoluteX, 4+PAGE_SENSITIVE}}, //*//
     };;
 
-    PPU* ppu;
     registers_6502 reg{};
 };
 

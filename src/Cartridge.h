@@ -7,16 +7,11 @@
 #include <vector>
 #include <cstdint>
 #include "Memory.h"
-#include "NES.h"
-#include "Processor.h"
-#include "CPU.h"
-#include "PPU.h"
+#include "Component.h"
 
-class NES;
-
-class Cartridge {
+class Cartridge : public Component {
 public:
-    Cartridge(NES* system) : sys(system) {};
+    Cartridge() : Component() {};
     ~Cartridge() {};
     void load();
     bool open_file(const std::string& filename);
@@ -38,8 +33,6 @@ private:
 
     Memory prg_rom;
     Memory chr_rom;
-
-    NES* sys;
 };
 
 

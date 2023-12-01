@@ -1,15 +1,22 @@
 #include "src/NES.h"
 
+#define SDL_MAIN_HANDLED
+#include <SDL.h>
+
 #include <iostream>
 
 int main() {
-    CPU cpu;
-    PPU ppu;
-    NES sys(&cpu, &ppu);
-    Cartridge* c = sys.cart;
+    NES* nes = new NES();
+    Cartridge* c = nes->get_cart();
 
-    if (c->open_file("smb.nes")) {
+    /*if (c->open_file("dk.nes")) {
         std::ifstream& file = c->get_file();
-        sys.run();
+        nes->run();
+    }*/
+    nes->run("dk.nes");
+
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        SDL_Log("blah", SDL_GetError());
+        return 1;
     }
 }
