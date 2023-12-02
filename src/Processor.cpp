@@ -36,7 +36,7 @@ bool Processor::map(const uint16_t addr, uint8_t *block, const uint16_t size) {
     // Validate that the mapped block would not intersect another before mapping
     auto mb = MappedBlock{addr, block, size};
     auto it = aspace.lower_bound(mb);
-    if (it != aspace.begin() && (--it)->start_addr + it->size > addr) return false;
+    //if (it != aspace.begin() && (--it)->start_addr + it->size > addr) return false;
 
     aspace.insert(mb);
     return true;

@@ -124,17 +124,9 @@ bool PPU::run() {
                         tile[b % 8][b / 8] = read(pattern_table + tile_num * 16 + b);
                     }
                     uint8_t col_at_pos = tile_col_at_pixel(tile, dx, dy, (sprite[SPRITE::ATTR] >> 6) & 0x1, (sprite[SPRITE::ATTR] >> 7) & 0x1);
-                    /*for (int ay=0; ay<8; ay++) {
-                        for (int ax=0; ax<8; ax++) {
-                            uint8_t col = tile_col_at_pixel(tile,ax,ay,0,0);
-                            uint8_t* rgb = rgb_palette[read(0x3F11 + (sprite[SPRITE::ATTR] & 0x3) * 4 + col)];
-                            std::cout<<"("<<+rgb[0]<<","<<+rgb[1]<<","<<+rgb[2]<<") ";
-                        }
-                        std::cout<<"\n";
-                    }
-                    std::cout<<"\n\n\n";*/
+
                     if (col_at_pos != 0) {
-                        uint8_t* rgb = rgb_palette[read(0x3F11 + (sprite[SPRITE::ATTR] & 0x3) * 4 + col_at_pos)];
+                        uint8_t* rgb = rgb_palette[read(0x3F11 + (sprite[SPRITE::ATTR] & 0x3) * 4 + (col_at_pos-1))];
                         nes->get_display()->set_pixel_buffer(scan_cycle - 1, scanline, rgb);
                         break;
                     }
@@ -172,7 +164,7 @@ uint8_t PPU::read_reg(uint8_t reg_id, int cycle, bool physical_read) {
     if (reg_id == PPUDATA) {
         if (physical_read) {
             uint8_t temp = vram_read_buffer;
-            vram_read_buffer = read(v);
+            vram_read_buffer = read(mirror_palette_addr(v));
             v += ((regs[PPUCTRL] >> 2) & 0x1) ? 32 : 1;
             return temp;
         }
@@ -186,7 +178,7 @@ bool PPU::write_reg(uint8_t reg_id, uint8_t value, int cycle) {
         return false;
     else*/
     if (reg_id == PPUADDR) {
-        if (address_latch_state == 0) {
+        if (address_latch_state == 0 || address_latch_state == 2) {
             v = value << 8;
             address_latch_state = 1;
         } else if (address_latch_state == 1) {
