@@ -53,10 +53,10 @@ void NES::tick(bool do_cpu, int times) {
         clock++;
         cycles_delta++;
 
-        if (cycles_delta >= CPS/60) {
-            cycles_delta -= CPS/60;
-            display->refresh();
-        }
+//        if (cycles_delta >= CPS/60*4) {
+//            cycles_delta -= CPS/60*4;
+//            display->refresh();
+//        }
     }
 }
 

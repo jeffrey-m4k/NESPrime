@@ -32,6 +32,7 @@ private:
     uint8_t buffer[WIDTH*HEIGHT*3] = {0};
 
     uint8_t pt[256*128*3] = {0};
+    uint8_t nts[256*240][4] = {0};
 };
 
 #endif

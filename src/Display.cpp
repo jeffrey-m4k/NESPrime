@@ -62,7 +62,7 @@ bool Display::update_pt() {
 
 bool Display::refresh() {
     int texture_pitch = 0;
-    void* texture_pixels = nullptr;
+    void *texture_pixels = nullptr;
     if (SDL_LockTexture(texture_main, nullptr, &texture_pixels, &texture_pitch) != 0) {
         SDL_Log("Unable to lock texture: %s", SDL_GetError());
     } else {
@@ -99,7 +99,7 @@ void Display::set_pixel_buffer(uint8_t x, uint8_t y, const uint8_t rgb[3]) {
 }
 
 void Display::push_buffer() {
-    black();
+    //black();
     for (int p = 0; p < WIDTH*HEIGHT*3; p ++) {
         pixels[p] = buffer[p];
         buffer[p] = 0;

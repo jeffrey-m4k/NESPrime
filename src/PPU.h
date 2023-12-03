@@ -54,7 +54,7 @@ private:
     uint8_t io_bus;
 
     short scanline = 0;
-    short scan_cycle = 27;
+    short scan_cycle = 3;
     long frame = 1;
 
     int inrange_sprites = 0;

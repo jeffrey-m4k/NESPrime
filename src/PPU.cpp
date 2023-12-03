@@ -7,7 +7,7 @@
 PPU::PPU() : Processor() {
     this->PPU::reset();
     this->regs[PPUSTATUS] = 0x0;
-    this->set_palette("classic.pal");
+    this->set_palette("Smooth (FBX).pal");
 }
 
 void PPU::reset() {
@@ -45,7 +45,7 @@ void PPU::init() {}
 bool PPU::run() {
     if (!pt_shown && nes->get_display() != nullptr) output_pt();
 
-    if (scanline == 241 && scan_cycle == 1) {
+    if (scanline == 241 && scan_cycle == 4) {
         // Set the v-blank flag on dot 1 of line 241
         regs[PPUSTATUS] |= 0x80;
         nmi_occurred = true;
@@ -133,8 +133,10 @@ bool PPU::run() {
                                 bool is_sprite0 = true;
                                 if ((regs[PPUSTATUS] & 0x40) != 0x40) {
                                     for (int i=0; i<4; i++) {
-                                        if (sprite[i] != this->sprite(0)[i]) is_sprite0 = false;
-                                        break;
+                                        if (sprite[i] != this->sprite(0)[i]) {
+                                            is_sprite0 = false;
+                                            break;
+                                        }
                                     }
                                 }
                                 sprite_0 = is_sprite0;
@@ -222,8 +224,9 @@ bool PPU::run() {
             uint8_t next_attr = read(next_attr_addr);
 
             uint16_t pattern_addr = 0x1000 * ((regs[PPUCTRL] >> 4) & 0x1) + ((uint16_t)next_tile << 4) + ((v & 0x7000) >> 12);
-            tile_shift_regs[1] = read(pattern_addr);
-            tile_attr_shift_regs[1] = read(next_attr_addr);
+            tile_shift_regs[1] = (read(pattern_addr)) | (read(pattern_addr+8) << 8);
+            //if (scan_cycle == 328) tile_shift_regs[1] = (read(pattern_addr)<<8) | read(pattern_addr+8);
+            tile_attr_shift_regs[1] = next_attr;
 
             if ((v & 0x001F) == 31) {
                 v &= ~0x001F;
@@ -269,6 +272,8 @@ bool PPU::run() {
     if (scanline > 260) { scanline = -1; nes->get_display()->push_buffer(); }
     if (scanline == 240 && scan_cycle == 0) frame++;
 
+    //if (scanline == 0 && scan_cycle == 0 && frame % 60 == 0) output_pt();
+
     return true;
 }
 
@@ -285,11 +290,9 @@ uint8_t PPU::read_reg(uint8_t reg_id, int cycle) {
 uint8_t PPU::read_reg(uint8_t reg_id, int cycle, bool physical_read) {
     if (physical_read) {
         if (reg_id == PPUDATA) {
-            if (physical_read) {
-                io_bus = vram_read_buffer;
-                vram_read_buffer = read(mirror_palette_addr(v & 0x3FFF));
-                v += ((regs[PPUCTRL] >> 2) & 0x1) ? 32 : 1;
-            } else return read(mirror_palette_addr(v));
+            io_bus = vram_read_buffer;
+            vram_read_buffer = read(mirror_palette_addr(v & 0x3FFF));
+            v += ((regs[PPUCTRL] >> 2) & 0x1) ? 32 : 1;
         } else if (reg_id == OAMDATA) { // TODO
         } else if (reg_id == PPUSTATUS) {
             io_bus = (io_bus & ~0xE0) | (regs[PPUSTATUS] & 0xE0);

@@ -9,6 +9,4 @@ int main() {
     NES* nes = new NES();
 
     nes->run("donkey kong.nes");
-
-
 }

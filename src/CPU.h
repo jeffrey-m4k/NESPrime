@@ -39,6 +39,14 @@ enum STATUS {
     c = 0x1, z = 0x2, i = 0x4, d = 0x8, b = 0x10, bit_5 = 0x20, v = 0x40, n = 0x80
 };
 
+enum CYCLE {
+    READ, WRITE, HALT
+};
+
+enum INTERRUPT_TYPE {
+    IRQ, NMI, BREAK
+};
+
 //typedef void (CPU::*op_func)();
 class CPU : public Processor {
 public:
@@ -47,14 +55,15 @@ public:
     void reset() override;
     void init() override;
     bool run();
-    void trigger_nmi() { nmi = true; };
+    void trigger_nmi() { PIN_NMI = true; };
 protected:
     uint8_t read(int addr) override;
     uint8_t read(int addr, bool physical_read);
     bool write(const uint16_t addr, const uint8_t data) override;
 private:
     uint8_t addr_to_ppu(const uint16_t addr);
-    void skip_cycles(uint8_t num);
+    void interrupt(INTERRUPT_TYPE type);
+    void skip_cycles(int num, CYCLE type);
     void exec(uint8_t opcode);
     void set_status(STATUS status, bool value);
     bool get_status(STATUS status) const;
@@ -106,7 +115,10 @@ private:
     bool oper_set = false;
     uint8_t oper();
 
-    bool nmi = false;
+    bool PIN_NMI = false;
+    bool PIN_INT = false;
+
+    CYCLE state;
 
     inline constexpr static const uint8_t PAGE_SENSITIVE = 0xF0;
     inline static const std::unordered_map<uint8_t,opcode_info> OPCODES = {
@@ -345,6 +357,8 @@ private:
     };;
 
     registers_6502 reg{};
+
+    bool logging = false;
 };
 
 

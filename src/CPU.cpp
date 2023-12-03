@@ -19,59 +19,89 @@ void CPU::reset() {
 }
 
 void CPU::init() {
-    cycle = 8;//8;
+    cycle = 0;//8;
     nes->out.fill('0');
-    reg.pc = read(0xFFFD, false) << 8 | read(0xFFFC, false);
+
+    skip_cycles(3, READ);
+    reg.s = 0x00; // Initialize stack head pointer
+    for (int i=0;i<3;i++) {
+        skip_cycles(1, READ);
+        reg.s--;
+    }
+
+    reg.pc = create_address(read(0xFFFC), read(0xFFFD));
     //reg.pc = 0xC000;// uncomment for nestest
     reg.p = 0x24; // Initialize STATUS register to 00100100
-    reg.s = 0xFD; // Initialize stack head pointer
+
     nes->out << "\n\n===== CPU INITIALIZED =====";
 }
 
 bool CPU::run() {
     //if (!this->Processor::run()) return false;
-    if (nmi) {
-        BRK();
-        uint16_t nmi_addr = read_address(0xFFFA);
-        nmi = false;
-        reg.pc = nmi_addr;
-        nes->out << "\n!!! NMI TRIGGERED !!!";
-    }
 
     oper_set = false;
 
     std::ostringstream regs_log;
-    regs_log << "A:"; print_hex(regs_log, reg.acc);
-    regs_log << " X:"; print_hex(regs_log,reg.x);
-    regs_log << " Y:"; print_hex(regs_log,reg.y);
-    regs_log << " P:"; print_hex(regs_log,reg.p);
-    regs_log << " SP:"; print_hex(regs_log,reg.s);
-    regs_log << " CYC:" << cycle;
-    regs_log << " | PPU:";
-    for (int i = 0; i < 9; i++) {
-        print_hex(regs_log, nes->get_ppu()->read_reg(i, cycle, false)); regs_log << " ";
+    if (logging) {
+        regs_log << "A:";
+        print_hex(regs_log, reg.acc);
+        regs_log << " X:";
+        print_hex(regs_log, reg.x);
+        regs_log << " Y:";
+        print_hex(regs_log, reg.y);
+        regs_log << " P:";
+        print_hex(regs_log, reg.p);
+        regs_log << " SP:";
+        print_hex(regs_log, reg.s);
+        regs_log << " CYC:" << cycle;
+        regs_log << " | PPU:";
+        for (int i = 0; i < 9; i++) {
+            print_hex(regs_log, nes->get_ppu()->read_reg(i, cycle, false));
+            regs_log << " ";
+        }
+        regs_log << "CYC:" << nes->get_ppu()->get_y() << "," << nes->get_ppu()->get_x() << ":"
+                 << nes->get_ppu()->get_frame();
+        regs_log << " | v:";
+        print_hex(regs_log, nes->get_ppu()->get_v());
+        regs_log << " | t:";
+        print_hex(regs_log, nes->get_ppu()->get_t());
+        regs_log << " | w:";
+        print_hex(regs_log, nes->get_ppu()->get_w());
+        regs_log << " | x:";
+        print_hex(regs_log, nes->get_ppu()->get_finex());
+        nes->out << "\n";
     }
-    regs_log << "CYC:" << nes->get_ppu()->get_y() << "," << nes->get_ppu()->get_x() << ":" << nes->get_ppu()->get_frame();
-    regs_log << " | v:"; print_hex(regs_log, nes->get_ppu()->get_v());
-    regs_log << " | t:"; print_hex(regs_log, nes->get_ppu()->get_t());
-    regs_log << " | w:"; print_hex(regs_log, nes->get_ppu()->get_w());
-    regs_log << " | x:"; print_hex(regs_log, nes->get_ppu()->get_finex());
-    nes->out << "\n";
 
     uint8_t opcode = read(reg.pc);
-    print_hex(nes->out, reg.pc, "  ");
+    if (logging) print_hex(nes->out, reg.pc, "  ");
 
     exec(opcode);
 
-    nes->out << setw(35) << std::left << regs_log.str();
+    if (logging) nes->out << setw(35) << std::left << regs_log.str();
 
-    //idle_cycles--;
-    //cycle++;
+    if (PIN_NMI) {
+        interrupt(NMI);
+        if (logging) nes->out << "\n!!! NMI TRIGGERED !!!";
+    }
+
     return true;
 }
 
-void CPU::skip_cycles(uint8_t num) {
+void CPU::interrupt(INTERRUPT_TYPE type) {
+    if (type != BREAK) skip_cycles(2, READ);
+    uint8_t push_p = type == BREAK ? reg.p | STATUS::b : reg.p & ~STATUS::b;
+    uint16_t vector = type == NMI ? 0xFFFA : 0xFFFE;
+    uint16_t push_addr = type == BREAK ? ++reg.pc + 1 : reg.pc;
+    reg.p |= STATUS::i;
+    push_address(push_addr);
+    push_stack(push_p);
+    reg.pc = read_address(vector);
+    PIN_NMI = false;
+}
+
+void CPU::skip_cycles(int num, CYCLE type) {
     for (int i = 0; i < num; i++) {
+        state = type;
         nes->tick(false, 12 - 1*(i==num-1));
         cycle++;
     }
@@ -86,12 +116,14 @@ uint8_t CPU::oper() {
 }
 
 void CPU::exec(const uint8_t opcode) {
-    oss.str("");
+    if (logging) oss.str("");
 
     auto it = OPCODES.find(opcode);
     if (it == OPCODES.end()) {
-        nes->out << "\n\nError: unknown opcode! ";
-        print_hex(nes->out, opcode);
+        if (logging) {
+            nes->out << "\n\nError: unknown opcode! ";
+            print_hex(nes->out, opcode);
+        }
         exit;
     }
 
@@ -101,25 +133,36 @@ void CPU::exec(const uint8_t opcode) {
     bool page_sensitive = ((curr_op.cycles & PAGE_SENSITIVE) >> 4) & 1;
 
     //idle_cycles += (curr_op.cycles & ~PAGE_SENSITIVE);
-    print_hex(oss, opcode, " ");
+    if (logging) print_hex(oss, opcode, " ");
 
     bool phys = true;
     if (curr_op.id == Op::STA || curr_op.id == Op::STX || curr_op.id == Op::STY || curr_op.id == Op::INC) phys = false;
     switch (curr_op.mode) {
         case Accumulator:
-            nes->out << setw(10) << std::left << oss.str(); oss.str("");
-            oss << OP_NAMES[curr_op.id] << " A";
+            if (logging) {
+                nes->out << setw(10) << std::left << oss.str();
+                oss.str("");
+                oss << OP_NAMES[curr_op.id] << " A";
+            }
             break;
         case Implicit:
-            nes->out << setw(10) << std::left << oss.str(); oss.str("");
-            oss << OP_NAMES[curr_op.id];
+            if (logging) {
+                nes->out << setw(10) << std::left << oss.str();
+                oss.str("");
+                oss << OP_NAMES[curr_op.id];
+            }
             break;
         case Immediate:
             addrs[0] = ++reg.pc;
-            print_hex(oss, read(addrs[0], false), " ");
 
-            nes->out << setw(10) << std::left << oss.str(); oss.str("");
-            oss << OP_NAMES[curr_op.id] << " #$"; print_hex(oss, read(addrs[0], false));
+            if (logging) {
+                print_hex(oss, read(addrs[0], false), " ");
+
+                nes->out << setw(10) << std::left << oss.str();
+                oss.str("");
+                oss << OP_NAMES[curr_op.id] << " #$";
+                print_hex(oss, read(addrs[0], false));
+            }
 
             break;
         case Absolute: {
@@ -127,10 +170,16 @@ void CPU::exec(const uint8_t opcode) {
             uint8_t hi = read(++reg.pc);
             addrs[0] = create_address(lo, hi);
 
-            print_hex(oss, lo, " ");
-            print_hex(oss, hi, " ");
-            nes->out << setw(10) << std::left << oss.str(); oss.str("");
-            oss << OP_NAMES[curr_op.id] << " $"; print_hex(oss, addrs[0]); oss << " = "; print_hex(oss, read(addrs[0], false));
+            if (logging) {
+                print_hex(oss, lo, " ");
+                print_hex(oss, hi, " ");
+                nes->out << setw(10) << std::left << oss.str();
+                oss.str("");
+                oss << OP_NAMES[curr_op.id] << " $";
+                print_hex(oss, addrs[0]);
+                oss << " = ";
+                print_hex(oss, read(addrs[0], false));
+            }
 
             break;
         }
@@ -138,9 +187,15 @@ void CPU::exec(const uint8_t opcode) {
             uint8_t lo = read(++reg.pc);
             addrs[0] = lo;
 
-            print_hex(oss, lo, " ");
-            nes->out << setw(10) << std::left << oss.str(); oss.str("");
-            oss << OP_NAMES[curr_op.id] << " $"; print_hex(oss, addrs[0]); oss << " = "; print_hex(oss, read(addrs[0], false));
+            if (logging) {
+                print_hex(oss, lo, " ");
+                nes->out << setw(10) << std::left << oss.str();
+                oss.str("");
+                oss << OP_NAMES[curr_op.id] << " $";
+                print_hex(oss, addrs[0]);
+                oss << " = ";
+                print_hex(oss, read(addrs[0], false));
+            }
 
             break;
         }
@@ -150,13 +205,20 @@ void CPU::exec(const uint8_t opcode) {
             uint8_t hi = read(++reg.pc);
             uint16_t addr = create_address(lo, hi);
             addrs[0] = addr + (curr_op.mode == IndexedAbsoluteX ? reg.x : reg.y);
-            if (!same_page(addr, addrs[0]) && page_sensitive || !page_sensitive) skip_cycles(1);
+            if (!same_page(addr, addrs[0]) && page_sensitive || !page_sensitive) skip_cycles(1, READ);
 
-            print_hex(oss, lo, " ");
-            print_hex(oss, hi, " ");
-            nes->out << setw(10) << std::left << oss.str(); oss.str("");
-            oss << OP_NAMES[curr_op.id] << " $"; print_hex(oss, addr); oss << (curr_op.mode == IndexedAbsoluteX ? ",X" : ",Y") << " @ ";
-            print_hex(oss, addrs[0]); oss << " = "; print_hex(oss, read(addrs[0], false));
+            if (logging) {
+                print_hex(oss, lo, " ");
+                print_hex(oss, hi, " ");
+                nes->out << setw(10) << std::left << oss.str();
+                oss.str("");
+                oss << OP_NAMES[curr_op.id] << " $";
+                print_hex(oss, addr);
+                oss << (curr_op.mode == IndexedAbsoluteX ? ",X" : ",Y") << " @ ";
+                print_hex(oss, addrs[0]);
+                oss << " = ";
+                print_hex(oss, read(addrs[0], false));
+            }
 
             break;
         }
@@ -164,12 +226,19 @@ void CPU::exec(const uint8_t opcode) {
         case IndexedZeroY: {
             uint8_t lo = read(++reg.pc);
             addrs[0] = (uint8_t)(lo + (curr_op.mode == IndexedZeroX ? reg.x : reg.y));
-            skip_cycles(1);
+            skip_cycles(1, READ);
 
-            print_hex(oss, lo, " ");
-            nes->out << setw(10) << std::left << oss.str(); oss.str("");
-            oss << OP_NAMES[curr_op.id] << " $"; print_hex(oss, lo); oss << (curr_op.mode == IndexedZeroX ? ",X" : ",Y") << " @ ";
-            print_hex(oss, addrs[0]); oss << " = "; print_hex(oss, read(addrs[0], false));
+            if (logging) {
+                print_hex(oss, lo, " ");
+                nes->out << setw(10) << std::left << oss.str();
+                oss.str("");
+                oss << OP_NAMES[curr_op.id] << " $";
+                print_hex(oss, lo);
+                oss << (curr_op.mode == IndexedZeroX ? ",X" : ",Y") << " @ ";
+                print_hex(oss, addrs[0]);
+                oss << " = ";
+                print_hex(oss, read(addrs[0], false));
+            }
 
             break;
         }
@@ -179,22 +248,37 @@ void CPU::exec(const uint8_t opcode) {
             uint16_t at = create_address(lo, hi);
             addrs[0] = create_address(read(at), read((uint8_t)(at+1) | (at & 0xFF00))); // Jump address wraps around due to 6502 bug
 
-            print_hex(oss, lo, " ");
-            print_hex(oss, hi, " ");
-            nes->out << setw(10) << std::left << oss.str(); oss.str("");
-            oss << OP_NAMES[curr_op.id] << " ($"; print_hex(oss, at); oss << ") = "; print_hex(oss, addrs[0]);
+            if (logging) {
+                print_hex(oss, lo, " ");
+                print_hex(oss, hi, " ");
+                nes->out << setw(10) << std::left << oss.str();
+                oss.str("");
+                oss << OP_NAMES[curr_op.id] << " ($";
+                print_hex(oss, at);
+                oss << ") = ";
+                print_hex(oss, addrs[0]);
+            }
             break;
         }
         case IndexedIndirectX: {
             uint8_t base = read(++reg.pc);
             auto addr = (uint8_t)(base+reg.x);
             addrs[0] = create_address(read(addr), read((uint8_t)(addr+1)));
-            skip_cycles(1);
+            skip_cycles(1, READ);
 
-            print_hex(oss, base, " ");
-            nes->out << setw(10) << std::left << oss.str(); oss.str("");
-            oss << OP_NAMES[curr_op.id] << " ($"; print_hex(oss, base); oss << ",X) @ "; print_hex(oss, addr); oss << " = "; print_hex(oss, addrs[0]);
-            oss << " = "; print_hex(oss, read(addrs[0], false));
+            if (logging) {
+                print_hex(oss, base, " ");
+                nes->out << setw(10) << std::left << oss.str();
+                oss.str("");
+                oss << OP_NAMES[curr_op.id] << " ($";
+                print_hex(oss, base);
+                oss << ",X) @ ";
+                print_hex(oss, addr);
+                oss << " = ";
+                print_hex(oss, addrs[0]);
+                oss << " = ";
+                print_hex(oss, read(addrs[0], false));
+            }
 
             break;
         }
@@ -202,12 +286,21 @@ void CPU::exec(const uint8_t opcode) {
             uint8_t base = read(++reg.pc);
             uint16_t addr = create_address(read(base), read((uint8_t)(base+1)));
             addrs[0] = addr + reg.y;
-            if (!same_page(addr, addrs[0]) && page_sensitive || !page_sensitive) skip_cycles(1);
+            if (!same_page(addr, addrs[0]) && page_sensitive || !page_sensitive) skip_cycles(1, READ);
 
-            print_hex(oss, base, " ");
-            nes->out << setw(10) << std::left << oss.str(); oss.str("");
-            oss << OP_NAMES[curr_op.id] << " ($"; print_hex(oss, base); oss << "),Y = "; print_hex(oss, addrs[0]); oss << " @ "; print_hex(oss, addrs[0]);
-            oss << " = "; print_hex(oss, read(addrs[0], false));
+            if (logging) {
+                print_hex(oss, base, " ");
+                nes->out << setw(10) << std::left << oss.str();
+                oss.str("");
+                oss << OP_NAMES[curr_op.id] << " ($";
+                print_hex(oss, base);
+                oss << "),Y = ";
+                print_hex(oss, addrs[0]);
+                oss << " @ ";
+                print_hex(oss, addrs[0]);
+                oss << " = ";
+                print_hex(oss, read(addrs[0], false));
+            }
 
             break;
         }
@@ -215,9 +308,13 @@ void CPU::exec(const uint8_t opcode) {
             offset = (int8_t)read(++reg.pc);
             addrs[0] = reg.pc + 1 + offset;
 
-            print_hex(oss, offset, " ");
-            nes->out << setw(10) << std::left << oss.str(); oss.str("");
-            oss << OP_NAMES[curr_op.id] << " $"; print_hex(oss, addrs[0]);
+            if (logging) {
+                print_hex(oss, offset, " ");
+                nes->out << setw(10) << std::left << oss.str();
+                oss.str("");
+                oss << OP_NAMES[curr_op.id] << " $";
+                print_hex(oss, addrs[0]);
+            }
 
             break;
         default:
@@ -293,7 +390,7 @@ void CPU::exec(const uint8_t opcode) {
         default:
             break;
     }
-    nes->out << setw(30) << std::left << oss.str();
+    if (logging) nes->out << setw(30) << std::left << oss.str();
     if (inc_pc) reg.pc++;
 }
 
@@ -326,9 +423,9 @@ uint8_t CPU::peek_stack(const uint8_t bytes) {
 void CPU::branch(const STATUS status, const bool check_against) {
     if (get_status(status) == check_against) {
         if (!same_page(reg.pc + 1, addrs[0]))
-            skip_cycles(2);
+            skip_cycles(2, READ);
         else
-            skip_cycles(1);
+            skip_cycles(1, READ);
         reg.pc = addrs[0];
         inc_pc = false;
     }
@@ -412,12 +509,13 @@ void CPU::AND() {
     set_value_status(reg.acc);
 }
 void CPU::ASL() {
-    skip_cycles(1);
     if (curr_op.mode == Accumulator) {
         reg.acc = shift_left(reg.acc);
+        skip_cycles(1, WRITE);
         set_value_status(reg.acc);
     } else {
         ops[0] = shift_left(oper());
+        skip_cycles(1, WRITE);
         write(addrs[0], ops[0]);
         set_value_status(ops[0]);
     }
@@ -435,17 +533,15 @@ void CPU::BMI() { branch(STATUS::n, true); }
 void CPU::BNE() { branch(STATUS::z, false); }
 void CPU::BPL() { branch(STATUS::n, false); }
 void CPU::BRK() {
-    skip_cycles(1);
-    push_address(++reg.pc + 1);
-    SEI();
-    push_stack(reg.p);
+    skip_cycles(1, READ);
+    interrupt(BREAK);
 }
 void CPU::BVC() { branch(STATUS::v, false); }
 void CPU::BVS() { branch(STATUS::v, true); }
-void CPU::CLC() { set_status(STATUS::c, false); skip_cycles(1); }
-void CPU::CLD() { set_status(STATUS::d, false); skip_cycles(1); }
-void CPU::CLI() { set_status(STATUS::i, false); skip_cycles(1); }
-void CPU::CLV() { set_status(STATUS::v, false); skip_cycles(1); }
+void CPU::CLC() { set_status(STATUS::c, false); skip_cycles(1, READ); }
+void CPU::CLD() { set_status(STATUS::d, false); skip_cycles(1, READ); }
+void CPU::CLI() { set_status(STATUS::i, false); skip_cycles(1, READ); }
+void CPU::CLV() { set_status(STATUS::v, false); skip_cycles(1, READ); }
 void CPU::CMP() { compare(reg.acc, oper()); }
 void CPU::CPX() { compare(reg.x, oper()); }
 void CPU::CPY() { compare(reg.y, oper()); }
@@ -455,24 +551,24 @@ void CPU::DCP() {
 }
 void CPU::DEC() {
     oper();
-    skip_cycles(1);
+    skip_cycles(1, WRITE);
     write(addrs[0], --ops[0]);
     set_value_status(ops[0]);
 }
-void CPU::DEX() { set_value_status(--reg.x); skip_cycles(1); }
-void CPU::DEY() { set_value_status(--reg.y); skip_cycles(1); }
+void CPU::DEX() { set_value_status(--reg.x); skip_cycles(1, READ); }
+void CPU::DEY() { set_value_status(--reg.y); skip_cycles(1, READ); }
 void CPU::EOR() {
     reg.acc ^= oper();
     set_value_status(reg.acc);
 }
 void CPU::INC() {
     oper();
-    skip_cycles(1);
+    skip_cycles(1, WRITE);
     write(addrs[0], ++ops[0]);
     set_value_status(ops[0]);
 }
-void CPU::INX() { set_value_status(++reg.x); skip_cycles(1); }
-void CPU::INY() { set_value_status(++reg.y); skip_cycles(1); }
+void CPU::INX() { set_value_status(++reg.x); skip_cycles(1, READ); }
+void CPU::INY() { set_value_status(++reg.y); skip_cycles(1, READ); }
 void CPU::ISB() {
     INC();
     SBC();
@@ -482,7 +578,7 @@ void CPU::JMP() {
     inc_pc = false;
 }
 void CPU::JSR() {
-    skip_cycles(1);
+    skip_cycles(1, READ);
     push_address(reg.pc);
     JMP();
 }
@@ -508,36 +604,37 @@ void CPU::LDY() {
     reg.y = ops[0];
 }
 void CPU::LSR() {
-    skip_cycles(1);
     if (curr_op.mode == Accumulator) {
         reg.acc = shift_right(reg.acc);
+        skip_cycles(1, WRITE);
         set_value_status(reg.acc);
     } else {
         ops[0] = shift_right(oper());
+        skip_cycles(1, WRITE);
         CPU::write(addrs[0], ops[0]);
         set_value_status(ops[0]);
     }
 }
-void CPU::NOP() { skip_cycles(1); }
+void CPU::NOP() { skip_cycles(1, READ); }
 void CPU::ORA() {
     reg.acc |= oper();
     set_value_status(reg.acc);
 }
 void CPU::PHA() {
-    skip_cycles(1);
+    skip_cycles(1, READ);
     push_stack(reg.acc);
 }
 void CPU::PHP() {
-    skip_cycles(1);
-    push_stack(reg.p);
+    skip_cycles(1, READ);
+    push_stack(reg.p | STATUS::b);
 }
 void CPU::PLA() {
-    skip_cycles(2);
+    skip_cycles(2, READ);
     reg.acc = pop_stack();
     set_value_status(reg.acc);
 }
 void CPU::PLP() {
-    skip_cycles(2);
+    skip_cycles(2, READ);
     uint8_t status = pop_stack();
     bool b = get_status(STATUS::b);
     bool bit_5 = get_status(STATUS::bit_5);
@@ -550,23 +647,25 @@ void CPU::RLA() {
     AND();
 }
 void CPU::ROL() {
-    skip_cycles(1);
     if (curr_op.mode == Accumulator) {
         reg.acc = rot_left(reg.acc);
+        skip_cycles(1, WRITE);
         set_value_status(reg.acc);
     } else {
         ops[0] = rot_left(oper());
+        skip_cycles(1, WRITE);
         write(addrs[0], ops[0]);
         set_value_status(ops[0]);
     }
 }
 void CPU::ROR() {
-    skip_cycles(1);
     if (curr_op.mode == Accumulator) {
         reg.acc = rot_right(reg.acc);
+        skip_cycles(1, WRITE);
         set_value_status(reg.acc);
     } else {
         ops[0] = rot_right(oper());
+        skip_cycles(1, WRITE);
         write(addrs[0], ops[0]);
         set_value_status(ops[0]);
     }
@@ -576,7 +675,7 @@ void CPU::RRA() {
     ADC();
 }
 void CPU::RTI() {
-    skip_cycles(2);
+    skip_cycles(2, READ);
     uint8_t status = pop_stack();
     bool b = get_status(STATUS::b);
     bool bit_5 = get_status(STATUS::bit_5);
@@ -587,18 +686,18 @@ void CPU::RTI() {
     inc_pc = false;
 }
 void CPU::RTS() {
-    skip_cycles(2);
+    skip_cycles(2, READ);
     reg.pc = pop_address() + 1;
-    skip_cycles(1);
+    skip_cycles(1, READ);
     inc_pc = false;
 }
 void CPU::SAX() {
     write(addrs[0], reg.acc & reg.x);
 }
 void CPU::SBC() { add_with_carry(true); }
-void CPU::SEC() { set_status(STATUS::c, true); skip_cycles(1); }
-void CPU::SED() { set_status(STATUS::d, true); skip_cycles(1); }
-void CPU::SEI() { set_status(STATUS::i, true); skip_cycles(1); }
+void CPU::SEC() { set_status(STATUS::c, true); skip_cycles(1, READ); }
+void CPU::SED() { set_status(STATUS::d, true); skip_cycles(1, READ); }
+void CPU::SEI() { set_status(STATUS::i, true); skip_cycles(1, READ); }
 void CPU::SLO() {
     ASL();
     ORA();
@@ -619,31 +718,31 @@ void CPU::STY() {
 void CPU::TAX() {
     reg.x = reg.acc;
     set_value_status(reg.x);
-    skip_cycles(1);
+    skip_cycles(1, READ);
 }
 void CPU::TAY() {
+    skip_cycles(1, READ);
     reg.y = reg.acc;
     set_value_status(reg.y);
-    skip_cycles(1);
 }
 void CPU::TSX() {
+    skip_cycles(1, READ);
     reg.x = reg.s;
     set_value_status(reg.x);
-    skip_cycles(1);
 }
 void CPU::TXA() {
+    skip_cycles(1, READ);
     reg.acc = reg.x;
     set_value_status(reg.acc);
-    skip_cycles(1);
 }
 void CPU::TXS() {
+    skip_cycles(1, READ);
     reg.s = reg.x;
-    skip_cycles(1);
 }
 void CPU::TYA() {
+    skip_cycles(1, READ);
     reg.acc = reg.y;
     set_value_status(reg.acc);
-    skip_cycles(1);
 }
 void CPU::USBC() {
     SBC();
@@ -654,7 +753,7 @@ uint8_t CPU::read(int addr) {
 }
 
 uint8_t CPU::read(int addr, bool physical_read) {
-    if (physical_read) skip_cycles(1);
+    if (physical_read) skip_cycles(1, READ);
     if (addr >= 0x2000 && addr <= 0x3FFF) {
         uint8_t reg = nes->get_ppu()->read_reg(addr % 8, cycle, physical_read);
         return reg;
@@ -663,7 +762,7 @@ uint8_t CPU::read(int addr, bool physical_read) {
 }
 
 bool CPU::write(const uint16_t addr, const uint8_t data) {
-    skip_cycles(1);
+    skip_cycles(1, WRITE);
     if (addr >= 0x2000 && addr <= 0x3FFF) {
         return nes->get_ppu()->write_reg(addr % 8, data, cycle, true);
     } else if (addr == 0x4014) {
@@ -671,13 +770,15 @@ bool CPU::write(const uint16_t addr, const uint8_t data) {
 
         nes->get_ppu()->write_reg(OAMDMA, data, cycle, true);
         // TODO properly check get/put cycles using APU clock sync (using even-get odd-put for now)
-        skip_cycles(1 + (cycle % 2 != 0));
+        skip_cycles(1 + (cycle % 2 != 0), READ);
 
         for (int i = 0; i <= 0xFF; i++) {
-            uint8_t oam_data = read(create_address(i, data));
-            nes->get_ppu()->write_oam(i, oam_data);
-            skip_cycles(1);
+            /*uint8_t oam_data = read(create_address(i, data));
+            skip_cycles(1, WRITE);
+            nes->get_ppu()->write_oam(i, oam_data);*/
+            nes->get_ppu()->write_oam(i, read(create_address(i, data), false));
         }
+        skip_cycles(512, WRITE);
     }
     return Processor::write(addr, data);
 }
