@@ -54,6 +54,7 @@ protected:
     bool write(const uint16_t addr, const uint8_t data) override;
 private:
     uint8_t addr_to_ppu(const uint16_t addr);
+    void skip_cycles(uint8_t num);
     void exec(uint8_t opcode);
     void set_status(STATUS status, bool value);
     bool get_status(STATUS status) const;
@@ -101,6 +102,9 @@ private:
     uint16_t addrs[2];
     int8_t offset;
     bool inc_pc = true;
+
+    bool oper_set = false;
+    uint8_t oper();
 
     bool nmi = false;
 

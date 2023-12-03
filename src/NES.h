@@ -16,6 +16,7 @@ public:
     ~NES();
     void run();
     void run(const std::string& filename);
+    void tick(bool do_cpu, int times);
 
     CPU* get_cpu() { return cpu; };
     PPU* get_ppu() { return ppu; };
@@ -40,6 +41,7 @@ private:
     long clock = 0;
     constexpr static const int CPS = 21477272;
     constexpr static const double CLOCK_SPEED = 1.0 / CPS;
+    int cycles_delta = 0;
 };
 
 

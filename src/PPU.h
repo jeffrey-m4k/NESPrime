@@ -26,16 +26,20 @@ public:
     void set_mirroring(MIRRORING mirror_mode) { nt_mirror = mirror_mode; }
     uint8_t read_reg(uint8_t reg_id, int cycle);
     uint8_t read_reg(uint8_t reg_id, int cycle, bool physical_read);
-    bool write_reg(uint8_t reg_id, uint8_t value, int cycle);
+    bool write_reg(uint8_t reg_id, uint8_t value, int cycle, bool physical_write);
     void write_oam(uint8_t byte, uint8_t data);
 
     void set_palette(std::string palFileName);
     short get_x() { return scan_cycle; }
     short get_y() { return scanline; }
+    long get_frame() { return frame; }
 
     uint16_t get_v() { return v; }
-    void reset_address() { v = 0; address_latch_state = 0; }
-    short get_latch_state() { return address_latch_state; }
+    uint16_t get_t() { return t; }
+    uint8_t get_finex() { return x; }
+    uint16_t get_w() { return w; }
+
+    void output_pt();
 protected:
     uint8_t read(int addr) override { return Processor::read(mirror_palette_addr(addr)); };
     bool write(const uint16_t addr, const uint8_t data) override { return Processor::write(mirror_palette_addr(addr), data); };
@@ -46,8 +50,12 @@ private:
     uint8_t oam2[32];
     uint8_t palette[32];
     uint8_t regs[9];
+
+    uint8_t io_bus;
+
     short scanline = 0;
-    short scan_cycle = 21;
+    short scan_cycle = 27;
+    long frame = 1;
 
     int inrange_sprites = 0;
     uint8_t scanline_sprites[8][4];
@@ -57,9 +65,10 @@ private:
     //internal registers
     uint16_t v, t;
     uint8_t x;
-    bool w;
+    bool w; // address latch
 
-    short address_latch_state = 0;
+    uint16_t tile_shift_regs[2];
+    uint8_t tile_attr_shift_regs[2];
 
     bool nmi_occurred = false;
     bool nmi_output = false;
@@ -67,7 +76,10 @@ private:
     uint8_t vram_read_buffer = 0;
 
     Sprite sprite(uint8_t index);
-    uint8_t tile_col_at_pixel(Tile tile, int dx, int dy, bool flip_x, bool flip_y);
+    static uint8_t tile_col_at_pixel(Tile tile, int dx, int dy, bool flip_x, bool flip_y);
+    uint8_t* col_to_rgb(uint8_t attr, uint8_t col, bool spr);
+
+    bool pt_shown = false;
 };
 
 

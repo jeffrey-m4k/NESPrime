@@ -13,17 +13,25 @@ public:
     ~Display();
     bool init();
     bool refresh();
+    bool update_pt();
     void close();
     void black();
-    void set_pixel_buffer(uint8_t x, uint8_t y, uint8_t rgb[3]);
+    void set_pixel_buffer(uint8_t x, uint8_t y, const uint8_t rgb[3]);
+    void write_pt_pixel(uint8_t tile, uint8_t x, uint8_t y, bool pt2, const uint8_t rgb[3]);
     void push_buffer();
     uint8_t* get_pixels() { return pixels; }
 private:
-    SDL_Window *window;
-    SDL_Renderer *renderer;
-    SDL_Texture *texture;
+    SDL_Window *window_main;
+    SDL_Window *window_pt;
+    SDL_Renderer *renderer_main;
+    SDL_Renderer *renderer_pt;
+    SDL_Texture *texture_main;
+    SDL_Texture *texture_pt;
+
     uint8_t pixels[WIDTH*HEIGHT*3] = {0};
     uint8_t buffer[WIDTH*HEIGHT*3] = {0};
+
+    uint8_t pt[256*128*3] = {0};
 };
 
 #endif

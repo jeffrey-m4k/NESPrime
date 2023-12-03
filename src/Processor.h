@@ -42,7 +42,7 @@ protected:
     virtual uint8_t read(const int addr) { return aspace.read(addr); }
     virtual bool write(const uint16_t addr, const uint8_t data) { return aspace.write(addr, data); }
 protected:
-    uint8_t idle_cycles = 0;
+    int idle_cycles = 0;
     long cycle = 0;
     Memory mem;
     AddressSpace aspace;

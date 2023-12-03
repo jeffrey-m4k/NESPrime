@@ -22,16 +22,18 @@ void NES::run() {
     display->refresh();
 
     int cycles_per_frame = CPS/60;
-    int cycles_delta = 0;
+    cycles_delta = 0;
 
-    while (clock < CPS*20) {
+    bool quit = false;
+    while (!quit) {
+        SDL_Event event;
+
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) quit = true;
+        }
+
         while (cycles_delta < cycles_per_frame) {
-            if (clock % 12 == 0) cpu->run();
-            if (clock % 4 == 0) ppu->run();
-
-
-            clock++;
-            cycles_delta++;
+            tick(true, 1);
         }
         cycles_delta -= cycles_per_frame;
         display->refresh();
@@ -41,6 +43,20 @@ void NES::run() {
 void NES::run(const std::string& filename) {
     if (cart->open_file(filename)) {
         run();
+    }
+}
+
+void NES::tick(bool do_cpu, int times) {
+    for (int i = 0; i < times; i++) {
+        if (clock % 12 == 0 && do_cpu) cpu->run();
+        if (clock % 4 == 0) ppu->run();
+        clock++;
+        cycles_delta++;
+
+        if (cycles_delta >= CPS/60) {
+            cycles_delta -= CPS/60;
+            display->refresh();
+        }
     }
 }
 
