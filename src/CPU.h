@@ -60,7 +60,7 @@ public:
 protected:
     uint8_t read(int addr) override;
     uint8_t read(int addr, bool physical_read);
-    bool write(const uint16_t addr, const uint8_t data) override;
+    bool write(uint16_t addr, uint8_t data) override;
 private:
     uint8_t addr_to_ppu(const uint16_t addr);
     void interrupt(INTERRUPT_TYPE type);
@@ -359,6 +359,7 @@ private:
 
     registers_6502 reg{};
 
+    std::ostringstream regs_log;
     bool logging = false;
 };
 

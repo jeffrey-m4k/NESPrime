@@ -90,9 +90,7 @@ void Cartridge::load() {
 
         CPU* cpu = nes->get_cpu();
         PPU* ppu = nes->get_ppu();
-        uint8_t* prg_mem = prg_rom.get_mem();
 
-        ppu->reset();
         switch (mapper_num) {
             case 0: mapper = new Mapper0(this);
             default: break;
@@ -100,6 +98,9 @@ void Cartridge::load() {
 
         if (flags[0][3]) mapper->set_mirroring(FourScreen);
         else mapper->set_mirroring(static_cast<MIRRORING>(flags[0][0]));
+
+        cpu->set_mapper(mapper);
+        ppu->set_mapper(mapper);
 
 
         // TODO add PlayChoice-10 support (low priority)

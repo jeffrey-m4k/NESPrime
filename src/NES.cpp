@@ -36,10 +36,10 @@ void NES::run() {
             tick(true, 1);
         }
 //        if (ppu->get_y() == 240 && ppu->get_x() == )
-        if (SDL_GetTicks() - display->last_update >= 1000/60) {
+        //if (SDL_GetTicks() - display->last_update >= 1000/60) {
             cycles_delta -= cycles_per_frame;
             display->refresh();
-        }
+        //}
 //        SDL_Delay(1000/60);
     }
 }

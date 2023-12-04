@@ -11,11 +11,6 @@ CPU::CPU() : Processor() {
 }
 
 void CPU::reset() {
-    // Clear the address space and map_cpu the CPU's 2KB memory from 0x0000 to 0x2000
-    this->aspace.clear();
-    for (int i = 0; i < 4; i++) {
-        map(static_cast<uint16_t>(i*0x800), this->mem.get_mem(), 0x800);
-    }
 }
 
 void CPU::init() {
@@ -41,7 +36,7 @@ bool CPU::run() {
 
     oper_set = false;
 
-    std::ostringstream regs_log;
+    regs_log.clear();
     if (logging) {
         regs_log << "A:";
         print_hex(regs_log, reg.acc);
@@ -758,7 +753,7 @@ uint8_t CPU::read(int addr, bool physical_read) {
         uint8_t ppureg = nes->get_ppu()->read_reg(addr % 8, cycle, physical_read);
         return ppureg;
     } else if (addr >= 0x4000 && addr < 0x8000) return 0;
-    else return *nes->get_cart()->get_mapper()->map_cpu(addr);
+    else return *mapper->map_cpu(addr);
 }
 
 bool CPU::write(const uint16_t addr, const uint8_t data) {
@@ -781,6 +776,6 @@ bool CPU::write(const uint16_t addr, const uint8_t data) {
         skip_cycles(512, WRITE);
     } else if (addr >= 0x4000 && addr <= 0x8000) { // temp ignore unmapped space
         return true;
-    } else *nes->get_cart()->get_mapper()->map_cpu(addr) = data;
+    } else *mapper->map_cpu(addr) = data;
     return true;
 }

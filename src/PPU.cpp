@@ -402,7 +402,7 @@ void PPU::output_nt() {
 
         for (int y = 0; y < 30; y++) {
             for (int cx = 0; cx < 32; cx++) {
-                uint8_t tile_num = memory[0x400*i + y*32 + cx];
+                uint8_t tile_num = memory[0x400*i*(mapper->get_mirroring()==Vertical?1:2) + y*32 + cx];
                 uint16_t pattern_idx = 0x1000 * ((regs[PPUCTRL] >> 4) & 0x1) + ((uint16_t)tile_num << 4);
                 Tile tile;
                 for (int b = 0; b < 16; b++) {
@@ -425,10 +425,10 @@ void PPU::output_nt() {
 
 uint8_t PPU::read(int addr) {
     if (addr >= 0x3F00) return palette[mirror_palette_addr(addr)];
-    else return *nes->get_cart()->get_mapper()->map_ppu(addr);
+    else return *mapper->map_ppu(addr);
 }
 
 bool PPU::write(const uint16_t addr, const uint8_t data) {
     if (addr >= 0x3F00) palette[mirror_palette_addr(addr)] = data;
-    else *nes->get_cart()->get_mapper()->map_ppu(addr) = data;
+    else *mapper->map_ppu(addr) = data;
 }
