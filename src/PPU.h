@@ -40,6 +40,7 @@ public:
     uint16_t get_w() { return w; }
 
     void output_pt();
+    void output_nt();
 protected:
     uint8_t read(int addr) override { return Processor::read(mirror_palette_addr(addr)); };
     bool write(const uint16_t addr, const uint8_t data) override { return Processor::write(mirror_palette_addr(addr), data); };

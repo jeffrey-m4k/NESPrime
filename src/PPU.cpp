@@ -212,46 +212,48 @@ bool PPU::run() {
             v = (v & ~0x7BE0) | (t & 0x7BE0);
         }
 
-        // Every 8 dots, increment coarse X and update shift registers
-        if ((scan_cycle-1) % 8 == 7 && (scan_cycle >= 328 || scan_cycle <= 256)) {
-            tile_shift_regs[0] = tile_shift_regs[1];
-            tile_attr_shift_regs[0] = tile_attr_shift_regs[1];
+        if (scanline < 240) {
+            // Every 8 dots, increment coarse X and update shift registers
+            if ((scan_cycle - 1) % 8 == 7 && (scan_cycle >= 328 || scan_cycle <= 256)) {
+                tile_shift_regs[0] = tile_shift_regs[1];
+                tile_attr_shift_regs[0] = tile_attr_shift_regs[1];
 
-            uint16_t next_tile_addr = 0x2000 | (v & 0x0FFF);
-            uint16_t next_attr_addr = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
+                uint16_t next_tile_addr = 0x2000 | (v & 0x0FFF);
+                uint16_t next_attr_addr = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
 
-            uint8_t next_tile = read(next_tile_addr);
-            uint8_t next_attr = read(next_attr_addr);
+                uint8_t next_tile = read(next_tile_addr);
+                uint8_t next_attr = read(next_attr_addr);
 
-            uint16_t pattern_addr = 0x1000 * ((regs[PPUCTRL] >> 4) & 0x1) + ((uint16_t)next_tile << 4) + ((v & 0x7000) >> 12);
-            tile_shift_regs[1] = (read(pattern_addr)) | (read(pattern_addr+8) << 8);
-            //if (scan_cycle == 328) tile_shift_regs[1] = (read(pattern_addr)<<8) | read(pattern_addr+8);
-            tile_attr_shift_regs[1] = next_attr;
+                uint16_t pattern_addr =
+                        0x1000 * ((regs[PPUCTRL] >> 4) & 0x1) + ((uint16_t) next_tile << 4) + ((v & 0x7000) >> 12);
+                tile_shift_regs[1] = (read(pattern_addr)) | (read(pattern_addr + 8) << 8);
+                //if (scan_cycle == 328) tile_shift_regs[1] = (read(pattern_addr)<<8) | read(pattern_addr+8);
+                tile_attr_shift_regs[1] = next_attr;
 
-            if ((v & 0x001F) == 31) {
-                v &= ~0x001F;
-                v ^= 0x0400;
-            } else v += 1;
-        }
-
-        // Increment fine Y at end of line and wrap around
-        if (scan_cycle == 256) {
-            if ((v & 0x7000) != 0x7000)
-                v += 0x1000;
-            else {
-                v &= ~0x7000;
-                int y = (v>>5) & 0x1F;
-                if (y == 29) {
-                    y = 0;
-                    v ^= 0x800;
-                }
-                else if (y == 31) y = 0;
-                else y += 1;
-
-                v = (v & ~0x03E0) | (y << 5);
+                if ((v & 0x001F) == 31) {
+                    v &= ~0x001F;
+                    v ^= 0x0400;
+                } else v += 1;
             }
-        } else if (scan_cycle == 257) { // Move horizontal bits from temp VRAM address
-            v = (v & ~0x041F) | (t & 0x041F);
+
+            // Increment fine Y at end of line and wrap around
+            if (scan_cycle == 256) {
+                if ((v & 0x7000) != 0x7000)
+                    v += 0x1000;
+                else {
+                    v &= ~0x7000;
+                    int y = (v >> 5) & 0x1F;
+                    if (y == 29) {
+                        y = 0;
+                        v ^= 0x800;
+                    } else if (y == 31) y = 0;
+                    else y += 1;
+
+                    v = (v & ~0x03E0) | (y << 5);
+                }
+            } else if (scan_cycle == 257) { // Move horizontal bits from temp VRAM address
+                v = (v & ~0x041F) | (t & 0x041F);
+            }
         }
     } else if ((v & 0x3F00) == 0x3F00 && scan_cycle >= 1 && scan_cycle <= 256 && scanline >= 0 && scanline <= 239) {
         // Background palette hack
@@ -270,6 +272,7 @@ bool PPU::run() {
     scan_cycle++;
     if (scan_cycle > 340 || (do_render && scan_cycle == 340 && scanline == -1 && frame % 2 != 0)) { scan_cycle = 0; scanline++; }
     if (scanline > 260) { scanline = -1; nes->get_display()->push_buffer(); }
+    if (scanline == 0 && scan_cycle == 0 && frame % 30 == 0) output_nt();
     if (scanline == 240 && scan_cycle == 0) frame++;
 
     //if (scanline == 0 && scan_cycle == 0 && frame % 60 == 0) output_pt();
@@ -398,4 +401,30 @@ void PPU::output_pt() {
     }
     nes->get_display()->update_pt();
     pt_shown = true;
+}
+
+void PPU::output_nt() {
+    uint8_t* memory = this->mem.get_mem();
+    for (int i = 0; i < 2; i++) {
+
+        for (int y = 0; y < 30; y++) {
+            for (int cx = 0; cx < 32; cx++) {
+                uint8_t tile_num = memory[0x400*i + y*32 + cx];
+                uint16_t pattern_idx = 0x1000 * ((regs[PPUCTRL] >> 4) & 0x1) + ((uint16_t)tile_num << 4);
+                Tile tile;
+                for (int b = 0; b < 16; b++) {
+                    tile[b % 8][b / 8] = read(pattern_idx + b);
+                }
+                for (int fine_y = 0; fine_y < 8; fine_y++) {
+                    for (int fine_x = 0; fine_x < 8; fine_x++) {
+                        uint8_t col = tile_col_at_pixel(tile, fine_x, fine_y, false, false);
+                        uint8_t rgb[3] = {0, 0, 0};
+                        if (col != 0) rgb[col-1] = 255;
+                        nes->get_display()->write_nt_pixel(y*32 + cx, fine_x, fine_y, i==1, rgb);
+                    }
+                }
+            }
+        }
+    }
+    nes->get_display()->update_nt();
 }
