@@ -5,6 +5,7 @@
 #include "CPU.h"
 #include "NES.h"
 #include "PPU.h"
+#include "IO.h"
 
 CPU::CPU() : Processor() {
     this->CPU::reset();
@@ -752,7 +753,10 @@ uint8_t CPU::read(int addr, bool physical_read) {
     if (addr >= 0x2000 && addr <= 0x3FFF) {
         uint8_t ppureg = nes->get_ppu()->read_reg(addr % 8, cycle, physical_read);
         return ppureg;
-    } else if (addr >= 0x4000 && addr < 0x8000) return 0;
+    } else if (addr >= 0x4000 && addr < 0x4018) {
+        if (addr == 0x4016) return nes->get_io()->read_joy();
+        return memory_regs[addr-0x4000];
+    } else if (addr >= 0x4018 && addr < 0x8000) return 0;
     else return *mapper->map_cpu(addr);
 }
 
@@ -763,18 +767,17 @@ bool CPU::write(const uint16_t addr, const uint8_t data) {
     } else if (addr == 0x4014) {
         // OAM DMA
 
-        nes->get_ppu()->write_reg(OAMDMA, data, cycle, true);
+        memory_regs[0x14] = data;
         // TODO properly check get/put cycles using APU clock sync (using even-get odd-put for now)
         skip_cycles(1 + (cycle % 2 != 0), READ);
 
         for (int i = 0; i <= 0xFF; i++) {
-            /*uint8_t oam_data = read(create_address(i, data));
-            skip_cycles(1, WRITE);
-            nes->get_ppu()->write_oam(i, oam_data);*/
             nes->get_ppu()->write_oam(i, read(create_address(i, data), false));
         }
         skip_cycles(512, WRITE);
-    } else if (addr >= 0x4000 && addr <= 0x8000) { // temp ignore unmapped space
+    } else if (addr >= 0x4000 && addr < 0x4018) {
+        memory_regs[addr-0x4000] = data;
+    } else if (addr >= 0x4018 && addr <= 0x8000) { // temp ignore unmapped space
         return true;
     } else *mapper->map_cpu(addr) = data;
     return true;

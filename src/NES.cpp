@@ -3,12 +3,14 @@
 #include "PPU.h"
 #include "Cartridge.h"
 #include "Display.h"
+#include "IO.h"
 
 NES::NES() {
     set_cpu(new CPU());
     set_ppu(new PPU());
     set_cart(new Cartridge());
     set_display(new Display());
+    set_io(new IO());
     out.open("out.txt");
 }
 
@@ -35,12 +37,10 @@ void NES::run() {
         while (cycles_delta < cycles_per_frame) {
             tick(true, 1);
         }
-//        if (ppu->get_y() == 240 && ppu->get_x() == )
-        //if (SDL_GetTicks() - display->last_update >= 1000/60) {
+        if (SDL_GetTicks() - display->last_update >= 1000/60) {
             cycles_delta -= cycles_per_frame;
             display->refresh();
-        //}
-//        SDL_Delay(1000/60);
+        }
     }
 }
 
@@ -52,16 +52,12 @@ void NES::run(const std::string& filename) {
 
 void NES::tick(bool do_cpu, int times) {
     for (int i = 0; i < times; i++) {
+        if (cpu->get_memory_reg(0x16) & 0x1) io->poll();
         if (clock % 12 == 0 && do_cpu) cpu->run();
         if (clock % 4 == 0) ppu->run();
 
         clock++;
         cycles_delta++;
-
-//        if (cycles_delta >= CPS/60*4) {
-//            cycles_delta -= CPS/60*4;
-//            display->refresh();
-//        }
     }
 }
 
@@ -83,4 +79,9 @@ void NES::set_cart(Cartridge* cart) {
 void NES::set_display(Display* display) {
     this->display = display;
     display->set_nes(this);
+}
+
+void NES::set_io(IO* io) {
+    this->io = io;
+    io->set_nes(this);
 }

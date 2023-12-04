@@ -4,7 +4,7 @@
 #include "Processor.h"
 
 enum PPU_REG {
-    PPUCTRL, PPUMASK, PPUSTATUS, OAMADDR, OAMDATA, PPUSCROLL, PPUADDR, PPUDATA, OAMDMA
+    PPUCTRL, PPUMASK, PPUSTATUS, OAMADDR, OAMDATA, PPUSCROLL, PPUADDR, PPUDATA
 };
 
 typedef uint8_t* Sprite;
@@ -44,7 +44,7 @@ private:
     uint8_t oam[256];
     uint8_t oam2[32];
     uint8_t palette[32];
-    uint8_t regs[9];
+    uint8_t regs[8];
 
     uint8_t io_bus;
 
