@@ -69,7 +69,8 @@ private:
     bool w; // address latch
 
     uint16_t tile_shift_regs[2];
-    uint8_t tile_attr_shift_regs[2];
+    uint16_t tile_attr_shift_regs[2];
+    bool attr_latch[2];
 
     bool nmi_occurred = false;
     bool nmi_output = false;

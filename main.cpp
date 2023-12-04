@@ -8,5 +8,5 @@
 int main() {
     NES* nes = new NES();
 
-    nes->run("donkey kong.nes");
+    nes->run("roms/mapper0/smb.nes");
 }

@@ -72,25 +72,21 @@ bool PPU::run() {
             uint8_t *spr_rgb = nullptr;
             bool spr_priority = false;
 
+            if ((scan_cycle >= 2 && scan_cycle <= 257)/* || (scan_cycle >= 322 && scan_cycle <= 337)*/) {
+                for (int i = 0; i < 2; i++) {
+                    tile_shift_regs[i] <<= 1;
+                    tile_attr_shift_regs[i] <<= 1;
+                    tile_attr_shift_regs[i] |= attr_latch[i] * 0x1;
+                }
+            }
+
             // Get bgr color
             if (scan_cycle >= 1 && scan_cycle <= 256 && scanline >= 0 && scanline <= 239) {
                 if (render_bgr && (scan_cycle > 8 || render_bgr_l)) {
-                    uint16_t pattern = tile_shift_regs[0];
-                    uint8_t attr = tile_attr_shift_regs[0];
+                    uint8_t col = (((tile_shift_regs[1] >> (15-x)) & 0x1) << 1) | ((tile_shift_regs[0] >> (15-x)) & 0x1);
 
-                    uint8_t col = (((pattern >> 15) & 0x1) << 1) | ((pattern >> 7) & 0x1);
-
-                    int quadrant_shift;
-                    int x_relative = (v & 0x1F) % 2;
-                    int y_relative = ((v >> 5) & 0x1F) % 2;
-                    if (x_relative == 0) {
-                        if (y_relative == 0) quadrant_shift = 0;
-                        else quadrant_shift = 4;
-                    } else {
-                        if (y_relative == 0) quadrant_shift = 2;
-                        else quadrant_shift = 6;
-                    }
-                    bgr_rgb = col == 0 ? rgb_palette[read(0x3F00)] : col_to_rgb(attr >> quadrant_shift, col, false);
+                    uint8_t attr = (((tile_attr_shift_regs[1] >> (15-x)) & 0x1) << 1) | ((tile_attr_shift_regs[0] >> (15-x)) & 0x1);
+                    bgr_rgb = col == 0 ? rgb_palette[read(0x3F00)] : col_to_rgb(attr, col, false);
 
                     /*if (scanline == 0) {
                         for (int i = 0; i < 0x20; i++) {
@@ -103,7 +99,7 @@ bool PPU::run() {
                 }
             }
 
-            tile_shift_regs[0] <<= 1;
+
 
             // Get spr color
             bool sprite_0 = false;
@@ -215,8 +211,15 @@ bool PPU::run() {
         if (scanline < 240) {
             // Every 8 dots, increment coarse X and update shift registers
             if ((scan_cycle - 1) % 8 == 7 && (scan_cycle >= 328 || scan_cycle <= 256)) {
-                tile_shift_regs[0] = tile_shift_regs[1];
-                tile_attr_shift_regs[0] = tile_attr_shift_regs[1];
+                if (scan_cycle >= 328) {
+                    for (int n = 0; n < 8; n++) {
+                        for (int i = 0; i < 2; i++) {
+                            tile_shift_regs[i] <<= 1;
+                            tile_attr_shift_regs[i] <<= 1;
+                            tile_attr_shift_regs[i] |= attr_latch[i] * 0x1;
+                        }
+                    }
+                }
 
                 uint16_t next_tile_addr = 0x2000 | (v & 0x0FFF);
                 uint16_t next_attr_addr = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
@@ -224,11 +227,29 @@ bool PPU::run() {
                 uint8_t next_tile = read(next_tile_addr);
                 uint8_t next_attr = read(next_attr_addr);
 
-                uint16_t pattern_addr =
-                        0x1000 * ((regs[PPUCTRL] >> 4) & 0x1) + ((uint16_t) next_tile << 4) + ((v & 0x7000) >> 12);
-                tile_shift_regs[1] = (read(pattern_addr)) | (read(pattern_addr + 8) << 8);
-                //if (scan_cycle == 328) tile_shift_regs[1] = (read(pattern_addr)<<8) | read(pattern_addr+8);
-                tile_attr_shift_regs[1] = next_attr;
+                int quadrant_shift;
+                bool x_high = (v >> 1) & 0x1;
+                bool y_high = (v >> 6) & 0x1;
+                if (!x_high) {
+                    if (!y_high) quadrant_shift = 0;
+                    else quadrant_shift = 4;
+                } else {
+                    if (!y_high) quadrant_shift = 2;
+                    else quadrant_shift = 6;
+                }
+                attr_latch[0] = (next_attr >> quadrant_shift) & 0x1;
+                attr_latch[1] = (next_attr >> quadrant_shift >> 1) & 0x1;
+
+                for (int n = 0; n < 8; n++) {
+                    for (int i = 0; i < 2; i++) {
+                        tile_attr_shift_regs[i] <<= 1;
+                        tile_attr_shift_regs[i] |= attr_latch[i] * 0x1;
+                    }
+                }
+
+                uint16_t pattern_addr = 0x1000 * ((regs[PPUCTRL] >> 4) & 0x1) + ((uint16_t) next_tile << 4) + ((v & 0x7000) >> 12);
+                tile_shift_regs[0] = tile_shift_regs[0] & 0xFF00 | (read(pattern_addr));
+                tile_shift_regs[1] = tile_shift_regs[1] & 0xFF00 | (read(pattern_addr + 8));
 
                 if ((v & 0x001F) == 31) {
                     v &= ~0x001F;
@@ -419,6 +440,7 @@ void PPU::output_nt() {
                     for (int fine_x = 0; fine_x < 8; fine_x++) {
                         uint8_t col = tile_col_at_pixel(tile, fine_x, fine_y, false, false);
                         uint8_t rgb[3] = {0, 0, 0};
+                        if (fine_x == 0 || fine_y == 0) rgb[2] = 64;
                         if (col != 0) rgb[col-1] = 255;
                         nes->get_display()->write_nt_pixel(y*32 + cx, fine_x, fine_y, i==1, rgb);
                     }
