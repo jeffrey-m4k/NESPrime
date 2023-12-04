@@ -73,6 +73,7 @@ private:
 
     Sprite sprite(uint8_t index);
     static uint8_t tile_col_at_pixel(Tile tile, int dx, int dy, bool flip_x, bool flip_y);
+    uint8_t* bgr_base_rgb();
     uint8_t* col_to_rgb(uint8_t attr, uint8_t col, bool spr);
 
     bool pt_shown = false;

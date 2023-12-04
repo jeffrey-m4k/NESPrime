@@ -7,5 +7,5 @@
 int main() {
     NES* nes = new NES();
 
-    nes->run("roms/mapper0/Balloon_fight.nes");
+    nes->run("roms/test/color_test.nes");
 }

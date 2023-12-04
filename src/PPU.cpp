@@ -30,11 +30,13 @@ bool PPU::run() {
         nmi_occurred = false;
     }
 
-    bool grayscale = regs[PPUMASK] >> 0;
-    bool render_bgr_l = regs[PPUMASK] >> 1;
-    bool render_spr_l = regs[PPUMASK] >> 2;
-    bool render_bgr = regs[PPUMASK] >> 3;
-    bool render_spr = regs[PPUMASK] >> 4;
+    bool render_bgr_l = (regs[PPUMASK] >> 1) & 0x1;
+    bool render_spr_l = (regs[PPUMASK] >> 2) & 0x1;
+    bool render_bgr = (regs[PPUMASK] >> 3) & 0x1;
+    bool render_spr = (regs[PPUMASK] >> 4) & 0x1;
+    bool emphasis_r = (regs[PPUMASK] >> 5) & 0x1;
+    bool emphasis_g = (regs[PPUMASK] >> 6) & 0x1;
+    bool emphasis_b = (regs[PPUMASK] >> 7) & 0x1;
 
     bool do_render = render_bgr || render_spr;
 
@@ -58,7 +60,7 @@ bool PPU::run() {
                     uint8_t col = (((tile_shift_regs[1] >> (15-x)) & 0x1) << 1) | ((tile_shift_regs[0] >> (15-x)) & 0x1);
 
                     uint8_t attr = (((tile_attr_shift_regs[1] >> (15-x)) & 0x1) << 1) | ((tile_attr_shift_regs[0] >> (15-x)) & 0x1);
-                    bgr_rgb = col == 0 ? rgb_palette[read(0x3F00)] : col_to_rgb(attr, col, false);
+                    bgr_rgb = col == 0 ? bgr_base_rgb() : col_to_rgb(attr, col, false);
 
                     /*if (scanline == 0) {
                         for (int i = 0; i < 0x20; i++) {
@@ -128,7 +130,12 @@ bool PPU::run() {
                     }
                 }
 
-                nes->get_display()->set_pixel_buffer(scan_cycle - 1, scanline, final_rgb);
+                uint8_t rgb_cpy[3];
+                rgb_cpy[0] = (emphasis_g || emphasis_b) ? final_rgb[0] / 2 : final_rgb[0];
+                rgb_cpy[1] = (emphasis_r || emphasis_b) ? final_rgb[1] / 2 : final_rgb[1];
+                rgb_cpy[2] = (emphasis_r || emphasis_g) ? final_rgb[2] / 2 : final_rgb[2];
+
+                nes->get_display()->set_pixel_buffer(scan_cycle - 1, scanline, rgb_cpy);
             }
         }
 
@@ -367,8 +374,17 @@ void PPU::set_palette(std::string palFileName) {
     }
 }
 
+uint8_t* PPU::bgr_base_rgb() {
+    uint8_t col = read(0x3F00);
+    if ((regs[PPUMASK] >> 0) & 0x1) { col &= 0x30; }
+    uint8_t* rgb = rgb_palette[col];
+    return rgb;
+}
+
 uint8_t* PPU::col_to_rgb(uint8_t attr, uint8_t col, bool spr) {
-    uint8_t* rgb = rgb_palette[read(0x3F01 + (attr & 0x3) * 4 + (col-1) + spr*0x10)];
+    uint8_t plt = read(0x3F01 + (attr & 0x3) * 4 + (col-1) + spr*0x10);
+    if ((regs[PPUMASK] >> 0) & 0x1) { plt &= 0x30; } //grayscale effect
+    uint8_t* rgb = rgb_palette[plt];
     return rgb;
 }
 
