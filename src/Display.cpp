@@ -46,6 +46,10 @@ bool Display::init() {
         return false;
     }
 
+    fps_lasttime = SDL_GetTicks();
+    fps_current = 0;
+    fps_frames = 0;
+
     return true;
 }
 
@@ -92,6 +96,16 @@ bool Display::refresh() {
     SDL_RenderClear(renderer_main);
     SDL_RenderCopy(renderer_main, texture_main, nullptr, nullptr);
     SDL_RenderPresent(renderer_main);
+
+    fps_frames++;
+    if (fps_lasttime < SDL_GetTicks() - 1000) {
+        fps_lasttime = SDL_GetTicks();
+        fps_current = fps_frames;
+        fps_frames = 0;
+    }
+    SDL_SetWindowTitle(window_main, ("FPS:" + std::to_string(fps_current)).c_str());
+
+    last_update = SDL_GetTicks();
 
     return true;
 }

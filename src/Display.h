@@ -22,6 +22,8 @@ public:
     void write_nt_pixel(int tile, uint8_t x, uint8_t y, bool nt2, const uint8_t rgb[3]);
     void push_buffer();
     uint8_t* get_pixels() { return pixels; }
+public:
+    uint32_t last_update = 0;
 private:
     SDL_Window *window_main;
     SDL_Window *window_pt;
@@ -38,6 +40,10 @@ private:
 
     uint8_t pt[256*128*3] = {0};
     uint8_t nts[256*240*2*3] = {0};
+
+    uint32_t fps_lasttime;
+    uint32_t fps_current;
+    uint32_t fps_frames;
 };
 
 #endif

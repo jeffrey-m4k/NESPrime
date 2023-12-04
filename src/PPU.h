@@ -42,8 +42,8 @@ public:
     void output_pt();
     void output_nt();
 protected:
-    uint8_t read(int addr) override { return Processor::read(mirror_palette_addr(addr)); };
-    bool write(const uint16_t addr, const uint8_t data) override { return Processor::write(mirror_palette_addr(addr), data); };
+    uint8_t read(int addr) override;
+    bool write(const uint16_t addr, const uint8_t data) override;
 private:
     static uint16_t mirror_palette_addr(uint16_t addr);
     MIRRORING nt_mirror;

@@ -2,6 +2,7 @@
 #include "util.h"
 #include "CPU.h"
 #include "PPU.h"
+#include "mappers/Mapper0.h"
 
 #include <iostream>
 
@@ -55,9 +56,9 @@ bool Cartridge::read_header() {
         prg_size = buffer[4] * 0x4000;
         chr_size = buffer[5] * 0x2000;
 
-        mapper = (buffer[6] & 0xF0) | (buffer[7] >> 4);
+        mapper_num = (buffer[6] & 0xF0) | (buffer[7] >> 4);
         // TODO support other mappers
-        if (mapper != 0) return false;
+        if (mapper_num != 0) return false;
         for (int i = 0; i < 4; i++) {
             flags[0][i] = (buffer[6] >> i) & 0x1;
             flags[1][i] = (buffer[7] >> i) & 0x1;
@@ -91,24 +92,15 @@ void Cartridge::load() {
         PPU* ppu = nes->get_ppu();
         uint8_t* prg_mem = prg_rom.get_mem();
 
-        if (flags[0][3]) ppu->set_mirroring(FourScreen);
-        else ppu->set_mirroring(static_cast<MIRRORING>(flags[0][0]));
         ppu->reset();
-        switch (mapper) {
-            case 0: {
-                bool nrom_256 = prg_size == 0x8000;
-                cpu->map(0x8000, prg_mem, prg_size);
-                if (!nrom_256)
-                    cpu->map(0xC000, prg_mem, prg_size);
-                ppu->map(0x0, chr_rom.get_mem(), 0x2000);
-                break;
-            }
-            default:
-                break;
+        switch (mapper_num) {
+            case 0: mapper = new Mapper0(this);
+            default: break;
         }
-        /*uint8_t* ppu_regs = ppu->get_regs_addr();
-        cpu->map(0x2000, ppu_regs, 0x8);
-        cpu->map(0x4014, ppu_regs + 8, 0x1);*/
+
+        if (flags[0][3]) mapper->set_mirroring(FourScreen);
+        else mapper->set_mirroring(static_cast<MIRRORING>(flags[0][0]));
+
 
         // TODO add PlayChoice-10 support (low priority)
     }
@@ -119,7 +111,7 @@ void Cartridge::load() {
 void Cartridge::print_metadata() {
     nes->out << "PRG ROM size: " << prg_size << " bytes\n";
     nes->out << "CHR ROM size: " << chr_size << " bytes\n";
-    nes->out << "Mapper: " << (int)mapper << "\n";
+    nes->out << "Mapper: " << (int)mapper_num << "\n";
     nes->out << "Flags:\n";
     nes->out << "0: ";
     for (int i = 0; i < 4; i++)

@@ -35,8 +35,12 @@ void NES::run() {
         while (cycles_delta < cycles_per_frame) {
             tick(true, 1);
         }
-        cycles_delta -= cycles_per_frame;
-        display->refresh();
+//        if (ppu->get_y() == 240 && ppu->get_x() == )
+        if (SDL_GetTicks() - display->last_update >= 1000/60) {
+            cycles_delta -= cycles_per_frame;
+            display->refresh();
+        }
+//        SDL_Delay(1000/60);
     }
 }
 
@@ -50,6 +54,7 @@ void NES::tick(bool do_cpu, int times) {
     for (int i = 0; i < times; i++) {
         if (clock % 12 == 0 && do_cpu) cpu->run();
         if (clock % 4 == 0) ppu->run();
+
         clock++;
         cycles_delta++;
 

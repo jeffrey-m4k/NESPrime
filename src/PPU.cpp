@@ -11,34 +11,6 @@ PPU::PPU() : Processor() {
 }
 
 void PPU::reset() {
-    this->aspace.clear();
-    uint8_t* memory = this->mem.get_mem();
-    switch (nt_mirror) {
-        //TODO limit mirroring to 3EFF
-        case Horizontal:
-            for (int i = 0; i < 2; ++i) {
-                map(0x2000+(i*0x400), memory, 0x400);
-                map(0x2800+(i*0x400), memory + 0x400, 0x400);
-                map(0x3000+(i*0x400), memory, 0x400);
-                map(0x3800+(i*0x400), memory + 0x400, 0x400);
-            }
-            break;
-        case Vertical:
-            for (int i = 0; i < 2; ++i) {
-                map(0x2000+(i*0x800), memory, 0x400);
-                map(0x2400+(i*0x800), memory + 0x400, 0x400);
-                map(0x3000+(i*0x800), memory, 0x400);
-                map(0x3400+(i*0x800), memory + 0x400, 0x400);
-            }
-            break;
-        default:
-            break;
-    }
-    for (int i = 0; i < 8; ++i) {
-        map(0x3F00+(i*0x20), palette, 0x20);
-    }
-    //write_reg(PPUMASK, 0x1E, 100000); //force enable all rendering
-
 }
 
 void PPU::init() {}
@@ -210,8 +182,8 @@ bool PPU::run() {
 
         if (scanline < 240) {
             // Every 8 dots, increment coarse X and update shift registers
-            if ((scan_cycle - 1) % 8 == 7 && (scan_cycle >= 328 || scan_cycle <= 256)) {
-                if (scan_cycle >= 328) {
+            if ((scan_cycle - 2) % 8 == 7 && (scan_cycle >= 329 || scan_cycle <= 257)) {
+                if (scan_cycle >= 329) {
                     for (int n = 0; n < 8; n++) {
                         for (int i = 0; i < 2; i++) {
                             tile_shift_regs[i] <<= 1;
@@ -278,7 +250,7 @@ bool PPU::run() {
         }
     } else if ((v & 0x3F00) == 0x3F00 && scan_cycle >= 1 && scan_cycle <= 256 && scanline >= 0 && scanline <= 239) {
         // Background palette hack
-        nes->get_display()->set_pixel_buffer(scan_cycle - 1, scanline, rgb_palette[read(mirror_palette_addr(v))]);
+        nes->get_display()->set_pixel_buffer(scan_cycle - 1, scanline, rgb_palette[read(v)]);
     }
 
     // Display test
@@ -304,7 +276,7 @@ bool PPU::run() {
 uint16_t PPU::mirror_palette_addr(uint16_t addr) {
     if ((addr & 0x3F00) == 0x3F00 && (((addr >> 4) & 0xF)) % 2 != 0 && (addr & 0xF) % 4 == 0)
         addr -= 0x10;
-    return addr;
+    return addr % 0x20;
 }
 
 uint8_t PPU::read_reg(uint8_t reg_id, int cycle) {
@@ -315,7 +287,7 @@ uint8_t PPU::read_reg(uint8_t reg_id, int cycle, bool physical_read) {
     if (physical_read) {
         if (reg_id == PPUDATA) {
             io_bus = vram_read_buffer;
-            vram_read_buffer = read(mirror_palette_addr(v & 0x3FFF));
+            vram_read_buffer = read(v & 0x3FFF);
             v += ((regs[PPUCTRL] >> 2) & 0x1) ? 32 : 1;
         } else if (reg_id == OAMDATA) { // TODO
         } else if (reg_id == PPUSTATUS) {
@@ -355,7 +327,7 @@ bool PPU::write_reg(uint8_t reg_id, uint8_t value, int cycle, bool physical_writ
             w = !w;
             break;
         case PPUDATA:
-            write(mirror_palette_addr(v & 0x3FFF), value);
+            write(v & 0x3FFF, value);
             v += ((regs[PPUCTRL] >> 2) & 0x1) ? 32 : 1;
             break;
         default:
@@ -396,7 +368,7 @@ void PPU::set_palette(std::string palFileName) {
 }
 
 uint8_t* PPU::col_to_rgb(uint8_t attr, uint8_t col, bool spr) {
-    uint8_t* rgb = rgb_palette[read(mirror_palette_addr(0x3F01 + (attr & 0x3) * 4 + (col-1) + spr*0x10))];
+    uint8_t* rgb = rgb_palette[read(0x3F01 + (attr & 0x3) * 4 + (col-1) + spr*0x10)];
     return rgb;
 }
 
@@ -449,4 +421,14 @@ void PPU::output_nt() {
         }
     }
     nes->get_display()->update_nt();
+}
+
+uint8_t PPU::read(int addr) {
+    if (addr >= 0x3F00) return palette[mirror_palette_addr(addr)];
+    else return *nes->get_cart()->get_mapper()->map_ppu(addr);
+}
+
+bool PPU::write(const uint16_t addr, const uint8_t data) {
+    if (addr >= 0x3F00) palette[mirror_palette_addr(addr)] = data;
+    else *nes->get_cart()->get_mapper()->map_ppu(addr) = data;
 }

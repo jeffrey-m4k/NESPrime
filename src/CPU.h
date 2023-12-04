@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <sstream>
 #include "Processor.h"
+#include "mappers/Mapper.h"
 
 enum ADDRESSING_MODE {
     IndexedZeroX, IndexedZeroY, IndexedAbsoluteX, IndexedAbsoluteY, IndexedIndirectX, IndexedIndirectY,

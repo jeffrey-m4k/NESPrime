@@ -38,6 +38,7 @@ public:
     bool map(uint16_t addr, uint8_t* block, uint16_t size);
 
     long get_cycle() { return cycle; }
+    Memory* get_mem() { return &mem; }
 protected:
     virtual uint8_t read(const int addr) { return aspace.read(addr); }
     virtual bool write(const uint16_t addr, const uint8_t data) { return aspace.write(addr, data); }
