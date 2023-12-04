@@ -14,7 +14,7 @@ class Mapper;
 class Processor : public Component {
 public:
     Processor();
-    ~Processor() { delete mem.get_mem(); };
+    ~Processor() { delete[] mem.get_mem(); };
     virtual void reset() = 0;
     virtual void init() = 0;
     virtual bool run();

@@ -8,6 +8,8 @@
 
 using std::ios;
 
+Cartridge::~Cartridge() { delete mapper; }
+
 bool Cartridge::read_next(const uint16_t bytes) {
     return read_next(buffer, bytes);
 }

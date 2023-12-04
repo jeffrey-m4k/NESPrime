@@ -20,7 +20,7 @@ bool Memory::write(const uint16_t addr, const uint8_t* data, const int bytes) {
 }
 
 void Memory::init(const uint16_t size) {
-    delete this->mem;
+    delete[] this->mem;
     this->size = size;
     this->mem = new uint8_t[size];
 }

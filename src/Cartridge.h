@@ -14,7 +14,7 @@ class Mapper;
 class Cartridge : public Component {
 public:
     Cartridge() : Component() {};
-    ~Cartridge() {};
+    ~Cartridge();
     void load();
     bool open_file(const std::string& filename);
     std::ifstream& get_file() { return file; }
@@ -41,7 +41,7 @@ private:
 
     Memory prg_rom;
     Memory chr_rom;
-    Mapper* mapper;
+    Mapper* mapper = nullptr;
 };
 
 

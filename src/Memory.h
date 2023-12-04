@@ -7,7 +7,7 @@ class Memory {
 public:
     Memory() : size(0), mem(nullptr) {};
     Memory(const uint16_t size) : size(size) { mem = new uint8_t[size]; };
-    ~Memory() { delete mem; };
+    ~Memory() { delete[] mem; };
     void init(uint16_t size);
     uint8_t read(uint16_t addr);
     bool write(uint16_t addr, uint8_t data);

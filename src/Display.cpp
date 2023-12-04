@@ -120,8 +120,14 @@ void Display::black() {
 
 void Display::close() {
     SDL_DestroyTexture(texture_main);
+    SDL_DestroyTexture(texture_pt);
+    SDL_DestroyTexture(texture_nt);
     SDL_DestroyRenderer(renderer_main);
+    SDL_DestroyRenderer(renderer_pt);
+    SDL_DestroyRenderer(renderer_nt);
     SDL_DestroyWindow(window_main);
+    SDL_DestroyWindow(window_pt);
+    SDL_DestroyWindow(window_nt);
     SDL_Quit();
 }
 

@@ -13,7 +13,7 @@ enum MIRRORING {
 class Mapper {
 public:
     explicit Mapper(Cartridge* cart);
-    ~Mapper();
+    ~Mapper() = default;
     virtual uint8_t* map_cpu(uint16_t addr);
     virtual uint8_t* map_ppu(uint16_t addr);
     void set_mirroring(MIRRORING mirr) { mirroring = mirr; }
