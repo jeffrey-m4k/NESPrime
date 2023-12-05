@@ -16,7 +16,6 @@ void PPU::reset() {
 void PPU::init() {}
 bool PPU::run() {
     bool tall_sprites = (regs[PPUCTRL] >> 5) & 0x1;
-    //if (!pt_shown && nes->get_display() != nullptr) output_pt();
 
     if (scanline == 241 && scan_cycle == 4) {
         // Set the v-blank flag on dot 1 of line 241
@@ -46,8 +45,9 @@ bool PPU::run() {
             uint8_t *bgr_rgb = nullptr;
             uint8_t *spr_rgb = nullptr;
             bool spr_priority = false;
+            bool bgr_base = true;
 
-            if ((scan_cycle >= 2 && scan_cycle <= 257)/* || (scan_cycle >= 322 && scan_cycle <= 337)*/) {
+            if ((scan_cycle >= 2 && scan_cycle <= 257)) {
                 for (int i = 0; i < 2; i++) {
                     tile_shift_regs[i] <<= 1;
                     tile_attr_shift_regs[i] <<= 1;
@@ -55,34 +55,24 @@ bool PPU::run() {
                 }
             }
 
-            // Get bgr color
+            // Draw pixel at dot
             if (scan_cycle >= 1 && scan_cycle <= 256 && scanline >= 0 && scanline <= 239) {
+                // Get bgr color
                 if (render_bgr && (scan_cycle > 8 || render_bgr_l)) {
-                    uint8_t col = (((tile_shift_regs[1] >> (15-x)) & 0x1) << 1) | ((tile_shift_regs[0] >> (15-x)) & 0x1);
+                    uint8_t col = (((tile_shift_regs[1] >> (15 - x)) & 0x1) << 1) |
+                                  ((tile_shift_regs[0] >> (15 - x)) & 0x1);
 
-                    uint8_t attr = (((tile_attr_shift_regs[1] >> (15-x)) & 0x1) << 1) | ((tile_attr_shift_regs[0] >> (15-x)) & 0x1);
-                    bgr_rgb = col == 0 ? bgr_base_rgb() : col_to_rgb(attr, col, false);
-
-                    /*if (scanline == 0) {
-                        for (int i = 0; i < 0x20; i++) {
-                            print_hex(std::cout, read(0x3F00 + i)); std::cout<<"|"; print_hex(std::cout,palette[i]);
-                            std::cout << " ";
-                            if (i==0x0f) std::cout<<"\n";
-                        }
-                        std::cout << "\n\n";
-                    }*/
+                    uint8_t attr = (((tile_attr_shift_regs[1] >> (15 - x)) & 0x1) << 1) |
+                                   ((tile_attr_shift_regs[0] >> (15 - x)) & 0x1);
+                    if (col != 0) bgr_rgb = col_to_rgb(attr, col, false);
                 }
-            }
 
+                // Get spr color
+                bool sprite_0 = false;
+                if (render_spr && (scan_cycle > 8 || render_spr_l)) {
+                    Tile tile;
+                    uint16_t pattern_table = (regs[PPUCTRL] >> 3) & 0x1 ? 0x1000 : 0x0;
 
-
-            // Get spr color
-            bool sprite_0 = false;
-            if (render_spr && (scan_cycle > 8 || render_spr_l)) {
-                Tile tile;
-                uint16_t pattern_table = (regs[PPUCTRL] >> 3) & 0x1 ? 0x1000 : 0x0;
-
-                if (scanline >= 0 && scanline <= 239 && scan_cycle >= 1 && scan_cycle <= 256) {
                     for (int s = 0; scanline != 0 && s < inrange_sprites; s++) {
                         Sprite sprite = scanline_sprites[s];
                         if (tall_sprites) pattern_table = 0x1000 * (sprite[SPRITE::TILE] & 0x1);
@@ -110,7 +100,7 @@ bool PPU::run() {
 
                                 bool is_sprite0 = true;
                                 if ((regs[PPUSTATUS] & 0x40) != 0x40) {
-                                    for (int i=0; i<4; i++) {
+                                    for (int i = 0; i < 4; i++) {
                                         if (sprite[i] != this->sprite(0)[i]) {
                                             is_sprite0 = false;
                                             break;
@@ -122,21 +112,20 @@ bool PPU::run() {
                             }
                         }
                     }
-
                 }
-            }
 
-            if (bgr_rgb != nullptr || spr_rgb != nullptr) {
+                // Multiplex bgr and spr color
                 uint8_t *final_rgb;
-
-                if (bgr_rgb == nullptr) final_rgb = spr_rgb;
-                else if (spr_rgb == nullptr) final_rgb = bgr_rgb;
-                else {
-                    final_rgb = spr_priority ? spr_rgb : bgr_rgb;
-                    if (sprite_0) {
-                        regs[PPUSTATUS] |= 0x40;
+                if (bgr_rgb != nullptr || spr_rgb != nullptr) {
+                    if (bgr_rgb == nullptr) final_rgb = spr_rgb;
+                    else if (spr_rgb == nullptr) final_rgb = bgr_rgb;
+                    else {
+                        final_rgb = (spr_priority) ? spr_rgb : bgr_rgb;
+                        if (sprite_0) {
+                            regs[PPUSTATUS] |= 0x40;
+                        }
                     }
-                }
+                } else final_rgb = bgr_base_rgb();
 
                 uint8_t rgb_cpy[3];
                 rgb_cpy[0] = (emphasis_g || emphasis_b) ? final_rgb[0] / 2 : final_rgb[0];
@@ -148,7 +137,7 @@ bool PPU::run() {
         }
 
         // Sprite evaluation
-        if (scanline != -1) {
+        if (scanline != -1 && scanline <= 239) {
             // Clear oam2 from cycles 1-64
             if (scan_cycle >= 1 && scan_cycle <= 64 && scan_cycle % 2 == 0) {
                 oam2[scan_cycle / 2 - 1] = 0xFF;
@@ -272,18 +261,10 @@ bool PPU::run() {
 //    uint8_t test[3] = {static_cast<uint8_t>((128 + sin(cycle)*63)*0.25), 0, static_cast<uint8_t>((128+cos(nes->get_clock()/1000000.0)*63)*0.25)};
 //    if (scan_cycle <= 255 && scanline <= 239) nes->get_display()->set_pixel_buffer(scan_cycle - 1, scanline, test);
 
-
-    //std::cout << (cycle / 60) << " ";
-
-
-
     scan_cycle++;
     if (scan_cycle > 340 || (do_render && scan_cycle == 340 && scanline == -1 && frame % 2 != 0)) { scan_cycle = 0; scanline++; }
     if (scanline > 260) { scanline = -1; nes->get_display()->push_buffer(); }
-    //if (scanline == 0 && scan_cycle == 0 && frame % 30 == 0) output_nt();
     if (scanline == 240 && scan_cycle == 0) frame++;
-
-    //if (scanline == 0 && scan_cycle == 0 && frame % 60 == 0) output_pt();
 
     return true;
 }
@@ -337,7 +318,7 @@ bool PPU::write_reg(uint8_t reg_id, uint8_t value, int cycle, bool physical_writ
                 t = (t & 0xFFE0) | ((value >> 3) & 0x1F);
                 x = value & 0x7;
             } else {
-                t = (t & 0x1F) | (((value >> 3) & 0x1F) << 5) | ((value & 0x7) << 12);
+                t = (t & 0xC1F) | (((value >> 3) & 0x1F) << 5) | ((value & 0x7) << 12);
             }
             w = !w;
             break;
@@ -406,7 +387,6 @@ void PPU::output_pt() {
 
                 for (int cx=0; cx<8; cx++) {
                     uint8_t col = ((p1>>(7-cx) & 0x1)) | ((p2>>(7-cx) & 0x1) << 1);
-                    //uint8_t rgb[3] = {static_cast<uint8_t>(col*85), static_cast<uint8_t>(col*85), static_cast<uint8_t>(col*85)};
                     uint8_t rgb[3] = {0, 0, 0};
                     if (col != 0) rgb[col-1] = 255;
                     nes->get_display()->write_pt_pixel(n, cx, y, i, rgb);
@@ -424,7 +404,7 @@ void PPU::output_nt() {
 
         for (int y = 0; y < 30; y++) {
             for (int cx = 0; cx < 32; cx++) {
-                uint8_t tile_num = memory[0x400*i*(mapper->get_mirroring()==Vertical?1:2) + y*32 + cx];
+                uint8_t tile_num = read(0x2000 + 0x400*i*(mapper->get_mirroring()==Vertical?1:2) + y*32 + cx);
                 uint16_t pattern_idx = 0x1000 * ((regs[PPUCTRL] >> 4) & 0x1) + ((uint16_t)tile_num << 4);
                 Tile tile;
                 for (int b = 0; b < 16; b++) {
