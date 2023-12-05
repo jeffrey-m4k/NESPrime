@@ -7,5 +7,5 @@
 int main() {
     NES* nes = new NES();
 
-    nes->run("roms/test/color_test.nes");
+    nes->run("roms/mapper2/Castlevania.nes");
 }

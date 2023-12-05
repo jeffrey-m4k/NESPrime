@@ -15,7 +15,8 @@ void PPU::reset() {
 
 void PPU::init() {}
 bool PPU::run() {
-    if (!pt_shown && nes->get_display() != nullptr) output_pt();
+    bool tall_sprites = (regs[PPUCTRL] >> 5) & 0x1;
+    //if (!pt_shown && nes->get_display() != nullptr) output_pt();
 
     if (scanline == 241 && scan_cycle == 4) {
         // Set the v-blank flag on dot 1 of line 241
@@ -81,20 +82,27 @@ bool PPU::run() {
                 Tile tile;
                 uint16_t pattern_table = (regs[PPUCTRL] >> 3) & 0x1 ? 0x1000 : 0x0;
 
-                bool tall_sprites = (regs[PPUCTRL] >> 5) & 0x1;
                 if (scanline >= 0 && scanline <= 239 && scan_cycle >= 1 && scan_cycle <= 256) {
                     for (int s = 0; scanline != 0 && s < inrange_sprites; s++) {
                         Sprite sprite = scanline_sprites[s];
+                        if (tall_sprites) pattern_table = 0x1000 * (sprite[SPRITE::TILE] & 0x1);
                         int dx = (scan_cycle - 1) - sprite[SPRITE::X];
                         int dy = scanline - (sprite[SPRITE::Y] + 1);
-                        if (dx >= 0 && dx <= 7 && dy >= 0 && dy <= 7) {
+
+                        if (dx >= 0 && dx <= 7 && dy >= 0 && dy <= (tall_sprites ? 15 : 7)) {
                             uint8_t tile_num = sprite[SPRITE::TILE];
-                            // TODO support 8x16 sprites
+                            bool flip_x = (sprite[SPRITE::ATTR] >> 6) & 0x1;
+                            bool flip_y = (sprite[SPRITE::ATTR] >> 7) & 0x1;
+
+                            if (tall_sprites) tile_num &= ~0x1;
+                            if (tall_sprites && flip_y != (dy >= 8)) tile_num++;
+
+                            uint16_t tile_addr = pattern_table + tile_num * 16;
+
                             for (int b = 0; b < 16; b++) {
-                                tile[b % 8][b / 8] = read(pattern_table + tile_num * 16 + b);
+                                tile[b % 8][b / 8] = read(tile_addr + b);
                             }
-                            uint8_t col_at_pos = tile_col_at_pixel(tile, dx, dy, (sprite[SPRITE::ATTR] >> 6) & 0x1,
-                                                                   (sprite[SPRITE::ATTR] >> 7) & 0x1);
+                            uint8_t col_at_pos = tile_col_at_pixel(tile, dx, dy % 8, flip_x, flip_y);
 
                             if (col_at_pos != 0) {
                                 spr_rgb = col_to_rgb(sprite[SPRITE::ATTR], col_at_pos, true);
@@ -151,7 +159,7 @@ bool PPU::run() {
                 for (; n < 64; n++) {
                     Sprite spr = sprite(n);
                     uint8_t y = spr[SPRITE::Y];
-                    if (y <= scanline && (scanline - y) < 8) {
+                    if (y <= scanline && (scanline - y) < (tall_sprites ? 16 : 8)) {
                         for (int i = 0; i < 4; i++) {
                             oam2[inrange_sprites * 4 + i] = spr[i];
                         }
@@ -164,7 +172,7 @@ bool PPU::run() {
                     for (; n < 64; n++) {
                         for (int m = 0; m < 4; m++) {
                             uint8_t faux_y = oam[n * 4 + m];
-                            if (faux_y <= scanline && (scanline - faux_y) < 8) {
+                            if (faux_y <= scanline && (scanline - faux_y) < (tall_sprites ? 16 : 8)) {
                                 regs[PPUSTATUS] |= 0x20;
                             } else {
                                 n++;
@@ -272,7 +280,7 @@ bool PPU::run() {
     scan_cycle++;
     if (scan_cycle > 340 || (do_render && scan_cycle == 340 && scanline == -1 && frame % 2 != 0)) { scan_cycle = 0; scanline++; }
     if (scanline > 260) { scanline = -1; nes->get_display()->push_buffer(); }
-    if (scanline == 0 && scan_cycle == 0 && frame % 30 == 0) output_nt();
+    //if (scanline == 0 && scan_cycle == 0 && frame % 30 == 0) output_nt();
     if (scanline == 240 && scan_cycle == 0) frame++;
 
     //if (scanline == 0 && scan_cycle == 0 && frame % 60 == 0) output_pt();
@@ -399,11 +407,9 @@ void PPU::output_pt() {
                 for (int cx=0; cx<8; cx++) {
                     uint8_t col = ((p1>>(7-cx) & 0x1)) | ((p2>>(7-cx) & 0x1) << 1);
                     //uint8_t rgb[3] = {static_cast<uint8_t>(col*85), static_cast<uint8_t>(col*85), static_cast<uint8_t>(col*85)};
-                    if (col != 0) {
-                        uint8_t rgb[3] = {0, 0, 0};
-                        rgb[col-1] = 255;
-                        nes->get_display()->write_pt_pixel(n, cx, y, i, rgb);
-                    }
+                    uint8_t rgb[3] = {0, 0, 0};
+                    if (col != 0) rgb[col-1] = 255;
+                    nes->get_display()->write_pt_pixel(n, cx, y, i, rgb);
                 }
             }
         }

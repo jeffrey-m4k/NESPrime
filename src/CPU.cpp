@@ -37,8 +37,9 @@ bool CPU::run() {
 
     oper_set = false;
 
-    regs_log.clear();
     if (logging) {
+        regs_log.str("");
+        regs_log.clear();
         regs_log << "A:";
         print_hex(regs_log, reg.acc);
         regs_log << " X:";
@@ -779,6 +780,9 @@ bool CPU::write(const uint16_t addr, const uint8_t data) {
         memory_regs[addr-0x4000] = data;
     } else if (addr >= 0x4018 && addr <= 0x8000) { // temp ignore unmapped space
         return true;
-    } else *mapper->map_cpu(addr) = data;
+    } else {
+        *mapper->map_cpu(addr) = data;
+        if (addr >= 0x8000) mapper->set_bank(data);
+    }
     return true;
 }

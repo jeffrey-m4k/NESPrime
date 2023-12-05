@@ -3,8 +3,11 @@
 Mapper::Mapper(Cartridge *cart) : cartridge(cart) {
     cpu_mem = cartridge->get_nes()->get_cpu()->get_mem()->get_mem();
     ppu_mem = cartridge->get_nes()->get_ppu()->get_mem()->get_mem();
-    prg_rom = cartridge->get_prg()->get_mem();
-    chr_rom = cartridge->get_chr()->get_mem();
+    prg_rom = cartridge->get_prg_rom()->get_mem();
+    chr_rom = cartridge->get_chr_rom()->get_mem();
+    prg_ram = cartridge->get_prg_ram()->get_mem();
+    chr_ram = cartridge->get_chr_ram()->get_mem();
+    mirroring = Horizontal;
 }
 
 uint8_t* Mapper::map_cpu(uint16_t addr) {
@@ -13,7 +16,8 @@ uint8_t* Mapper::map_cpu(uint16_t addr) {
 }
 
 uint8_t* Mapper::map_ppu(uint16_t addr) {
-    if (addr < 0x2000 || addr >= 0x3F00) return nullptr;
+    if (addr >= 0x3F00) return nullptr;
+    if (addr < 0x2000) return chr_ram == nullptr ? chr_rom + addr : chr_ram + addr;
     addr &= ~0x1000; // $3000-$3FFF is a mirror of $2000-$2FFF
     addr -= 0x2000;
     uint8_t* base = ppu_mem;

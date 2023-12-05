@@ -2,7 +2,6 @@
 #include "util.h"
 #include "CPU.h"
 #include "PPU.h"
-#include "mappers/Mapper0.h"
 
 #include <iostream>
 
@@ -10,11 +9,11 @@ using std::ios;
 
 Cartridge::~Cartridge() { delete mapper; }
 
-bool Cartridge::read_next(const uint16_t bytes) {
+bool Cartridge::read_next(const uint32_t bytes) {
     return read_next(buffer, bytes);
 }
 
-bool Cartridge::read_next(uint8_t* into, const uint16_t bytes) {
+bool Cartridge::read_next(uint8_t* into, const uint32_t bytes) {
     // TODO better EOF checking, for now just assuming ROM is formatted correctly
     if (!file.eof()) {
         file.seekg(pos);
@@ -25,7 +24,7 @@ bool Cartridge::read_next(uint8_t* into, const uint16_t bytes) {
     return false;
 }
 
-bool Cartridge::read_next(Memory& into, const uint16_t start, const uint16_t bytes) {
+bool Cartridge::read_next(Memory& into, const uint32_t start, const uint32_t bytes) {
     if (!file.eof()) {
         file.seekg(pos);
         if (start + bytes > into.get_size()) return false;
@@ -58,9 +57,8 @@ bool Cartridge::read_header() {
         prg_size = buffer[4] * 0x4000;
         chr_size = buffer[5] * 0x2000;
 
-        mapper_num = (buffer[6] & 0xF0) | (buffer[7] >> 4);
+        mapper_num = (buffer[6] >> 4) | (buffer[7] & 0xF0);
         // TODO support other mappers
-        if (mapper_num != 0) return false;
         for (int i = 0; i < 4; i++) {
             flags[0][i] = (buffer[6] >> i) & 0x1;
             flags[1][i] = (buffer[7] >> i) & 0x1;
@@ -88,14 +86,15 @@ void Cartridge::load() {
         if (chr_size) {
             chr_rom.init(chr_size);
             read_next(chr_rom, 0, chr_size);
-        }
+        } else chr_ram.init(0x2000);
 
         CPU* cpu = nes->get_cpu();
         PPU* ppu = nes->get_ppu();
 
         switch (mapper_num) {
-            case 0: mapper = new Mapper0(this);
-            default: break;
+            case 0: mapper = new Mapper0(this); break;
+            case 2: mapper = new Mapper2(this); break;
+            default: exit(EXIT_FAILURE);
         }
 
         if (flags[0][3]) mapper->set_mirroring(FourScreen);
