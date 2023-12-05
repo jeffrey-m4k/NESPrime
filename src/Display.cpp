@@ -9,13 +9,13 @@ bool Display::init() {
         return false;
     }
 
-    window_pt = SDL_CreateWindow("sdl2_pixelbuffer", 16, 16, 1024,512, SDL_WINDOW_RESIZABLE);
-    window_nt = SDL_CreateWindow("sdl2_pixelbuffer", 16, 544, 1024,480, SDL_WINDOW_RESIZABLE);
+    window_pt = SDL_CreateWindow("sdl2_pixelbuffer", 16, 16, 512,256, SDL_WINDOW_RESIZABLE);
+    window_nt = SDL_CreateWindow("sdl2_pixelbuffer", 16, 544, 512,240, SDL_WINDOW_RESIZABLE);
     window_main = SDL_CreateWindow("sdl2_pixelbuffer",
                                    SDL_WINDOWPOS_CENTERED,
                                    SDL_WINDOWPOS_CENTERED,
-                                          WIDTH*4,
-                                          HEIGHT*4,
+                                          WIDTH*3,
+                                          HEIGHT*3,
                                    SDL_WINDOW_RESIZABLE);
 
     if (window_main == nullptr || window_pt == nullptr || window_nt == nullptr) {

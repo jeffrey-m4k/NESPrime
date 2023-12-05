@@ -31,12 +31,13 @@ void NES::run() {
         SDL_Event event;
 
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) quit = true;
-        }
+            if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE) quit = true;
+        };
 
         while (cycles_delta < cycles_per_frame) {
             tick(true, 1);
         }
+
         if (SDL_GetTicks() - display->last_update >= 1000/60) {
             cycles_delta -= cycles_per_frame;
             display->refresh();

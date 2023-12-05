@@ -18,7 +18,7 @@ uint8_t* Mapper::map_ppu(uint16_t addr) {
     addr -= 0x2000;
     uint8_t* base = ppu_mem;
     switch (mirroring) {
-        case Horizontal: return base + (addr & ~0x400);
+        case Horizontal: return base + (addr & ~0x400) % 0x800 + 0x400 * (addr / 0x800);
         case Vertical: return base + (addr & ~0x800);
         default: return nullptr;
     }
