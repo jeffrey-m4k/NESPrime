@@ -32,9 +32,21 @@ void APU::cycle() {
 }
 
 float APU::get_mixer() {
-    float pulse_out = 0.00752 * (pulse[0].get_output() + pulse[1].get_output());/*0.00752 **/
-    float tri_out = 0.00851 * triangle.get_output() * 0.08;
-    return pulse_out + tri_out;
+    float pulse_out = 0.65 * (pulse[0].get_output() + pulse[1].get_output());/*0.00752 **/
+    float tri_out = 0.15 * triangle.get_output();
+    float sample = pulse_out + tri_out;
+    if (has_last) {
+        int damp_at = 10;
+        float diff = abs(sample - last_sample);
+        if (diff > damp_at) {
+            float factor = pow(0.95, diff-damp_at);
+            sample = sample*factor+last_sample*(1-factor);
+        }
+    } else {
+        last_sample = sample;
+        has_last = true;
+    }
+    return sample;
 }
 
 void APU::write_apu_reg(uint8_t reg, uint8_t data) {

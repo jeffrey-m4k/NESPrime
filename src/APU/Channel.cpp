@@ -1,3 +1,4 @@
+#include <iostream>
 #include "Channel.h"
 
 void Channel::set_timer_hi(uint8_t hi) {
@@ -48,7 +49,7 @@ uint8_t Pulse::get_output() {
 }
 
 void Triangle::tick_timer() {
-    if (timer.clock() && length > 0 && linear_counter > 0) seq_out = sequencer.next();
+    if (timer.clock() && (length > 0 && linear_counter > 0 || length_halt)) seq_out = sequencer.next();
 }
 
 void Triangle::tick_lc() {
@@ -58,5 +59,5 @@ void Triangle::tick_lc() {
 }
 
 uint8_t Triangle::get_output() {
-    return (enabled && length > 0 && linear_counter > 0) ? seq_out : 0;
+    return (enabled && (length > 0 && linear_counter > 0 || length_halt)) ? seq_out : 0;
 }

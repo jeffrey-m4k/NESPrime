@@ -26,6 +26,9 @@ private:
     FrameSequencer* frameSeq;
 
     bool tick_fs = false;
+
+    float last_sample = 0;
+    bool has_last = false;
 };
 
 #endif
