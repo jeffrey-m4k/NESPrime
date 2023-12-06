@@ -26,20 +26,26 @@ void APU::cycle() {
         frameSeq->tick();
         pulse[0].tick_timer();
         pulse[1].tick_timer();
+        noise.tick_timer();
         tick_fs = false;
     } else tick_fs = true;
     triangle.tick_timer();
 }
 
 float APU::get_mixer() {
-    float pulse_out = 0.65 * (pulse[0].get_output() + pulse[1].get_output());/*0.00752 **/
-    float tri_out = 0.15 * triangle.get_output();
-    float sample = pulse_out + tri_out;
+    float pulse_out = 0.45 * (0.5 * pulse[0].get_output() + 0.5 * pulse[1].get_output()*0.5);/*0.00752 **/
+    float tnd_out = 0.25 * (0.5 * triangle.get_output() + 0.25 * noise.get_output());
+    float sample = pulse_out + tnd_out;
     if (has_last) {
-        int damp_at = 10;
+        if (last_sample == 0 & sample != 0) {
+            sample = sample*0.5;
+        } else if (sample == 0 && last_sample != 0) {
+            sample = last_sample*0.5;
+        }
+        int damp_at = 1;
         float diff = abs(sample - last_sample);
         if (diff > damp_at) {
-            float factor = pow(0.95, diff-damp_at);
+            float factor = pow(0.99, diff-damp_at);
             sample = sample*factor+last_sample*(1-factor);
         }
     } else {
@@ -86,10 +92,23 @@ void APU::write_apu_reg(uint8_t reg, uint8_t data) {
             triangle.set_timer_hi(data);
             triangle.set_flag_linc_reload(true);
             break;
+        case 0xC:
+            noise.set_length_halt((data >> 5) & 0x1);
+            noise.set_constant_vol((data >> 4) & 0x1);
+            noise.set_vol(data & 0xF);
+            break;
+        case 0xE:
+            noise.set_mode((data >> 7) & 0x1);
+            noise.set_period(data & 0xF);
+            break;
+        case 0xF:
+            noise.set_length_counter(data >> 3);
+            break;
         case 0x15:
             pulse[0].set_enabled(data & 0x1);
             pulse[1].set_enabled((data >> 1) & 0x1);
             triangle.set_enabled((data >> 2) & 0x1);
+            noise.set_enabled((data >> 3) & 0x1);
             break;
         case 0x17:
             frameSeq->reset(data);

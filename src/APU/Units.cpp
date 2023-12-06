@@ -87,10 +87,12 @@ void FrameSequencer::do_length_clock() {
     apu->pulse[0].tick_sweep();
     apu->pulse[1].tick_sweep();
     apu->triangle.clock_length();
+    apu->noise.clock_length();
 }
 
 void FrameSequencer::do_env_clock() {
     apu->pulse[0].clock_env();
     apu->pulse[1].clock_env();
     apu->triangle.tick_lc();
+    apu->noise.clock_env();
 }

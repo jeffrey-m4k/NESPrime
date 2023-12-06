@@ -21,7 +21,7 @@ private:
 
     Pulse pulse[2] = {new Pulse(false), new Pulse(true)};
     Triangle triangle;
-//    Noise noise;
+    Noise noise;
 //    DMC dmc;
     FrameSequencer* frameSeq;
 

@@ -63,7 +63,7 @@ void NES::run(const std::string& filename) {
 void NES::tick(bool do_cpu, int times) {
     for (int i = 0; i < times; i++) {
         if (clock % 487 == 0) {
-            int16_t sample = apu->get_mixer() * 2500;
+            int16_t sample = apu->get_mixer() * 3000;
             const int sample_size = sizeof(int16_t) * 1;
             SDL_QueueAudio(apu->audio_device, &sample, sample_size);
         }

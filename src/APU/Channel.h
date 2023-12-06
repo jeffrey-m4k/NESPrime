@@ -11,6 +11,7 @@ public:
     ~Channel() = default;
     void set_enabled(bool enable) { enabled = enable; }
     void set_timer_hi(uint8_t hi);
+    void set_length_counter(uint8_t c);
     void set_timer_lo(uint8_t lo) { timer.set_lo(lo); }
     void set_length_halt(bool halt);
     void set_constant_vol(bool cv) { envelope.set_constant_vol(cv); }
@@ -78,7 +79,7 @@ public:
 
     uint8_t get_output() override;
 private:
-    uint8_t seq[32] = {
+    static constexpr uint8_t seq[32] = {
             15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
             0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
     };
@@ -89,7 +90,24 @@ private:
     bool flag_control = false;
     bool flag_linc_reload = false;
 };
-class Noise : public Channel {};
+
+class Noise : public Channel {
+public:
+    Noise() : Channel() { sequencer.steps = 1; }
+    void set_mode(bool m) { mode = m; }
+    void set_period(uint8_t p) { timer.set_period(periods[p%16]); }
+    void tick_timer();
+
+    uint8_t get_output() override;
+private:
+    static constexpr uint16_t periods[16] = {
+            4, 8, 16, 32, 64, 96, 128, 160, 202,
+            254, 380, 508, 762, 1016, 2034, 4068
+    };
+
+    bool mode;
+    uint16_t shifter = 1;
+};
 class DMC : public Channel {};
 
 

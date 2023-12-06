@@ -3,9 +3,13 @@
 
 void Channel::set_timer_hi(uint8_t hi) {
     timer.set_hi(hi);
-    if (!length_halt) length = length_lookup[(hi >> 3) & 0x1][hi >> 4];
-    envelope.restart();
+    set_length_counter(hi>>3);
     sequencer.reset();
+}
+
+void Channel::set_length_counter(uint8_t c) {
+    length = length_lookup[c&0x1][c>>1];
+    envelope.restart();
 }
 
 void Channel::set_length_halt(bool halt) {
@@ -45,11 +49,11 @@ void Pulse::tick_sweep() {
 }
 
 uint8_t Pulse::get_output() {
-    return (enabled && !muted) ? seq_out * envelope.get_volume() : 0;
+    return (enabled && timer.get_period() > 8 && !muted) ? seq_out * envelope.get_volume() : 0;
 }
 
 void Triangle::tick_timer() {
-    if (timer.clock() && (length > 0 && linear_counter > 0 || length_halt)) seq_out = sequencer.next();
+    if (timer.clock()) seq_out = sequencer.next();
 }
 
 void Triangle::tick_lc() {
@@ -59,5 +63,17 @@ void Triangle::tick_lc() {
 }
 
 uint8_t Triangle::get_output() {
-    return (enabled && (length > 0 && linear_counter > 0 || length_halt)) ? seq_out : 0;
+    return (enabled && timer.get_period() > 8 && (length > 0 && linear_counter > 0 || length_halt)) ? seq_out : 0;
+}
+
+void Noise::tick_timer() {
+    if (timer.clock()) {
+        bool feedback = (shifter & 0x1) ^ (mode ? ((shifter >> 6) & 0x1) : ((shifter >> 1) & 0x1));
+        shifter = (shifter >> 1) & ~0x8000;
+        shifter |= (feedback << 14);
+    }
+}
+
+uint8_t Noise::get_output() {
+    return (enabled && timer.get_period() > 8 && length > 0 && !(shifter & 0x1)) ? envelope.get_volume() : 0;
 }
