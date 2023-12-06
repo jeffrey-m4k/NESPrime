@@ -141,7 +141,7 @@ bool PPU::run() {
             // Clear oam2 from cycles 1-64
             if (scan_cycle >= 1 && scan_cycle <= 64 && scan_cycle % 2 == 0) {
                 oam2[scan_cycle / 2 - 1] = 0xFF;
-            } else if (scan_cycle == 65) {
+            } else if (scan_cycle == 257) {
                 inrange_sprites = 0;
                 //TODO maybe add optional support for bypassing 8-sprite limit
                 int n = 0;
@@ -157,20 +157,17 @@ bool PPU::run() {
                     if (inrange_sprites == 8) break;
                 }
                 // We emulate the hardware bug and treat each byte of the remaining sprites as a y-coordinate
-                if (n < 64) {
-                    for (; n < 64; n++) {
-                        for (int m = 0; m < 4; m++) {
-                            uint8_t faux_y = oam[n * 4 + m];
-                            if (faux_y <= scanline && (scanline - faux_y) < (tall_sprites ? 16 : 8)) {
-                                regs[PPUSTATUS] |= 0x20;
-                            } else {
-                                n++;
-                                m++;
-                            }
+                for (; n < 64; n++) {
+                    for (int m = 0; m < 4; m++) {
+                        uint8_t faux_y = oam[n * 4 + m];
+                        if (faux_y <= scanline && (scanline - faux_y) < (tall_sprites ? 16 : 8)) {
+                            regs[PPUSTATUS] |= 0x20;
+                        } else {
+                            n++;
+                            m++;
                         }
                     }
                 }
-            } else if (scan_cycle == 257) {
                 for (int s = 0; s < inrange_sprites; s++) {
                     for (int i = 0; i < 4; i++) {
                         scanline_sprites[s][i] = oam2[s*4+i];

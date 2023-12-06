@@ -92,8 +92,9 @@ void Cartridge::load() {
         PPU* ppu = nes->get_ppu();
 
         switch (mapper_num) {
-            case 0: mapper = new Mapper0(this); break;
+            case 0: mapper = new Mapper(this); break;
             case 2: mapper = new Mapper2(this); break;
+            case 3: mapper = new Mapper3(this); break;
             default: exit(EXIT_FAILURE);
         }
 

@@ -1,6 +1,8 @@
 #include "Mapper.h"
 
 Mapper::Mapper(Cartridge *cart) : cartridge(cart) {
+    prg_size = cartridge->get_prg_size();
+    chr_size = cartridge->get_chr_size();
     cpu_mem = cartridge->get_nes()->get_cpu()->get_mem()->get_mem();
     ppu_mem = cartridge->get_nes()->get_ppu()->get_mem()->get_mem();
     prg_rom = cartridge->get_prg_rom()->get_mem();
@@ -12,6 +14,10 @@ Mapper::Mapper(Cartridge *cart) : cartridge(cart) {
 
 uint8_t* Mapper::map_cpu(uint16_t addr) {
     if (addr < 0x2000) return cpu_mem + (addr % 0x800);
+    else if (addr >= 0x8000) {
+        if (prg_size != 0x8000) addr &= ~0x4000;
+        return prg_rom + (addr - 0x8000);
+    }
     else return nullptr;
 }
 
