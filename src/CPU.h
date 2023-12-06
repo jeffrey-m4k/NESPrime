@@ -56,7 +56,10 @@ public:
     void init() override;
     bool run();
     void trigger_nmi() { PIN_NMI = true; };
+    void trigger_irq() { PIN_IRQ = true; };
     uint8_t get_memory_reg(uint8_t num) { return memory_regs[num]; }
+
+    uint8_t memory_regs[24];
 protected:
     uint8_t read(int addr) override;
     uint8_t read(int addr, bool physical_read);
@@ -117,7 +120,7 @@ private:
     uint8_t oper();
 
     bool PIN_NMI = false;
-    bool PIN_INT = false;
+    bool PIN_IRQ = false;
 
     CYCLE state;
 
@@ -358,7 +361,6 @@ private:
     };;
 
     registers_6502 reg{};
-    uint8_t memory_regs[24];
 
     std::ostringstream regs_log;
     bool logging = false;

@@ -6,6 +6,7 @@
 #include "NES.h"
 #include "PPU.h"
 #include "IO.h"
+#include "APU/APU.h"
 
 CPU::CPU() : Processor() {
     this->CPU::reset();
@@ -777,6 +778,7 @@ bool CPU::write(const uint16_t addr, const uint8_t data) {
         }
         skip_cycles(512, WRITE);
     } else if (addr >= 0x4000 && addr < 0x4018) {
+        nes->get_apu()->write_apu_reg(addr-0x4000, data);
         memory_regs[addr-0x4000] = data;
     } else if (addr >= 0x4018 && addr <= 0x8000) { // temp ignore unmapped space
         return true;

@@ -4,13 +4,20 @@
 #include "Cartridge.h"
 #include "Display.h"
 #include "IO.h"
+#include "APU/APU.h"
+#include <SDL.h>
 
 NES::NES() {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) {
+        SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
+        exit(EXIT_FAILURE);
+    }
     set_cpu(new CPU());
     set_ppu(new PPU());
     set_cart(new Cartridge());
     set_display(new Display());
     set_io(new IO());
+    set_apu(new APU());
     out.open("out.txt");
 }
 
@@ -55,8 +62,14 @@ void NES::run(const std::string& filename) {
 
 void NES::tick(bool do_cpu, int times) {
     for (int i = 0; i < times; i++) {
+        if (clock % 487 == 0) {
+            int16_t sample = apu->get_mixer() * 250000;
+            const int sample_size = sizeof(int16_t) * 1;
+            SDL_QueueAudio(apu->audio_device, &sample, sample_size);
+        }
         if (cpu->get_memory_reg(0x16) & 0x1) io->poll();
         if (clock % 12 == 0 && do_cpu) cpu->run();
+        if (clock % 12 == 0) apu->cycle();
         if (clock % 4 == 0) ppu->run();
 
         clock++;
@@ -87,4 +100,9 @@ void NES::set_display(Display* display) {
 void NES::set_io(IO* io) {
     this->io = io;
     io->set_nes(this);
+}
+
+void NES::set_apu(APU* apu) {
+    this->apu = apu;
+    apu->set_nes(this);
 }

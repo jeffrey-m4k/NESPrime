@@ -10,6 +10,7 @@ class Cartridge;
 class Bus;
 class Display;
 class IO;
+class APU;
 
 class NES {
 public:
@@ -25,11 +26,13 @@ public:
     Cartridge* get_cart() { return cart; }
     Display* get_display() { return display; }
     IO* get_io() { return io; }
+    APU* get_apu() { return apu; }
     void set_cpu(CPU* cpu);
     void set_ppu(PPU* ppu);
     void set_cart(Cartridge* cart);
     void set_display(Display* display);
     void set_io(IO* io);
+    void set_apu(APU* apu);
 
     long get_clock() { return clock; };
 
@@ -41,6 +44,7 @@ private:
     PPU* ppu;
     Display* display;
     IO* io;
+    APU* apu;
 
     long clock = 0;
     constexpr static const int CPS = 21477272;

@@ -4,11 +4,6 @@
 #include <windows.h>
 
 bool Display::init() {
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
-        return false;
-    }
-
     window_pt = SDL_CreateWindow("sdl2_pixelbuffer", 16, 16, 512,256, SDL_WINDOW_RESIZABLE);
     window_nt = SDL_CreateWindow("sdl2_pixelbuffer", 16, 544, 512,240, SDL_WINDOW_RESIZABLE);
     window_main = SDL_CreateWindow("sdl2_pixelbuffer",
