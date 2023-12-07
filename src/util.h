@@ -1,6 +1,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <cstdint>
 #include <iostream>
 #include <iomanip>
 using std::hex, std::dec, std::uppercase, std::setw, std::cout, std::endl;

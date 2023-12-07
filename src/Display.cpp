@@ -1,16 +1,18 @@
 #include "Display.h"
 #include "PPU.h"
+#include "UI.h"
 #include <SDL.h>
+#include <SDL_ttf.h>
 #include <windows.h>
 
 bool Display::init() {
-    window_pt = SDL_CreateWindow("sdl2_pixelbuffer", 16, 16, 512,256, SDL_WINDOW_RESIZABLE);
-    window_nt = SDL_CreateWindow("sdl2_pixelbuffer", 16, 544, 512,240, SDL_WINDOW_RESIZABLE);
-    window_main = SDL_CreateWindow("sdl2_pixelbuffer",
+    window_pt = SDL_CreateWindow("Pattern Tables", 16, 16, 512,256, SDL_WINDOW_RESIZABLE);
+    window_nt = SDL_CreateWindow("Nametables", 16, 544, 512,240, SDL_WINDOW_RESIZABLE);
+    window_main = SDL_CreateWindow("Main",
                                    SDL_WINDOWPOS_CENTERED,
                                    SDL_WINDOWPOS_CENTERED,
-                                          WIDTH*3,
-                                          HEIGHT*3,
+                                   WIDTH*3,
+                                   HEIGHT*3,
                                    SDL_WINDOW_RESIZABLE);
 
     if (window_main == nullptr || window_pt == nullptr || window_nt == nullptr) {
@@ -18,9 +20,7 @@ bool Display::init() {
         return false;
     }
 
-
-
-    renderer_main = SDL_CreateRenderer(window_main, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    renderer_main = SDL_CreateRenderer(window_main, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
     renderer_pt = SDL_CreateRenderer(window_pt, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     renderer_nt = SDL_CreateRenderer(window_nt, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
@@ -29,17 +29,24 @@ bool Display::init() {
         return false;
     }
 
-    SDL_RenderSetLogicalSize(renderer_main, WIDTH, HEIGHT);
+    SDL_RenderSetLogicalSize(renderer_main, WIDTH*4, HEIGHT*4);
     SDL_RenderSetLogicalSize(renderer_pt, 256, 128);
     SDL_RenderSetLogicalSize(renderer_nt, 512, 240);
 
-    texture_main = SDL_CreateTexture(renderer_main, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, WIDTH, HEIGHT);
+    texture_game = SDL_CreateTexture(renderer_main, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, WIDTH, HEIGHT);
     texture_pt = SDL_CreateTexture(renderer_pt, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, 256, 128);
     texture_nt = SDL_CreateTexture(renderer_nt, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, 512, 240);
-    if (texture_main == nullptr || texture_pt == nullptr || texture_nt == nullptr) {
+    if (texture_game == nullptr || texture_pt == nullptr || texture_nt == nullptr) {
         SDL_Log("Unable to create texture: %s", SDL_GetError());
         return false;
     }
+
+
+    texture_main_base = SDL_CreateTexture(renderer_main, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, WIDTH*4, HEIGHT*4);
+    texture_main_ui = SDL_CreateTexture(renderer_main, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, WIDTH*4, HEIGHT*4);
+    SDL_SetTextureBlendMode(texture_game, SDL_BLENDMODE_BLEND);
+    SDL_SetTextureBlendMode(texture_main_ui, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawBlendMode(renderer_main, SDL_BLENDMODE_BLEND);
 
     fps_lasttime = SDL_GetTicks();
     fps_current = 0;
@@ -81,16 +88,24 @@ bool Display::update_nt() {
 bool Display::refresh() {
     int texture_pitch = 0;
     void *texture_pixels = nullptr;
-    if (SDL_LockTexture(texture_main, nullptr, &texture_pixels, &texture_pitch) != 0) {
+    if (SDL_LockTexture(texture_game, nullptr, &texture_pixels, &texture_pitch) != 0) {
         SDL_Log("Unable to lock texture: %s", SDL_GetError());
     } else {
         memcpy(texture_pixels, pixels, texture_pitch * HEIGHT);
     }
-    SDL_UnlockTexture(texture_main);
+    SDL_UnlockTexture(texture_game);
 
     SDL_RenderClear(renderer_main);
-    SDL_RenderCopy(renderer_main, texture_main, nullptr, nullptr);
+    SDL_SetRenderTarget(renderer_main, texture_main_base);
+    SDL_RenderCopy(renderer_main, texture_game, nullptr, nullptr);
+
+    if (nes->get_ui()->get_show()) nes->get_ui()->draw();
+
+    SDL_SetRenderTarget(renderer_main, nullptr);
+    SDL_RenderCopy(renderer_main, texture_main_base, nullptr, nullptr);
     SDL_RenderPresent(renderer_main);
+//    SDL_FreeSurface(surfaceMessage);
+//    SDL_DestroyTexture(Message);
 
     fps_frames++;
     if (fps_lasttime < SDL_GetTicks() - 1000) {
@@ -98,11 +113,15 @@ bool Display::refresh() {
         fps_current = fps_frames;
         fps_frames = 0;
     }
-    SDL_SetWindowTitle(window_main, ("FPS:" + std::to_string(fps_current)).c_str());
+    SDL_SetWindowTitle(window_main, ("[" + nes->filename + "] FPS:" + std::to_string(fps_current)).c_str());
 
     last_update = SDL_GetTicks();
 
     return true;
+}
+
+void Display::set_show_sys_texture(bool show) {
+    show_sys_texture = show;
 }
 
 void Display::black() {
@@ -114,9 +133,10 @@ void Display::black() {
 }
 
 void Display::close() {
-    SDL_DestroyTexture(texture_main);
+    SDL_DestroyTexture(texture_game);
     SDL_DestroyTexture(texture_pt);
     SDL_DestroyTexture(texture_nt);
+    SDL_DestroyTexture(texture_main_ui);
     SDL_DestroyRenderer(renderer_main);
     SDL_DestroyRenderer(renderer_pt);
     SDL_DestroyRenderer(renderer_nt);

@@ -2,12 +2,13 @@
 #include "CPU.h"
 #include "Display.h"
 #include "util.h"
+#include "data.h"
 #include <cmath>
 
 PPU::PPU() : Processor() {
     this->PPU::reset();
     this->regs[PPUSTATUS] = 0x0;
-    this->set_palette("Smooth (FBX).pal");
+    this->set_default_palette();
 }
 
 void PPU::reset() {
@@ -250,7 +251,7 @@ bool PPU::run() {
             }
         }
     } else if ((v & 0x3F00) == 0x3F00 && scan_cycle >= 1 && scan_cycle <= 256 && scanline >= 0 && scanline <= 239) {
-        // Background palette hack
+        // Background palette_data hack
         nes->get_display()->set_pixel_buffer(scan_cycle - 1, scanline, rgb_palette[read(v)]);
     }
 
@@ -360,6 +361,14 @@ void PPU::set_palette(std::string palFileName) {
     }
 }
 
+void PPU::set_default_palette() {
+    for (int col = 0; col < 64; col++) {
+        rgb_palette[col][0] = palette_data[col*3];
+        rgb_palette[col][1] = palette_data[col*3+1];
+        rgb_palette[col][2] = palette_data[col*3+2];
+    }
+}
+
 uint8_t* PPU::bgr_base_rgb() {
     uint8_t col = read(0x3F00);
     if ((regs[PPUMASK] >> 0) & 0x1) { col &= 0x30; }
@@ -430,4 +439,5 @@ uint8_t PPU::read(int addr) {
 bool PPU::write(const uint16_t addr, const uint8_t data) {
     if (addr >= 0x3F00) palette[mirror_palette_addr(addr)] = data;
     else *mapper->map_ppu(addr) = data;
+    return true;
 }

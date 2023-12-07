@@ -3,9 +3,10 @@
 #define SDL_MAIN_HANDLED
 
 #include <iostream>
+#include "SDL.h"
 
-int main() {
+int main(int argc, char *argv[]) {
     NES* nes = new NES();
 
-    nes->run("roms/mapper2/Castlevania.nes");
+    nes->run();
 }

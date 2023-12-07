@@ -25,6 +25,8 @@ public:
     void write_oam(uint8_t byte, uint8_t data);
 
     void set_palette(std::string palFileName);
+    void set_default_palette();
+
     short get_x() { return scan_cycle; }
     short get_y() { return scanline; }
     long get_frame() { return frame; }

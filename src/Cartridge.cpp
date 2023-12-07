@@ -71,6 +71,7 @@ bool Cartridge::read_header() {
 }
 
 void Cartridge::load() {
+    pos = 0;
     if (read_header()) {
         print_metadata();
 

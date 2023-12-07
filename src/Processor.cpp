@@ -1,5 +1,3 @@
-#include <algorithm>
-#include <iostream>
 #include "Processor.h"
 
 Processor::Processor() {

@@ -11,6 +11,7 @@ class Bus;
 class Display;
 class IO;
 class APU;
+class UI;
 
 class NES {
 public:
@@ -27,16 +28,19 @@ public:
     Display* get_display() { return display; }
     IO* get_io() { return io; }
     APU* get_apu() { return apu; }
+    UI* get_ui() { return ui; }
     void set_cpu(CPU* cpu);
     void set_ppu(PPU* ppu);
     void set_cart(Cartridge* cart);
     void set_display(Display* display);
     void set_io(IO* io);
     void set_apu(APU* apu);
+    void set_ui(UI* ui);
 
     long get_clock() { return clock; };
 
     std::ofstream out;
+    std::string filename;
 private:
     Cartridge* cart;
     Bus* bus;
@@ -45,6 +49,7 @@ private:
     Display* display;
     IO* io;
     APU* apu;
+    UI* ui;
 
     long clock = 0;
     constexpr static const int CPS = 21477272;

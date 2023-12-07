@@ -4,11 +4,13 @@
 #include "Cartridge.h"
 #include "Display.h"
 #include "IO.h"
+#include "UI.h"
 #include "APU/APU.h"
 #include <SDL.h>
+#include <SDL_ttf.h>
 
 NES::NES() {
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0 || TTF_Init() != 0) {
         SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
         exit(EXIT_FAILURE);
     }
@@ -18,6 +20,7 @@ NES::NES() {
     set_display(new Display());
     set_io(new IO());
     set_apu(new APU());
+    set_ui(new UI());
     out.open("out.txt");
 }
 
@@ -26,9 +29,7 @@ NES::~NES() {
 }
 
 void NES::run() {
-    cart->load();
-    cpu->init();
-    display->refresh();
+    ui->init();
 
     int cycles_per_frame = CPS/60;
     cycles_delta = 0;
@@ -38,25 +39,44 @@ void NES::run() {
         SDL_Event event;
 
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE) quit = true;
+            if (event.type == SDL_QUIT) quit = true;
+            else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE) {
+                SDL_Window* window = SDL_GetWindowFromID(event.window.windowID);
+                if (SDL_GetWindowID(window) == 3) quit = true;
+                else SDL_HideWindow(window);
+            } else if (event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+                if (ui->get_state() == PAUSE) ui->set_show(!ui->get_show());
+            } else if (ui->get_show() && event.type == SDL_KEYDOWN) ui->handle(event);
         };
 
-        while (cycles_delta < cycles_per_frame) {
-            tick(true, 1);
-        }
+        if (!ui->get_show()) {
+            while (cycles_delta < cycles_per_frame) {
+                tick(true, 1);
+            }
 
-        if (SDL_GetTicks() - display->last_update >= 1000/60) {
-            cycles_delta -= cycles_per_frame;
-            display->refresh();
-            ppu->output_pt();
-            ppu->output_nt();
+            if (SDL_GetTicks() - display->last_update >= 1000 / 60) {
+                cycles_delta -= cycles_per_frame;
+                display->refresh();
+                ppu->output_pt();
+                ppu->output_nt();
+            }
+        } else {
+            if (SDL_GetTicks() - display->last_update >= 1000 / 60) {
+                ui->tick();
+                display->refresh();
+            }
         }
     }
 }
 
 void NES::run(const std::string& filename) {
     if (cart->open_file(filename)) {
-        run();
+        this->filename = filename.substr(filename.find_last_of('/') + 1, filename.length());
+        cart->load();
+        cpu->init();
+        ui->set_state(PAUSE);
+        ui->set_show(false);
+        SDL_Delay(250);
     }
 }
 
@@ -105,4 +125,9 @@ void NES::set_io(IO* io) {
 void NES::set_apu(APU* apu) {
     this->apu = apu;
     apu->set_nes(this);
+}
+
+void NES::set_ui(UI* ui) {
+    this->ui = ui;
+    ui->set_nes(this);
 }

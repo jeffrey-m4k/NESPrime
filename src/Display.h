@@ -22,6 +22,11 @@ public:
     void write_nt_pixel(int tile, uint8_t x, uint8_t y, bool nt2, const uint8_t rgb[3]);
     void push_buffer();
     uint8_t* get_pixels() { return pixels; }
+    void set_show_sys_texture(bool show);
+    SDL_Renderer* get_main_renderer() { return renderer_main; }
+    SDL_Texture* get_base_texture() { return texture_main_base; }
+    SDL_Texture* get_sys_texture() { return texture_main_ui; }
+    void set_sys_texture(SDL_Texture* tex) { texture_main_ui = tex; }
 public:
     uint32_t last_update = 0;
 private:
@@ -31,7 +36,7 @@ private:
     SDL_Renderer *renderer_main;
     SDL_Renderer *renderer_pt;
     SDL_Renderer *renderer_nt;
-    SDL_Texture *texture_main;
+    SDL_Texture *texture_game;
     SDL_Texture *texture_pt;
     SDL_Texture *texture_nt;
 
@@ -44,6 +49,10 @@ private:
     uint32_t fps_lasttime;
     uint32_t fps_current;
     uint32_t fps_frames;
+
+    SDL_Texture* texture_main_base;
+    SDL_Texture* texture_main_ui = nullptr;
+    bool show_sys_texture = false;
 };
 
 #endif

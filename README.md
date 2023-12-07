@@ -10,12 +10,14 @@ NESPrime is a simple NES emulator written in C++ using the SDL2 library.
 - Supports a few popular mappers, with more on the way
 
 ### Keybinds
-- Keybinds are currently not customizable:
+- Console:
   - A: Z
   - B: X
   - Select: TAB
   - Start: ENTER
   - D-Pad: Arrow Keys
+- Emulator:
+  - Pause: ESC
  
 ### Supported Mappers:
   - 0 (NROM)
