@@ -57,7 +57,6 @@ public:
     bool run();
     void trigger_nmi() { PIN_NMI = true; };
     void trigger_irq() { PIN_IRQ = true; };
-    uint8_t get_memory_reg(uint8_t num) { return memory_regs[num]; }
 
     uint8_t memory_regs[24];
 protected:
@@ -65,7 +64,6 @@ protected:
     uint8_t read(int addr, bool physical_read);
     bool write(uint16_t addr, uint8_t data) override;
 private:
-    uint8_t addr_to_ppu(const uint16_t addr);
     void interrupt(INTERRUPT_TYPE type);
     void skip_cycles(int num, CYCLE type);
     void exec(uint8_t opcode);

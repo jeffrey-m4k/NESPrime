@@ -51,8 +51,8 @@ void NES::run() {
             };
 
             if (!ui->get_show()) {
-                ppu->output_pt();
-                ppu->output_nt();
+//                ppu->output_pt();
+//                ppu->output_nt();
 
                 display->refresh();
             } else {
@@ -78,7 +78,7 @@ void NES::run(const std::string& filename) {
 
 void NES::tick(bool do_cpu, int times) {
     for (int i = 0; i < times; i++) {
-        if (cpu->get_memory_reg(0x16) & 0x1) io->poll();
+        if (cpu->memory_regs[0x16] & 0x1) io->poll();
         if (clock % 12 == 0 && do_cpu) cpu->run();
         if (clock % 4 == 0) ppu->run();
         if (clock % 12 == 0) apu->cycle();

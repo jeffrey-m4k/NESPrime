@@ -7,7 +7,7 @@
 bool Display::init() {
     window_pt = SDL_CreateWindow("Pattern Tables", 16, 16, 512,256, SDL_WINDOW_RESIZABLE);
     window_nt = SDL_CreateWindow("Nametables", 16, 544, 512,240, SDL_WINDOW_RESIZABLE);
-    window_main = SDL_CreateWindow("Main",
+    window_main = SDL_CreateWindow("NESPrime",
                                    SDL_WINDOWPOS_CENTERED,
                                    SDL_WINDOWPOS_CENTERED,
                                    WIDTH*3,
@@ -18,6 +18,8 @@ bool Display::init() {
         SDL_Log("Unable to create window: %s", SDL_GetError());
         return false;
     }
+    SDL_HideWindow(window_pt);
+    SDL_HideWindow(window_nt);
 
     renderer_main = SDL_CreateRenderer(window_main, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
     renderer_pt = SDL_CreateRenderer(window_pt, -1, SDL_RENDERER_ACCELERATED);
@@ -103,8 +105,6 @@ bool Display::refresh() {
     SDL_SetRenderTarget(renderer_main, nullptr);
     SDL_RenderCopy(renderer_main, texture_main_base, nullptr, nullptr);
     SDL_RenderPresent(renderer_main);
-//    SDL_FreeSurface(surfaceMessage);
-//    SDL_DestroyTexture(Message);
 
     fps_frames++;
     if (fps_lasttime < SDL_GetTicks() - 1000) {
@@ -112,7 +112,7 @@ bool Display::refresh() {
         fps_current = fps_frames;
         fps_frames = 0;
     }
-    SDL_SetWindowTitle(window_main, ("[" + nes->filename + "] FPS:" + std::to_string(fps_current)).c_str());
+    //SDL_SetWindowTitle(window_main, ("[" + nes->filename + "] FPS:" + std::to_string(fps_current)).c_str());
 
     //last_update = SDL_GetTicks();
 

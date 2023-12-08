@@ -32,6 +32,8 @@ private:
 
     std::vector<int16_t> sample_buffer;
     float sample_clock = 0;
+
+    static constexpr float sample_per = 21477272/44100.0/12.0;
 };
 
 #endif

@@ -1,6 +1,5 @@
 #include "APU.h"
 #include "../CPU.h"
-#include <math.h>
 
 APU::APU() {
     SDL_setenv("SDL_AUDIODRIVER", "directsound", 1);
@@ -35,11 +34,11 @@ void APU::cycle() {
 }
 
 void APU::sample() {
-    if (++sample_clock >= 40.73) {
+    if (++sample_clock >= sample_per) {
         sample_buffer.push_back(get_mixer() * 500);
-        sample_clock -= 40.73;
+        sample_clock -= sample_per;
     }
-    if (sample_buffer.size() >= 100) {
+    if (sample_buffer.size() >= 10) {
         SDL_QueueAudio(audio_device, sample_buffer.data(), sample_buffer.size() * 2);
         sample_buffer.clear();
         while (SDL_GetQueuedAudioSize(audio_device) > 4096 * 2) {};

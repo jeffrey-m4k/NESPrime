@@ -54,7 +54,7 @@ public:
     explicit Mapper3(Cartridge* cart) : Mapper(cart) {};
     uint8_t* map_ppu(uint16_t address) override {
         if (address >= 0x2000) return Mapper::map_ppu(address);
-        return chr_rom + ((bank+1) * 0x2000) + (address - 0x2000);
+        return chr_rom + bank * 0x2000 + address;
     }
     void set_bank(uint8_t num) override {
         bank = num & 0x3;//((chr_size / 0x2000) - 1);
