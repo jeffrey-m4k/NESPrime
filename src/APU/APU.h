@@ -5,6 +5,7 @@
 #include "../Component.h"
 #include "Channel.h"
 #include "Units.h"
+#include <vector>
 
 class APU : public Component {
 public:
@@ -13,6 +14,8 @@ public:
     ~APU();
     void cycle();
     void write_apu_reg(uint8_t reg, uint8_t data);
+private:
+    void sample();
     float get_mixer();
 public:
     SDL_AudioDeviceID audio_device;
@@ -27,8 +30,8 @@ private:
 
     bool tick_fs = false;
 
-    float last_sample = 0;
-    bool has_last = false;
+    std::vector<int16_t> sample_buffer;
+    float sample_clock = 0;
 };
 
 #endif

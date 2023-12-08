@@ -37,8 +37,6 @@ public:
     void set_apu(APU* apu);
     void set_ui(UI* ui);
 
-    long get_clock() { return clock; };
-
     std::ofstream out;
     std::string filename;
 private:
@@ -52,9 +50,6 @@ private:
     UI* ui;
 
     long clock = 0;
-    constexpr static const int CPS = 21477272;
-    constexpr static const double CLOCK_SPEED = 1.0 / CPS;
-    int cycles_delta = 0;
 };
 
 

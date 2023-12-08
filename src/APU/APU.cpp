@@ -3,6 +3,7 @@
 #include <math.h>
 
 APU::APU() {
+    SDL_setenv("SDL_AUDIODRIVER", "directsound", 1);
     SDL_zero(audio_spec);
     audio_spec.freq = 44100;
     audio_spec.format = AUDIO_S16SYS;
@@ -30,28 +31,25 @@ void APU::cycle() {
         tick_fs = false;
     } else tick_fs = true;
     triangle.tick_timer();
+    sample();
+}
+
+void APU::sample() {
+    if (++sample_clock >= 40.73) {
+        sample_buffer.push_back(get_mixer() * 500);
+        sample_clock -= 40.73;
+    }
+    if (sample_buffer.size() >= 100) {
+        SDL_QueueAudio(audio_device, sample_buffer.data(), sample_buffer.size() * 2);
+        sample_buffer.clear();
+        while (SDL_GetQueuedAudioSize(audio_device) > 4096 * 2) {};
+    }
 }
 
 float APU::get_mixer() {
-    float pulse_out = 0.45 * (0.5 * pulse[0].get_output() + 0.5 * pulse[1].get_output()*0.5);/*0.00752 **/
-    float tnd_out = 0.25 * (0.5 * triangle.get_output() + 0.25 * noise.get_output());
+    float pulse_out = 0.65 * (0.5 * pulse[0].get_output() + 0.5 * pulse[1].get_output()*0.5);/*0.00752 **/
+    float tnd_out = 0.35 * (0.5 * triangle.get_output() + 0.75 * noise.get_output());
     float sample = pulse_out + tnd_out;
-    if (has_last) {
-        if (last_sample == 0 & sample != 0) {
-            sample = sample*0.5;
-        } else if (sample == 0 && last_sample != 0) {
-            sample = last_sample*0.5;
-        }
-        int damp_at = 1;
-        float diff = abs(sample - last_sample);
-        if (diff > damp_at) {
-            float factor = pow(0.99, diff-damp_at);
-            sample = sample*factor+last_sample*(1-factor);
-        }
-    } else {
-        last_sample = sample;
-        has_last = true;
-    }
     return sample;
 }
 

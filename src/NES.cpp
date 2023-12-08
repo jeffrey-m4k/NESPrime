@@ -14,6 +14,7 @@ NES::NES() {
         SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
         exit(EXIT_FAILURE);
     }
+
     set_cpu(new CPU());
     set_ppu(new PPU());
     set_cart(new Cartridge());
@@ -31,40 +32,35 @@ NES::~NES() {
 void NES::run() {
     ui->init();
 
-    int cycles_per_frame = CPS/60;
-    cycles_delta = 0;
-
     bool quit = false;
     while (!quit) {
-        SDL_Event event;
+        if (!ui->get_show()) tick(true, 1);
 
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) quit = true;
-            else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE) {
-                SDL_Window* window = SDL_GetWindowFromID(event.window.windowID);
-                if (SDL_GetWindowID(window) == 3) quit = true;
-                else SDL_HideWindow(window);
-            } else if (event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
-                if (ui->get_state() == PAUSE) ui->set_show(!ui->get_show());
-            } else if (ui->get_show() && event.type == SDL_KEYDOWN) ui->handle(event);
-        };
+        Uint32 t = SDL_GetTicks();
+        if (t - display->last_update >= 1000 / 60) {
+            SDL_Event event;
+            while (SDL_PollEvent(&event)) {
+                if (event.type == SDL_QUIT) quit = true;
+                else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE) {
+                    SDL_Window *window = SDL_GetWindowFromID(event.window.windowID);
+                    if (SDL_GetWindowID(window) == 3) quit = true;
+                    else SDL_HideWindow(window);
+                } else if (event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+                    if (ui->get_state() == PAUSE) ui->set_show(!ui->get_show());
+                } else if (ui->get_show() && event.type == SDL_KEYDOWN) ui->handle(event);
+            };
 
-        if (!ui->get_show()) {
-            while (cycles_delta < cycles_per_frame) {
-                tick(true, 1);
-            }
-
-            if (SDL_GetTicks() - display->last_update >= 1000 / 60) {
-                cycles_delta -= cycles_per_frame;
-                display->refresh();
+            if (!ui->get_show()) {
                 ppu->output_pt();
                 ppu->output_nt();
-            }
-        } else {
-            if (SDL_GetTicks() - display->last_update >= 1000 / 60) {
+
+                display->refresh();
+            } else {
                 ui->tick();
                 display->refresh();
             }
+
+            display->last_update = t;
         }
     }
 }
@@ -82,18 +78,12 @@ void NES::run(const std::string& filename) {
 
 void NES::tick(bool do_cpu, int times) {
     for (int i = 0; i < times; i++) {
-        if (clock % 487 == 0) {
-            int16_t sample = apu->get_mixer() * 3000;
-            const int sample_size = sizeof(int16_t) * 1;
-            SDL_QueueAudio(apu->audio_device, &sample, sample_size);
-        }
         if (cpu->get_memory_reg(0x16) & 0x1) io->poll();
         if (clock % 12 == 0 && do_cpu) cpu->run();
-        if (clock % 12 == 0) apu->cycle();
         if (clock % 4 == 0) ppu->run();
+        if (clock % 12 == 0) apu->cycle();
 
         clock++;
-        cycles_delta++;
     }
 }
 

@@ -3,7 +3,6 @@
 #include "UI.h"
 #include <SDL.h>
 #include <SDL_ttf.h>
-#include <windows.h>
 
 bool Display::init() {
     window_pt = SDL_CreateWindow("Pattern Tables", 16, 16, 512,256, SDL_WINDOW_RESIZABLE);
@@ -20,9 +19,9 @@ bool Display::init() {
         return false;
     }
 
-    renderer_main = SDL_CreateRenderer(window_main, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
-    renderer_pt = SDL_CreateRenderer(window_pt, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    renderer_nt = SDL_CreateRenderer(window_nt, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    renderer_main = SDL_CreateRenderer(window_main, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
+    renderer_pt = SDL_CreateRenderer(window_pt, -1, SDL_RENDERER_ACCELERATED);
+    renderer_nt = SDL_CreateRenderer(window_nt, -1, SDL_RENDERER_ACCELERATED);
 
     if (renderer_main == nullptr || renderer_pt == nullptr || renderer_nt == nullptr) {
         SDL_Log("Unable to create renderer: %s", SDL_GetError());
@@ -115,7 +114,7 @@ bool Display::refresh() {
     }
     SDL_SetWindowTitle(window_main, ("[" + nes->filename + "] FPS:" + std::to_string(fps_current)).c_str());
 
-    last_update = SDL_GetTicks();
+    //last_update = SDL_GetTicks();
 
     return true;
 }
