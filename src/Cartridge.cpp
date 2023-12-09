@@ -87,13 +87,17 @@ void Cartridge::load() {
         if (chr_size) {
             chr_rom.init(chr_size);
             read_next(chr_rom, 0, chr_size);
-        } else chr_ram.init(0x2000);
+        } else {
+            chr_size = 0x2000;
+            chr_ram.init(0x2000);
+        }
 
         CPU* cpu = nes->get_cpu();
         PPU* ppu = nes->get_ppu();
 
         switch (mapper_num) {
             case 0: mapper = new Mapper(this); break;
+            case 1: mapper = new Mapper1(this); break;
             case 2: mapper = new Mapper2(this); break;
             case 3: mapper = new Mapper3(this); break;
             default: exit(EXIT_FAILURE);

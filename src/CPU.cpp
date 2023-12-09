@@ -778,11 +778,11 @@ bool CPU::write(const uint16_t addr, const uint8_t data) {
     } else if (addr >= 0x4000 && addr < 0x4018) {
         nes->get_apu()->write_apu_reg(addr-0x4000, data);
         memory_regs[addr-0x4000] = data;
-    } else if (addr >= 0x4018 && addr <= 0x8000) { // temp ignore unmapped space
+    } else if (addr >= 0x4018 && addr < 0x6000) { // temp ignore unmapped space
         return true;
     } else {
-        *mapper->map_cpu(addr) = data;
-        if (addr >= 0x8000) mapper->set_bank(data);
+        if (addr < 0x8000 && nes->get_cart()->get_prg_ram() != nullptr) *mapper->map_cpu(addr) = data;
+        mapper->handle_write(data, addr);
     }
     return true;
 }

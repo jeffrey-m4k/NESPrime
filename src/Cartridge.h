@@ -20,7 +20,7 @@ public:
     std::ifstream& get_file() { return file; }
 
     uint32_t get_prg_size() const { return prg_size; }
-    uint32_t get_chr_size() const { return prg_size; }
+    uint32_t get_chr_size() const { return chr_size; }
     Memory* get_prg_rom() { return &prg_rom; }
     Memory* get_chr_rom() { return &chr_rom; }
     Memory* get_prg_ram() { return &prg_ram; }

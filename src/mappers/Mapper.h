@@ -7,7 +7,7 @@
 #include "../CPU.h"
 
 enum MIRRORING {
-    Horizontal, Vertical, OneScreen, FourScreen
+    Horizontal, Vertical, OneScreen_LB, OneScreen_HB, FourScreen
 };
 
 class Mapper {
@@ -16,13 +16,14 @@ public:
     ~Mapper() = default;
     virtual uint8_t* map_cpu(uint16_t addr);
     virtual uint8_t* map_ppu(uint16_t addr);
-    virtual void set_bank(uint8_t num) { bank = num; }
+    virtual void handle_write(uint8_t data, uint16_t addr) {};
     void set_mirroring(MIRRORING mirr) { mirroring = mirr; }
     MIRRORING get_mirroring() { return mirroring; }
 protected:
     Cartridge* cartridge;
     MIRRORING mirroring;
-    uint8_t bank = 0;
+    uint8_t bank_prg = 0;
+    uint8_t bank_chr = 0;
     uint32_t prg_size;
     uint32_t chr_size;
 
@@ -34,6 +35,22 @@ protected:
     uint8_t* chr_ram;
 };
 
+class Mapper1 : public Mapper {
+public:
+    explicit Mapper1(Cartridge* cart) : Mapper(cart) {};
+    uint8_t* map_cpu(uint16_t address) override;
+    uint8_t* map_ppu(uint16_t address) override;
+    void handle_write(uint8_t data, uint16_t addr) override;
+private:
+    uint8_t shifter = 1;
+
+    uint8_t bankmode_prg = 3;
+    uint8_t bankmode_chr = 1;
+
+    uint8_t bank_chr_2 = 1;
+
+    long last_write = 0;
+};
 
 class Mapper2 : public Mapper {
 public:
@@ -41,10 +58,11 @@ public:
     uint8_t* map_cpu(uint16_t address) override {
         if (address < 0x8000) return Mapper::map_cpu(address);
         if (address >= 0xC000) return prg_rom + (prg_size - 0x4000) + (address - 0xC000);
-        else return prg_rom + (bank * 0x4000) + (address - 0x8000);
+        else return prg_rom + (bank_prg * 0x4000) + (address - 0x8000);
     }
-    void set_bank(uint8_t num) override {
-        bank = num & ((prg_size / 0x4000) - 1);
+    void handle_write(uint8_t data, uint16_t addr) override {
+        if (addr < 0x8000) return;
+        bank_prg = data & ((prg_size / 0x4000) - 1);
     }
 };
 
@@ -54,10 +72,11 @@ public:
     explicit Mapper3(Cartridge* cart) : Mapper(cart) {};
     uint8_t* map_ppu(uint16_t address) override {
         if (address >= 0x2000) return Mapper::map_ppu(address);
-        return chr_rom + bank * 0x2000 + address;
+        return chr_rom + bank_chr * 0x2000 + address;
     }
-    void set_bank(uint8_t num) override {
-        bank = num & 0x3;//((chr_size / 0x2000) - 1);
+    void handle_write(uint8_t data, uint16_t addr) override {
+        if (addr < 0x8000) return;
+        bank_chr = data & 0x3;//((chr_size / 0x2000) - 1);
     }
 };
 
