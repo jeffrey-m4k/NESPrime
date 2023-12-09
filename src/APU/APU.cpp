@@ -87,7 +87,7 @@ void APU::write_apu_reg(uint8_t reg, uint8_t data) {
             break;
         case 0xB:
             triangle.set_timer_hi(data);
-            triangle.set_flag_linc_reload(true);
+            triangle.set_flag_linc_reload();
             break;
         case 0xC:
             noise.set_length_halt((data >> 5) & 0x1);

@@ -49,17 +49,17 @@ void Pulse::tick_sweep() {
 }
 
 uint8_t Pulse::get_output() {
-    return (enabled && timer.get_period() > 8 && !muted) ? seq_out * envelope.get_volume() : 0;
+    return (enabled && timer.get_period() > 8 && !muted && length > 0) ? seq_out * envelope.get_volume() : 0;
 }
 
 void Triangle::tick_timer() {
-    if (timer.clock()) seq_out = sequencer.next();
+    if (timer.clock() && length > 0 && linear_counter > 0) seq_out = sequencer.next();
 }
 
 void Triangle::tick_lc() {
     if (flag_linc_reload) linear_counter = counter_reload_val;
     else if (linear_counter > 0) linear_counter--;
-    if (!flag_control) flag_linc_reload = false;
+    if (!length_halt) flag_linc_reload = false;
 }
 
 uint8_t Triangle::get_output() {

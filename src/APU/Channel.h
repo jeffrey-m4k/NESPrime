@@ -9,7 +9,7 @@ class Channel {
 public:
     Channel() : timer(0), sequencer(8) {};
     ~Channel() = default;
-    void set_enabled(bool enable) { enabled = enable; }
+    void set_enabled(bool enable) { enabled = enable; if (!enable) { length = 0; length_halt = true; } }
     void set_timer_hi(uint8_t hi);
     void set_length_counter(uint8_t c);
     void set_timer_lo(uint8_t lo) { timer.set_lo(lo); }
@@ -71,9 +71,7 @@ class Triangle : public Channel {
 public:
     Triangle() : Channel() { sequencer.steps = 32; sequencer.sequence = seq; }
     void set_counter_reload_val(uint8_t val) { counter_reload_val = val;}
-    void set_flag_control(bool f) { flag_control = f; }
-    void set_flag_linc_reload(bool f) { flag_linc_reload = f; }
-    void set_length_halt(bool f) { Channel::set_length_halt(f); flag_control = f; }
+    void set_flag_linc_reload() { flag_linc_reload = true; }
     void tick_timer();
     void tick_lc();
 
@@ -87,7 +85,6 @@ private:
     uint8_t linear_counter = 0;
     uint8_t counter_reload_val = 0;
 
-    bool flag_control = false;
     bool flag_linc_reload = false;
 };
 
