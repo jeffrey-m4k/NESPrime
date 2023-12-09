@@ -512,10 +512,11 @@ void CPU::ASL() {
         skip_cycles(1, WRITE);
         set_value_status(reg.acc);
     } else {
-        write(addrs[0], oper());
-        ops[0] = shift_left(ops[0]);
-        write(addrs[0], ops[0]);
-        set_value_status(ops[0]);
+        ops[0] = oper();
+        ops[1] = shift_left(ops[0]);
+        dummy_write(addrs[0], ops[0]);
+        write(addrs[0], ops[1]);
+        set_value_status(ops[1]);
     }
 }
 void CPU::BCC() { branch(STATUS::c, false); }
@@ -548,7 +549,8 @@ void CPU::DCP() {
     CMP();
 }
 void CPU::DEC() {
-    write(addrs[0], oper());
+    ops[0] = oper();
+    dummy_write(addrs[0], ops[0]);
     write(addrs[0], --ops[0]);
     set_value_status(ops[0]);
 }
@@ -559,7 +561,8 @@ void CPU::EOR() {
     set_value_status(reg.acc);
 }
 void CPU::INC() {
-    write(addrs[0], oper());
+    ops[0] = oper();
+    dummy_write(addrs[0], ops[0]);
     write(addrs[0], ++ops[0]);
     set_value_status(ops[0]);
 }
@@ -605,10 +608,11 @@ void CPU::LSR() {
         skip_cycles(1, WRITE);
         set_value_status(reg.acc);
     } else {
-        write(addrs[0], oper());
-        ops[0] = shift_right(ops[0]);
-        write(addrs[0], ops[0]);
-        set_value_status(ops[0]);
+        ops[0] = oper();
+        ops[1] = shift_right(ops[0]);
+        dummy_write(addrs[0], ops[0]);
+        write(addrs[0], ops[1]);
+        set_value_status(ops[1]);
     }
 }
 void CPU::NOP() { skip_cycles(1, READ); }
@@ -648,10 +652,11 @@ void CPU::ROL() {
         skip_cycles(1, WRITE);
         set_value_status(reg.acc);
     } else {
-        write(addrs[0], oper());
-        ops[0] = rot_left(ops[0]);
-        write(addrs[0], ops[0]);
-        set_value_status(ops[0]);
+        ops[0] = oper();
+        ops[1] = rot_left(ops[0]);
+        dummy_write(addrs[0], ops[0]);
+        write(addrs[0], ops[1]);
+        set_value_status(ops[1]);
     }
 }
 void CPU::ROR() {
@@ -660,10 +665,11 @@ void CPU::ROR() {
         skip_cycles(1, WRITE);
         set_value_status(reg.acc);
     } else {
-        write(addrs[0], oper());
-        ops[0] = rot_right(ops[0]);
-        write(addrs[0], rot_right(ops[0]));
-        set_value_status(ops[0]);
+        ops[0] = oper();
+        ops[1] = rot_right(ops[0]);
+        dummy_write(addrs[0], ops[0]);
+        write(addrs[0], ops[1]);
+        set_value_status(ops[1]);
     }
 }
 void CPU::RRA() {
@@ -785,4 +791,9 @@ bool CPU::write(const uint16_t addr, const uint8_t data) {
         mapper->handle_write(data, addr);
     }
     return true;
+}
+
+void CPU::dummy_write(const uint16_t addr, const uint8_t data) {
+    skip_cycles(1, WRITE);
+    if (addr >= 0x8000) mapper->handle_write(data, addr);
 }

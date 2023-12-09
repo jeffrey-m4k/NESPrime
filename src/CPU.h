@@ -87,6 +87,8 @@ private:
     uint8_t rot_left(uint8_t byte);
     void add_with_carry(bool sub = false);
 
+    void dummy_write(uint16_t addr, uint8_t data);
+
     //Opcode funcs
     void ADC(), AND(), ASL();
     void BCC(), BCS(), BEQ(), BIT(), BMI(), BNE(), BPL(), BRK(), BVC(), BVS();
