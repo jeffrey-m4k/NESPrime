@@ -20,9 +20,16 @@ NESPrime is a simple NES emulator written in C++ using the SDL2 library.
   - Pause: ESC
  
 ### Supported Mappers:
-  - 0 (NROM)
-  - 2 (UNROM)
-  - 3 (CNROM)
+  - 0 (NROM) - *Donkey Kong, Super Mario Bros, Ice Climber...*
+  - 1 (MMC1) - *Metroid, Mega Man 2, Legend of Zelda...*
+  - 2 (UNROM) - *Mega Man, Castlevania, DuckTales...*
+  - 3 (CNROM) - *Back to the Future, Ghostbusters, Friday the 13th...*
+
+### Roadmap:
+- More mappers - MMC3, etc...
+- More fleshed-out UI with emulation settings, better ROM browsing, keybinds
+- PAL compatibility? (for troublesome games like Elite)
+- Debugging features
 
 # Credits
 Thanks to the wonderful [NESdev Wiki](https://www.nesdev.org/wiki/Nesdev_Wiki) for their very thorough documentation of the NES's internals, without which I doubt I could've made this.
