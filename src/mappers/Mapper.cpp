@@ -47,14 +47,14 @@ uint8_t* Mapper1::map_cpu(uint16_t address) {
     switch (bankmode_prg) {
         case 0:
         case 1:
-            return prg_rom + (bank_prg & ~0x1) * 0x2000 + (address - 0x8000);
+            return prg_rom + (bank_prg & ~0x1) * 0x8000 + (address - 0x8000);
         case 2:
             if (address < 0xC000) return prg_rom + (address - 0x8000);
-            else return prg_rom + bank_prg * 0x2000 + (address - 0xC000);
+            else return prg_rom + bank_prg * 0x4000 + (address - 0xC000);
         case 3:
         default:
             if (address >= 0xC000) return prg_rom + (prg_size - 0x4000) + (address - 0xC000);
-            else return prg_rom + bank_prg * 0x2000 + (address - 0x8000);
+            else return prg_rom + bank_prg * 0x4000 + (address - 0x8000);
     }
 }
 
@@ -62,37 +62,34 @@ uint8_t* Mapper1::map_ppu(uint16_t address) {
     if (address >= 0x2000) return Mapper::map_ppu(address);
 
     uint8_t* chr_mem = chr_ram == nullptr ? chr_rom : chr_ram;
-    if (bankmode_chr) {
+    if (bankmode_chr && chr_size > 0x2000) {
         if (address < 0x1000) return chr_mem + bank_chr * 0x1000 + address;
         else return chr_mem + bank_chr_2 * 0x1000 + address;
     } else {
-        return chr_mem + bank_chr * 0x2000 + address;
+        return chr_mem + (bank_chr & ~0x1) * 0x2000 + address;
     }
 }
 
 void Mapper1::handle_write(uint8_t data, uint16_t addr) {
     long cyc = cartridge->get_nes()->get_cpu()->get_cycle();
     if (addr < 0x8000) return;
-
-    if (data & 0x80) { shifter = 1; return; } // clear the shift register if bit 7 is set
+    if (data & 0x80) { shifter = 0x80; bankmode_prg = 3; last_write = cyc; return; } // clear the shift register if bit 7 is set
 
     if (cyc - last_write > 1) { // ignore consecutive writes
-        shifter = (shifter << 1) | (data & 0x1); // shift left with bit 0 of data
+        shifter = (shifter >> 1) | ((data & 0x1) << 7); // shift right with bit 0 of data
 
-        if (shifter & 0x20) { // if bit 5 is 1, the shifter is full and we update the relevant bank
-            uint8_t shifter_out = shifter & 0x1F;
+        if (shifter & 0x4) { // if bit 2 is 1, the shifter is full and we update the relevant bank
+            uint8_t shifter_out = (shifter & 0xF8) >> 3;
 
             if (addr >= 0xE000) { // PRG bank switch
                 bank_prg = shifter_out & 0xF;
                 if (!(bankmode_prg & 0x2)) bank_prg &= ~0x1; // if 32KB prg banking, ignore low bit
 
             } else if (addr >= 0xC000) { // CHR bank-2 switch
-                if (bankmode_chr) bank_chr_2 = shifter_out; // ignore if 8KB chr banking
+                bank_chr_2 = shifter_out;
 
             } else if (addr >= 0xA000) { // CHR bank-1 switch
                 bank_chr = shifter_out;
-                if (chr_size == 0x2000) bank_chr &= 0x1; // if only 8KB of chr, we can only have 2 4KB banks
-                if (!bankmode_chr) bank_chr &= ~0x1; // if 8KB chr banking, ignore low bit
 
             } else { // control
                 switch(shifter_out & 0x3) {
@@ -107,7 +104,7 @@ void Mapper1::handle_write(uint8_t data, uint16_t addr) {
 
             }
 
-            shifter = 1;
+            shifter = 0x80;
         }
     }
 

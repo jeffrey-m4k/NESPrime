@@ -762,7 +762,7 @@ uint8_t CPU::read(int addr, bool physical_read) {
     } else if (addr >= 0x4000 && addr < 0x4018) {
         if (addr == 0x4016) return nes->get_io()->read_joy();
         return memory_regs[addr-0x4000];
-    } else if (addr >= 0x4018 && addr < 0x8000) return 0;
+    } else if (addr >= 0x4018 && (addr < 0x6000 || (addr < 0x8000 && !mapper->has_prg_ram()))) return 0;
     else return *mapper->map_cpu(addr);
 }
 

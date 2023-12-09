@@ -19,6 +19,7 @@ public:
     virtual void handle_write(uint8_t data, uint16_t addr) {};
     void set_mirroring(MIRRORING mirr) { mirroring = mirr; }
     MIRRORING get_mirroring() { return mirroring; }
+    bool has_prg_ram() { return prg_ram != nullptr; }
 protected:
     Cartridge* cartridge;
     MIRRORING mirroring;
@@ -42,7 +43,7 @@ public:
     uint8_t* map_ppu(uint16_t address) override;
     void handle_write(uint8_t data, uint16_t addr) override;
 private:
-    uint8_t shifter = 1;
+    uint8_t shifter = 0x80;
 
     uint8_t bankmode_prg = 3;
     uint8_t bankmode_chr = 1;
