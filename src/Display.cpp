@@ -18,8 +18,8 @@ bool Display::init() {
         SDL_Log("Unable to create window: %s", SDL_GetError());
         return false;
     }
-    SDL_HideWindow(window_pt);
-    SDL_HideWindow(window_nt);
+//    SDL_HideWindow(window_pt);
+//    SDL_HideWindow(window_nt);
 
     renderer_main = SDL_CreateRenderer(window_main, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
     renderer_pt = SDL_CreateRenderer(window_pt, -1, SDL_RENDERER_ACCELERATED);

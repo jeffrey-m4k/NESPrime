@@ -47,7 +47,7 @@ private:
     uint8_t bankmode_prg = 3;
     uint8_t bankmode_chr = 1;
 
-    uint8_t bank_chr_2 = 1;
+    uint8_t bank_chr_2 = 0;
 
     long last_write = 0;
 };

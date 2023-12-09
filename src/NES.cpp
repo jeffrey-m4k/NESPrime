@@ -51,8 +51,8 @@ void NES::run() {
             };
 
             if (!ui->get_show()) {
-//                ppu->output_pt();
-//                ppu->output_nt();
+                ppu->output_pt();
+                ppu->output_nt();
 
                 display->refresh();
             } else {

@@ -72,10 +72,9 @@ uint8_t* Mapper1::map_ppu(uint16_t address) {
 
 void Mapper1::handle_write(uint8_t data, uint16_t addr) {
     long cyc = cartridge->get_nes()->get_cpu()->get_cycle();
-    last_write = cyc;
     if (addr < 0x8000) return;
 
-    if (data & 0x80) shifter = 1; // clear the shift register if bit 7 is set
+    if (data & 0x80) { shifter = 1; return; } // clear the shift register if bit 7 is set
 
     if (cyc - last_write > 1) { // ignore consecutive writes
         shifter = (shifter << 1) | (data & 0x1); // shift left with bit 0 of data

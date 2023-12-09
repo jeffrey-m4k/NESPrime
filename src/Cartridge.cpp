@@ -84,12 +84,14 @@ void Cartridge::load() {
         prg_rom.init(prg_size);
         read_next(prg_rom, 0, prg_size);
 
+        prg_ram.init(0x2000);
+
         if (chr_size) {
             chr_rom.init(chr_size);
             read_next(chr_rom, 0, chr_size);
         } else {
             chr_size = 0x2000;
-            chr_ram.init(0x2000);
+            chr_ram.init(chr_size);
         }
 
         CPU* cpu = nes->get_cpu();
