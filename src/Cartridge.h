@@ -36,7 +36,7 @@ private:
     static const int BUFFER_SIZE = 16;
     uint8_t buffer[BUFFER_SIZE];
     std::ifstream file;
-    uint16_t pos = 0;
+    uint32_t pos = 0;
     uint32_t prg_size;
     uint32_t chr_size;
     uint8_t mapper_num;

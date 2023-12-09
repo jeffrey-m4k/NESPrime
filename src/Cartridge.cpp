@@ -84,7 +84,7 @@ void Cartridge::load() {
         prg_rom.init(prg_size);
         read_next(prg_rom, 0, prg_size);
 
-        prg_ram.init(0x2000);
+        prg_ram.init(0x8000);
 
         if (chr_size) {
             chr_rom.init(chr_size);

@@ -62,9 +62,9 @@ uint8_t* Mapper1::map_ppu(uint16_t address) {
     if (address >= 0x2000) return Mapper::map_ppu(address);
 
     uint8_t* chr_mem = chr_ram == nullptr ? chr_rom : chr_ram;
-    if (bankmode_chr && chr_size > 0x2000) {
+    if (bankmode_chr) {
         if (address < 0x1000) return chr_mem + bank_chr * 0x1000 + address;
-        else return chr_mem + bank_chr_2 * 0x1000 + address;
+        else return chr_mem + bank_chr_2 * 0x1000 + (address - 0x1000);
     } else {
         return chr_mem + (bank_chr & ~0x1) * 0x2000 + address;
     }
