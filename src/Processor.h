@@ -14,12 +14,9 @@ class Mapper;
 class Processor : public Component {
 public:
     Processor();
-    ~Processor() { delete[] mem.get_mem(); };
     virtual void reset() = 0;
     virtual void init() = 0;
     virtual bool run();
-
-    bool map(uint16_t addr, uint8_t* block, uint16_t size);
 
     long get_cycle() { return cycle; }
     Memory* get_mem() { return &mem; }

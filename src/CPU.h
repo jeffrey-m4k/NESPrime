@@ -51,7 +51,6 @@ enum INTERRUPT_TYPE {
 class CPU : public Processor {
 public:
     CPU();
-    ~CPU() {};
     void reset() override;
     void init() override;
     bool run();

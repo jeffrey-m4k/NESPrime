@@ -20,6 +20,8 @@ public:
     void run();
     void run(const std::string& filename);
     void tick(bool do_cpu, int times);
+    void reset();
+    void kill() { quit = true; }
 
     CPU* get_cpu() { return cpu; };
     PPU* get_ppu() { return ppu; };
@@ -50,6 +52,7 @@ private:
     UI* ui;
 
     long clock = 0;
+    bool quit = false;
 };
 
 

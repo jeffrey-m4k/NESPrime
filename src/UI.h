@@ -5,6 +5,7 @@
 #include "Display.h"
 #include "SDL_ttf.h"
 #include <filesystem>
+#include <utility>
 #include <vector>
 
 enum UIState {
@@ -12,7 +13,7 @@ enum UIState {
 };
 
 enum UIColor {
-    WHITE, BLACK, RED
+    WHITE, BLACK, RED, NONE
 };
 
 enum UIAlignmentH {
@@ -23,19 +24,38 @@ enum UIAlignmentV {
     V_TOP, V_CENTER, V_BOTTOM
 };
 
+class Button {
+public:
+    Button(std::string text, int x, int y) : text(std::move(text)), x(x), y(y) {};
+    void set_selected(bool s) { selected = s; }
+    void set_show(bool s) { show = s; }
+    std::string get_text() { return text; }
+    bool get_selected() const { return selected; }
+    int get_x() const { return x; }
+    int get_y() const { return y; }
+private:
+    std::string text;
+    int x;
+    int y;
+
+    bool selected = false;
+    bool show = false;
+};
+
 class UI : public Component {
 public:
     bool init();
     void tick();
     void draw();
     void handle(SDL_Event& e);
+    void handle_global(SDL_Event& e);
     void set_show(bool s) { show = s; needs_update = s; nes->get_display()->set_show_sys_texture(s); }
     bool get_show() const { return show; }
     void set_state(UIState s) { state = s; needs_update = true; }
     UIState get_state() const { return state; }
 private:
     void set_render_draw_color(UIColor col, uint8_t alpha);
-    void draw_text(std::string text, int x, int y, float scale, UIAlignmentH h_align, UIAlignmentV v_align);
+    void draw_text(const std::string& text, int x, int y, float scale, UIAlignmentH h_align, UIAlignmentV v_align, UIColor col = WHITE, UIColor bgr_col = NONE);
 private:
     bool show = false;
     bool needs_update = true;
@@ -59,7 +79,12 @@ private:
     int rom_select_idx;
     bool crawled = false;
     bool found_roms = false;
+
+    // === STATE: PAUSE
+    std::vector<Button*> pause_buttons;
 };
+
+
 
 
 #endif

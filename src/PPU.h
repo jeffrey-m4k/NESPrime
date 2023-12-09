@@ -15,7 +15,10 @@ typedef uint8_t Tile[8][2];
 class PPU : public Processor {
 public:
     PPU();
-    ~PPU() {};
+    ~PPU() {
+        std::fill(oam, oam+256, 0);
+        std::fill(palette, palette+32, 0x1D);
+    }
     virtual void reset() override;
     virtual void init() override;
     virtual bool run() override;

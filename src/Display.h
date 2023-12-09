@@ -23,6 +23,7 @@ public:
     void push_buffer();
     uint8_t* get_pixels() { return pixels; }
     void set_show_sys_texture(bool show);
+    SDL_Window* get_main_window() { return window_main; }
     SDL_Renderer* get_main_renderer() { return renderer_main; }
     SDL_Texture* get_base_texture() { return texture_main_base; }
     SDL_Texture* get_sys_texture() { return texture_main_ui; }

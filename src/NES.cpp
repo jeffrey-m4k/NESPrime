@@ -32,7 +32,6 @@ NES::~NES() {
 void NES::run() {
     ui->init();
 
-    bool quit = false;
     while (!quit) {
         if (!ui->get_show()) tick(true, 1);
 
@@ -47,7 +46,7 @@ void NES::run() {
                     else SDL_HideWindow(window);
                 } else if (event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
                     if (ui->get_state() == PAUSE) ui->set_show(!ui->get_show());
-                } else if (ui->get_show() && event.type == SDL_KEYDOWN) ui->handle(event);
+                } else if (event.type == SDL_KEYDOWN) ui->get_show() ? ui->handle(event) : ui->handle_global(event);
             };
 
             if (!ui->get_show()) {
@@ -63,6 +62,20 @@ void NES::run() {
             display->last_update = t;
         }
     }
+}
+
+void NES::reset() {
+    delete cart;
+    delete cpu;
+    delete ppu;
+    delete apu;
+
+    set_cart(new Cartridge());
+    set_cpu(new CPU());
+    set_ppu(new PPU());
+    set_apu(new APU());
+
+    clock = 0;
 }
 
 void NES::run(const std::string& filename) {
