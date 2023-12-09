@@ -25,7 +25,7 @@ void UI::tick() {
 
     if (state == MAIN) {
         if (!crawled) {
-            for (recursive_directory_iterator i("."), end; i != end; ++i)
+            for (recursive_directory_iterator i(".."), end; i != end; ++i)
                 if (!is_directory(i->path()) && i->path().extension() == ".nes")
                     roms.push_back(i->path());
             if (!roms.empty()) {

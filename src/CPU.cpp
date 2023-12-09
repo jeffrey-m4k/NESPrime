@@ -512,8 +512,8 @@ void CPU::ASL() {
         skip_cycles(1, WRITE);
         set_value_status(reg.acc);
     } else {
-        ops[0] = shift_left(oper());
-        skip_cycles(1, WRITE);
+        write(addrs[0], oper());
+        ops[0] = shift_left(ops[0]);
         write(addrs[0], ops[0]);
         set_value_status(ops[0]);
     }
@@ -548,8 +548,7 @@ void CPU::DCP() {
     CMP();
 }
 void CPU::DEC() {
-    oper();
-    skip_cycles(1, WRITE);
+    write(addrs[0], oper());
     write(addrs[0], --ops[0]);
     set_value_status(ops[0]);
 }
@@ -560,8 +559,7 @@ void CPU::EOR() {
     set_value_status(reg.acc);
 }
 void CPU::INC() {
-    oper();
-    skip_cycles(1, WRITE);
+    write(addrs[0], oper());
     write(addrs[0], ++ops[0]);
     set_value_status(ops[0]);
 }
@@ -607,9 +605,9 @@ void CPU::LSR() {
         skip_cycles(1, WRITE);
         set_value_status(reg.acc);
     } else {
-        ops[0] = shift_right(oper());
-        skip_cycles(1, WRITE);
-        CPU::write(addrs[0], ops[0]);
+        write(addrs[0], oper());
+        ops[0] = shift_right(ops[0]);
+        write(addrs[0], ops[0]);
         set_value_status(ops[0]);
     }
 }
@@ -650,8 +648,8 @@ void CPU::ROL() {
         skip_cycles(1, WRITE);
         set_value_status(reg.acc);
     } else {
-        ops[0] = rot_left(oper());
-        skip_cycles(1, WRITE);
+        write(addrs[0], oper());
+        ops[0] = rot_left(ops[0]);
         write(addrs[0], ops[0]);
         set_value_status(ops[0]);
     }
@@ -662,9 +660,9 @@ void CPU::ROR() {
         skip_cycles(1, WRITE);
         set_value_status(reg.acc);
     } else {
-        ops[0] = rot_right(oper());
-        skip_cycles(1, WRITE);
-        write(addrs[0], ops[0]);
+        write(addrs[0], oper());
+        ops[0] = rot_right(ops[0]);
+        write(addrs[0], rot_right(ops[0]));
         set_value_status(ops[0]);
     }
 }
