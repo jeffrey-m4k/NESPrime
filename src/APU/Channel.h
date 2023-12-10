@@ -57,8 +57,8 @@ private:
     };
 
     Divider sweep_divider;
-    bool sweep_enable;
-    bool sweep_negate;
+    bool sweep_enable = false;
+    bool sweep_negate = false;
     bool sweep_reload = false;
     uint8_t sweep_shift = 0;
     uint16_t sweep_period = 0;

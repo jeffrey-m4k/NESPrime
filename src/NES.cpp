@@ -67,7 +67,7 @@ bool NES::run(const OPENFILENAME& fn) {
 
 void NES::check_refresh() {
     Uint32 t = SDL_GetTicks();
-    if (t - display->last_update >= 1000 / 165) {
+    if (t - display->last_update >= 1000 / 60) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) quit = true;

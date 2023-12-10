@@ -54,10 +54,11 @@ private:
 
 class FrameSequencer {
 public:
-    FrameSequencer(APU* apu) : divider(3728), sequencer(4), apu(apu) {};
+    FrameSequencer() : divider(3728), sequencer(4) {};
     void reset(uint8_t byte);
     void do_seq(uint8_t seq);
     void tick() { if (divider.clock()) do_seq(sequencer.next()); };
+    void set_apu(APU* a) {apu = a;};
 private:
     void set_interrupt();
     void do_length_clock();

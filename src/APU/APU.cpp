@@ -14,7 +14,7 @@ APU::APU() {
 
     SDL_PauseAudioDevice(audio_device, 0);
 
-    frameSeq = new FrameSequencer(this);
+    frameSeq.set_apu(this);
 }
 
 APU::~APU() {
@@ -23,7 +23,7 @@ APU::~APU() {
 
 void APU::cycle() {
     if (tick_fs) {
-        frameSeq->tick();
+        frameSeq.tick();
         pulse[0].tick_timer();
         pulse[1].tick_timer();
         noise.tick_timer();
@@ -41,7 +41,7 @@ void APU::sample() {
     if (sample_buffer.size() >= 100) {
         SDL_QueueAudio(audio_device, sample_buffer.data(), sample_buffer.size() * 2);
         sample_buffer.clear();
-        while (SDL_GetQueuedAudioSize(audio_device) > 4096 * 2) { nes->check_refresh(); };
+        while (SDL_GetQueuedAudioSize(audio_device) > 4096 * 2) {};
     }
 }
 
@@ -108,7 +108,7 @@ void APU::write_apu_reg(uint8_t reg, uint8_t data) {
             noise.set_enabled((data >> 3) & 0x1);
             break;
         case 0x17:
-            frameSeq->reset(data);
+            frameSeq.reset(data);
             break;
         default:
             break;

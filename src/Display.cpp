@@ -107,12 +107,13 @@ bool Display::refresh() {
     SDL_RenderPresent(renderer_main);
 
     fps_frames++;
-    if (fps_lasttime < SDL_GetTicks() - 1000) {
-        fps_lasttime = SDL_GetTicks();
+    Uint32 t = SDL_GetTicks();
+    if (fps_lasttime < t - 1000) {
+        fps_lasttime = t;
         fps_current = fps_frames;
         fps_frames = 0;
     }
-    //SDL_SetWindowTitle(window_main, ("[" + nes->filename + "] FPS:" + std::to_string(fps_current)).c_str());
+    SDL_SetWindowTitle(window_main, ("[" + nes->filename + "] FPS:" + std::to_string(fps_current)).c_str());
 
     //last_update = SDL_GetTicks();
 
