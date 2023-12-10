@@ -4,6 +4,7 @@
 #include "Component.h"
 #include "Display.h"
 #include "SDL_ttf.h"
+#include "SDL_image.h"
 #include <filesystem>
 #include <utility>
 #include <vector>
@@ -66,6 +67,7 @@ private:
     SDL_Texture* texture_base;
     SDL_Renderer* renderer_ui;
     TTF_Font* font_ui;
+    SDL_Surface* splash_img;
 
     static constexpr SDL_Rect screen_rect {0, 0, WIDTH*4, HEIGHT*4};
     static constexpr SDL_Color colors[] = {
@@ -77,6 +79,8 @@ private:
     // === STATE: MAIN
     WCHAR buffer[MAX_PATH];
     OPENFILENAME ofn = {};
+    Uint32 start_tick;
+    bool show_splash = true;
 
     // === STATE: PAUSE
     std::vector<Button*> pause_buttons;

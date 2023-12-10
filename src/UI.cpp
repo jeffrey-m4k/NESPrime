@@ -10,9 +10,11 @@ bool UI::init() {
     renderer_ui = nes->get_display()->get_main_renderer();
 
     SDL_RWops* font_mem = SDL_RWFromConstMem(ui_font, sizeof(ui_font));
+    SDL_RWops* splash_mem = SDL_RWFromConstMem(splash, sizeof(splash));
     font_ui = TTF_OpenFontRW(font_mem, 1, 24);
-    if (font_ui == nullptr) {
-        SDL_Log("Unable to initialize UI ui_font: %s", SDL_GetError());
+    splash_img = IMG_Load_RW(splash_mem, 1);
+    if (font_ui == nullptr || splash_img == nullptr) {
+        SDL_Log("Unable to initialize resource: %s", SDL_GetError());
         return false;
     }
 
@@ -23,11 +25,14 @@ bool UI::init() {
     pause_buttons.push_back(new Button("QUIT", 512, 800));
     pause_buttons.at(0)->set_selected(true);
 
+    start_tick = SDL_GetTicks();
+
     return true;
 }
 
 void UI::tick() {
     if (!show) return;
+    if (state == MAIN && show_splash && SDL_GetTicks() - start_tick > 1250) { show_splash = false; needs_update = true; }
 }
 
 void UI::handle(SDL_Event &e) {
@@ -36,7 +41,8 @@ void UI::handle(SDL_Event &e) {
         case MAIN:
             switch (sym) {
                 case SDL_SCANCODE_RETURN:
-                    show_rom_dialog();
+                    if (show_splash) { show_splash = false; needs_update = true; }
+                    else show_rom_dialog();
                 default:
                     break;
             }
@@ -111,8 +117,11 @@ void UI::draw() {
         } else if (state == MAIN) {
             set_render_draw_color(BLACK, 255);
             SDL_RenderFillRect(renderer_ui, &screen_rect);
-            draw_text("PRESS ENTER TO SELECT ROM", 512, 720, 2, H_CENTER, V_TOP);
-            draw_text("NESPrime", 512, 320, 5, H_CENTER, V_BOTTOM);
+            if (show_splash) {
+                SDL_Texture *splash_texture = SDL_CreateTextureFromSurface(renderer_ui, splash_img);
+                SDL_Rect splash_rect{96*4, 75*4, 64*4, 80*4};
+                SDL_RenderCopy(renderer_ui, splash_texture, nullptr, &splash_rect);
+            } else draw_text("PRESS ENTER TO SELECT ROM", 512, 480, 2, H_CENTER, V_CENTER);
         }
         needs_update = false;
     }
