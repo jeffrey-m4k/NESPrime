@@ -1,5 +1,4 @@
-<p align="center"><img src="https://github.com/jeffrey-m4k/NESPrime/assets/52832383/fc5f817b-523d-4e2f-b498-a3e1cef4a413" width=192 height=192/><br/>
-  <img src="https://github.com/jeffrey-m4k/NESPrime/assets/52832383/4f3d3ea6-6265-4513-b9c9-5fe58ad5e328"/><br/>
+<p align="center"><img src="https://github.com/jeffrey-m4k/NESPrime/assets/52832383/1428cf69-13ce-40ca-953a-765901518195)" width=192 height=240/>
 </p>
 
 # Overview
