@@ -56,6 +56,7 @@ public:
 private:
     void set_render_draw_color(UIColor col, uint8_t alpha);
     void draw_text(const std::string& text, int x, int y, float scale, UIAlignmentH h_align, UIAlignmentV v_align, UIColor col = WHITE, UIColor bgr_col = NONE);
+    void show_rom_dialog();
 private:
     bool show = false;
     bool needs_update = true;
@@ -74,11 +75,8 @@ private:
     };
 
     // === STATE: MAIN
-    std::vector<std::filesystem::path> roms;
-    std::filesystem::path rom_select;
-    int rom_select_idx;
-    bool crawled = false;
-    bool found_roms = false;
+    WCHAR buffer[MAX_PATH];
+    OPENFILENAME ofn = {};
 
     // === STATE: PAUSE
     std::vector<Button*> pause_buttons;

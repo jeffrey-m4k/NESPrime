@@ -3,11 +3,11 @@
 
 #include <string>
 #include <fstream>
+#include <windows.h>
 
 class CPU;
 class PPU;
 class Cartridge;
-class Bus;
 class Display;
 class IO;
 class APU;
@@ -18,14 +18,14 @@ public:
     NES();
     ~NES();
     void run();
-    void run(const std::string& filename);
+    bool run(const OPENFILENAME& fn);
+    void check_refresh();
     void tick(bool do_cpu, int times);
     void reset();
     void kill() { quit = true; }
 
     CPU* get_cpu() { return cpu; };
     PPU* get_ppu() { return ppu; };
-    Bus* get_bus() { return bus; };
     Cartridge* get_cart() { return cart; }
     Display* get_display() { return display; }
     IO* get_io() { return io; }
@@ -43,7 +43,6 @@ public:
     std::string filename;
 private:
     Cartridge* cart;
-    Bus* bus;
     CPU* cpu;
     PPU* ppu;
     Display* display;

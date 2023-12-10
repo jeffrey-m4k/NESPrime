@@ -8,6 +8,7 @@
 #include <cstdint>
 #include "Memory.h"
 #include "Component.h"
+#include <windows.h>
 
 class Mapper;
 
@@ -16,7 +17,7 @@ public:
     Cartridge() : Component() {};
     ~Cartridge();
     void load();
-    bool open_file(const std::string& filename);
+    bool open_file(const OPENFILENAME& filename);
     std::ifstream& get_file() { return file; }
 
     uint32_t get_prg_size() const { return prg_size; }

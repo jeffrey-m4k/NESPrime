@@ -41,7 +41,7 @@ void APU::sample() {
     if (sample_buffer.size() >= 100) {
         SDL_QueueAudio(audio_device, sample_buffer.data(), sample_buffer.size() * 2);
         sample_buffer.clear();
-        while (SDL_GetQueuedAudioSize(audio_device) > 4096 * 2) {};
+        while (SDL_GetQueuedAudioSize(audio_device) > 4096 * 2) { nes->check_refresh(); };
     }
 }
 

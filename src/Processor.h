@@ -6,7 +6,6 @@
 #include <set>
 #include <unordered_map>
 #include "Memory.h"
-#include "Bus.h"
 #include "Component.h"
 
 class Mapper;

@@ -1,5 +1,6 @@
 #include "UI.h"
 #include "data.h"
+#include <windows.h>
 
 using namespace std::filesystem;
 
@@ -27,46 +28,17 @@ bool UI::init() {
 
 void UI::tick() {
     if (!show) return;
-
-    if (state == MAIN) {
-        if (!crawled) {
-            for (recursive_directory_iterator i(".."), end; i != end; ++i)
-                if (!is_directory(i->path()) && i->path().extension() == ".nes")
-                    roms.push_back(i->path());
-            if (!roms.empty()) {
-                rom_select = roms.at(0);
-                rom_select_idx = 0;
-                found_roms = true;
-            }
-            crawled = true;
-            needs_update = true;
-        }
-    }
 }
 
 void UI::handle(SDL_Event &e) {
     SDL_Scancode sym = e.key.keysym.scancode;
     switch(state) {
         case MAIN:
-            if (found_roms) {
-                switch (sym) {
-                    case SDL_SCANCODE_RIGHT:
-                        rom_select_idx++;
-                        break;
-                    case SDL_SCANCODE_LEFT:
-                        rom_select_idx--;
-                        break;
-                    case SDL_SCANCODE_RETURN:
-                        nes->run(rom_select.string());
-                        show = false;
-                        state = PAUSE;
-                    default:
-                        break;
-                }
-                if (rom_select_idx < 0) rom_select_idx = roms.size() - 1;
-                else if (rom_select_idx >= roms.size()) rom_select_idx = 0;
-                rom_select = roms.at(rom_select_idx);
-                needs_update = true;
+            switch (sym) {
+                case SDL_SCANCODE_RETURN:
+                    show_rom_dialog();
+                default:
+                    break;
             }
             break;
         case PAUSE:
@@ -80,15 +52,14 @@ void UI::handle(SDL_Event &e) {
                             if (sym == SDL_SCANCODE_DOWN && ++b == pause_buttons.size()) pause_buttons.at(0)->set_selected(true);
                             else if (sym == SDL_SCANCODE_UP && --b < 0) pause_buttons.at(pause_buttons.size()-1)->set_selected(true);
                             else pause_buttons.at(b)->set_selected(true);
+                            break;
                         }
                     }
                     needs_update = true;
                     break;
                 case SDL_SCANCODE_RETURN:
                     if (pause_buttons.at(0)->get_selected()) {
-                        nes->reset();
-                        state = MAIN;
-                        needs_update = true;
+                        show_rom_dialog();
                     } else if (pause_buttons.at(1)->get_selected()) {
                         nes->kill();
                     }
@@ -113,6 +84,15 @@ void UI::handle_global(SDL_Event &e) {
     }
 }
 
+void UI::show_rom_dialog() {
+    ofn = {};
+    ofn.lStructSize = sizeof(ofn);
+    ofn.lpstrFilter = TEXT("ROM files (.nes)\0*.NES\0");
+    ofn.lpstrFile = reinterpret_cast<LPSTR>(buffer), ofn.nMaxFile = MAX_PATH, *buffer = '\0';
+    ofn.Flags = OFN_EXPLORER|OFN_ENABLESIZING|OFN_HIDEREADONLY|OFN_PATHMUSTEXIST|OFN_FILEMUSTEXIST;
+    if (GetOpenFileName(&ofn) && nes->run(ofn)) { state = PAUSE; needs_update = true; }
+}
+
 void UI::draw() {
     if (needs_update) {
         SDL_SetRenderTarget(renderer_ui, texture_ui);
@@ -131,10 +111,8 @@ void UI::draw() {
         } else if (state == MAIN) {
             set_render_draw_color(BLACK, 255);
             SDL_RenderFillRect(renderer_ui, &screen_rect);
-            std::string text = found_roms ? "<- " + rom_select.filename().string() + " ->": "NO ROMS FOUND";
-            draw_text(text, 512, 720, 2, H_CENTER, V_TOP);
+            draw_text("PRESS ENTER TO SELECT ROM", 512, 720, 2, H_CENTER, V_TOP);
             draw_text("NESPrime", 512, 320, 5, H_CENTER, V_BOTTOM);
-            draw_text("Please select a ROM:", 512, 640, 1, H_CENTER, V_TOP);
         }
         needs_update = false;
     }

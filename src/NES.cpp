@@ -34,33 +34,7 @@ void NES::run() {
 
     while (!quit) {
         if (!ui->get_show()) tick(true, 1);
-
-        Uint32 t = SDL_GetTicks();
-        if (t - display->last_update >= 1000 / 60) {
-            SDL_Event event;
-            while (SDL_PollEvent(&event)) {
-                if (event.type == SDL_QUIT) quit = true;
-                else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE) {
-                    SDL_Window *window = SDL_GetWindowFromID(event.window.windowID);
-                    if (SDL_GetWindowID(window) == 3) quit = true;
-                    else SDL_HideWindow(window);
-                } else if (event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
-                    if (ui->get_state() == PAUSE) ui->set_show(!ui->get_show());
-                } else if (event.type == SDL_KEYDOWN) ui->get_show() ? ui->handle(event) : ui->handle_global(event);
-            };
-
-            if (!ui->get_show()) {
-                ppu->output_pt();
-                ppu->output_nt();
-
-                display->refresh();
-            } else {
-                ui->tick();
-                display->refresh();
-            }
-
-            display->last_update = t;
-        }
+        check_refresh();
     }
 }
 
@@ -78,14 +52,45 @@ void NES::reset() {
     clock = 0;
 }
 
-void NES::run(const std::string& filename) {
-    if (cart->open_file(filename)) {
-        this->filename = filename.substr(filename.find_last_of('/') + 1, filename.length());
+bool NES::run(const OPENFILENAME& fn) {
+    reset();
+    if (cart->open_file(fn)) {
         cart->load();
         cpu->init();
         ui->set_state(PAUSE);
         ui->set_show(false);
         SDL_Delay(250);
+        return true;
+    }
+    return false;
+}
+
+void NES::check_refresh() {
+    Uint32 t = SDL_GetTicks();
+    if (t - display->last_update >= 1000 / 165) {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) quit = true;
+            else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE) {
+                SDL_Window *window = SDL_GetWindowFromID(event.window.windowID);
+                if (SDL_GetWindowID(window) == 3) quit = true;
+                else SDL_HideWindow(window);
+            } else if (event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+                if (ui->get_state() == PAUSE) ui->set_show(!ui->get_show());
+            } else if (event.type == SDL_KEYDOWN) ui->get_show() ? ui->handle(event) : ui->handle_global(event);
+        };
+
+        if (!ui->get_show()) {
+            ppu->output_pt();
+            ppu->output_nt();
+
+            display->refresh();
+        } else {
+            ui->tick();
+            display->refresh();
+        }
+
+        display->last_update = t;
     }
 }
 
