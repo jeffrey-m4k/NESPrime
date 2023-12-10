@@ -1,4 +1,4 @@
-<p align="center"><img src="https://github.com/jeffrey-m4k/NESPrime/assets/52832383/1428cf69-13ce-40ca-953a-765901518195)" width=192 height=240/>
+<p align="center"><img src="https://github.com/jeffrey-m4k/NESPrime/assets/52832383/1428cf69-13ce-40ca-953a-765901518195" width=192 height=240/>
 </p>
 
 # Overview
