@@ -1,5 +1,4 @@
-#ifndef CPU_H
-#define CPU_H
+#pragma once
 
 #include <cstdint>
 #include <sstream>
@@ -364,6 +363,3 @@ private:
     std::ostringstream regs_log;
     bool logging = false;
 };
-
-
-#endif //CPU_H

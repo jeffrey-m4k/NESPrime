@@ -1,5 +1,4 @@
-#ifndef COMPONENT_H
-#define COMPONENT_H
+#pragma once
 
 #include "NES.h"
 
@@ -12,6 +11,3 @@ public:
 protected:
     NES* nes{};
 };
-
-
-#endif

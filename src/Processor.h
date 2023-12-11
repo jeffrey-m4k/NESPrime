@@ -1,5 +1,4 @@
-#ifndef PROCESSOR_H
-#define PROCESSOR_H
+#pragma once
 
 #include <iostream>
 #include <cstdint>
@@ -29,5 +28,3 @@ protected:
     Memory mem;
     Mapper* mapper;
 };
-
-#endif //PROCESSOR_H

@@ -1,5 +1,4 @@
-#ifndef UI_H
-#define UI_H
+#pragma once
 
 #include "Component.h"
 #include "Display.h"
@@ -85,8 +84,3 @@ private:
     // === STATE: PAUSE
     std::vector<Button*> pause_buttons;
 };
-
-
-
-
-#endif

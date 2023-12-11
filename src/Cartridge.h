@@ -1,5 +1,4 @@
-#ifndef CARTRIDGE_H
-#define CARTRIDGE_H
+#pragma once
 
 #include <fstream>
 #include <ios>
@@ -50,6 +49,3 @@ private:
     Memory chr_ram;
     Mapper* mapper = nullptr;
 };
-
-
-#endif //CARTRIDGE_H

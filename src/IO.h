@@ -1,5 +1,4 @@
-#ifndef IO_H
-#define IO_H
+#pragma once
 
 #include "Component.h"
 #include <SDL.h>
@@ -17,6 +16,3 @@ private:
                                                  SDL_SCANCODE_UP, SDL_SCANCODE_DOWN, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT};
     uint8_t joy_status[2] = {0};
 };
-
-
-#endif //IO_H

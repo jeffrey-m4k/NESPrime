@@ -1,5 +1,4 @@
-#ifndef NES_H
-#define NES_H
+#pragma once
 
 #include <string>
 #include <fstream>
@@ -53,6 +52,3 @@ private:
     long clock = 0;
     bool quit = false;
 };
-
-
-#endif //NES_H

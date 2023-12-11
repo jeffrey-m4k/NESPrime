@@ -1,5 +1,4 @@
-#ifndef PPU_H
-#define PPU_H
+#pragma once
 
 #include "Processor.h"
 
@@ -83,6 +82,3 @@ private:
 
     bool pt_shown = false;
 };
-
-
-#endif //PPU_H

@@ -1,6 +1,4 @@
-#ifndef CHANNEL_H
-#define CHANNEL_H
-
+#pragma once
 
 #include <cstdint>
 #include "Units.h"
@@ -106,6 +104,3 @@ private:
     uint16_t shifter = 1;
 };
 class DMC : public Channel {};
-
-
-#endif

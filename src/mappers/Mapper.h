@@ -1,5 +1,4 @@
-#ifndef MAPPER_H
-#define MAPPER_H
+#pragma once
 
 #include <cstdint>
 #include "../Cartridge.h"
@@ -80,5 +79,3 @@ public:
         bank_chr = data & 0x3;//((chr_size / 0x2000) - 1);
     }
 };
-
-#endif //MAPPER_H

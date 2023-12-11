@@ -1,5 +1,4 @@
-#ifndef APU_H
-#define APU_H
+#pragma once
 
 #include "SDL.h"
 #include "../Component.h"
@@ -35,5 +34,3 @@ private:
 
     static constexpr float sample_per = 21477272/44100.0/12.0;
 };
-
-#endif

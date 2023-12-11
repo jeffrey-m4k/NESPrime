@@ -1,5 +1,4 @@
-#ifndef DISPLAY_H
-#define DISPLAY_H
+#pragma once
 
 #include <SDL.h>
 #include "Component.h"
@@ -55,5 +54,3 @@ private:
     SDL_Texture* texture_main_ui = nullptr;
     bool show_sys_texture = false;
 };
-
-#endif

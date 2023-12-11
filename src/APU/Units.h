@@ -1,5 +1,4 @@
-#ifndef UNITS_H
-#define UNITS_H
+#pragma once
 
 #include <cstdint>
 
@@ -71,5 +70,3 @@ private:
 
     APU* apu;
 };
-
-#endif

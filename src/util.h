@@ -1,5 +1,4 @@
-#ifndef UTIL_H
-#define UTIL_H
+#pragma once
 
 #include <cstdint>
 #include <iostream>
@@ -25,5 +24,3 @@ inline void flush_hex(std::ostream& out, uint8_t* buffer, const uint16_t& size) 
     out << dec << endl;
     out.fill(' ');
 }
-
-#endif //UTIL_H

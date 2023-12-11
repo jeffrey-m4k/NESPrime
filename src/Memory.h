@@ -1,5 +1,4 @@
-#ifndef MEMORY_H
-#define MEMORY_H
+#pragma once
 
 #include <algorithm>
 #include <cstdint>
@@ -19,6 +18,3 @@ private:
     uint32_t size;
     uint8_t* mem;
 };
-
-
-#endif //MEMORY_H
