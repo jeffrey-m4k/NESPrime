@@ -22,6 +22,7 @@ NES::NES() {
     set_io(new IO());
     set_apu(new APU());
     set_ui(new UI());
+
     out.open("out.txt");
 }
 
@@ -33,7 +34,8 @@ void NES::run() {
     ui->init();
 
     while (!quit) {
-        if (!ui->get_show()) tick(true, 1);
+        if (!ui->get_show())
+            tick(true, 1);
         check_refresh();
     }
 }
@@ -57,7 +59,7 @@ bool NES::run(const OPENFILENAME& fn) {
     if (cart->open_file(fn)) {
         cart->load();
         cpu->init();
-        ui->set_state(PAUSE);
+        ui->set_state(UIState::PAUSE);
         ui->set_show(false);
         SDL_Delay(250);
         return true;
@@ -70,20 +72,24 @@ void NES::check_refresh() {
     if (t - display->last_update >= 1000 / 60) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) quit = true;
+            if (event.type == SDL_QUIT)
+                quit = true;
             else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE) {
                 SDL_Window *window = SDL_GetWindowFromID(event.window.windowID);
-                if (SDL_GetWindowID(window) == 3) quit = true;
-                else SDL_HideWindow(window);
+                if (SDL_GetWindowID(window) == 3)
+                    quit = true;
+                else
+                    SDL_HideWindow(window);
             } else if (event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
-                if (ui->get_state() == PAUSE) ui->set_show(!ui->get_show());
-            } else if (event.type == SDL_KEYDOWN) ui->get_show() ? ui->handle(event) : ui->handle_global(event);
+                if (ui->get_state() == UIState::PAUSE)
+                    ui->set_show(!ui->get_show());
+            } else if (event.type == SDL_KEYDOWN)
+                ui->get_show() ? ui->handle(event) : ui->handle_global(event);
         };
 
         if (!ui->get_show()) {
             ppu->output_pt();
             ppu->output_nt();
-
             display->refresh();
         } else {
             ui->tick();
@@ -96,10 +102,14 @@ void NES::check_refresh() {
 
 void NES::tick(bool do_cpu, int times) {
     for (int i = 0; i < times; i++) {
-        if (cpu->memory_regs[0x16] & 0x1) io->poll();
-        if (clock % 12 == 0 && do_cpu) cpu->run();
-        if (clock % 4 == 0) ppu->run();
-        if (clock % 12 == 0) apu->cycle();
+        if (cpu->memory_regs[0x16] & 0x1)
+            io->poll();
+        if (clock % 12 == 0 && do_cpu)
+            cpu->run();
+        if (clock % 4 == 0)
+            ppu->run();
+        if (clock % 12 == 0)
+            apu->cycle();
 
         clock++;
     }

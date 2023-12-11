@@ -44,8 +44,11 @@ void Pulse::tick_sweep() {
     muted = curr_period < 8 || target_period > 0x7FF;
 
     bool zero = sweep_divider.clock();
-    if (zero && sweep_enable && !muted) timer.set_period(target_period);
-    if (zero || sweep_reload) sweep_divider.set_period(sweep_period);
+    if (zero && sweep_enable && !muted) {
+        timer.set_period(target_period);
+    }
+    if (zero || sweep_reload)
+        sweep_divider.set_period(sweep_period);
 }
 
 uint8_t Pulse::get_output() {
@@ -57,9 +60,13 @@ void Triangle::tick_timer() {
 }
 
 void Triangle::tick_lc() {
-    if (flag_linc_reload) linear_counter = counter_reload_val;
-    else if (linear_counter > 0) linear_counter--;
-    if (!length_halt) flag_linc_reload = false;
+    if (flag_linc_reload)
+        linear_counter = counter_reload_val;
+    else if (linear_counter > 0)
+        linear_counter--;
+
+    if (!length_halt)
+        flag_linc_reload = false;
 }
 
 uint8_t Triangle::get_output() {

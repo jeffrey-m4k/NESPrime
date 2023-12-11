@@ -28,7 +28,9 @@ void APU::cycle() {
         pulse[1].tick_timer();
         noise.tick_timer();
         tick_fs = false;
-    } else tick_fs = true;
+    } else
+        tick_fs = true;
+
     triangle.tick_timer();
     sample();
 }

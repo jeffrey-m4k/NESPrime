@@ -8,20 +8,20 @@
 #include <utility>
 #include <vector>
 
-enum UIState {
+enum class UIState {
     MAIN, PAUSE
 };
 
-enum UIColor {
+enum class Color {
     WHITE, BLACK, RED, NONE
 };
 
-enum UIAlignmentH {
-    H_LEFT, H_CENTER, H_RIGHT
+enum class HAlign {
+    LEFT, CENTER, RIGHT
 };
 
-enum UIAlignmentV {
-    V_TOP, V_CENTER, V_BOTTOM
+enum class VAlign {
+    TOP, CENTER, BOTTOM
 };
 
 class Button {
@@ -54,13 +54,13 @@ public:
     void set_state(UIState s) { state = s; needs_update = true; }
     UIState get_state() const { return state; }
 private:
-    void set_render_draw_color(UIColor col, uint8_t alpha);
-    void draw_text(const std::string& text, int x, int y, float scale, UIAlignmentH h_align, UIAlignmentV v_align, UIColor col = WHITE, UIColor bgr_col = NONE);
+    void set_render_draw_color(Color col, uint8_t alpha);
+    void draw_text(const std::string& text, int x, int y, float scale, HAlign h_align, VAlign v_align, Color col = Color::WHITE, Color bgr_col = Color::NONE);
     void show_rom_dialog();
 private:
     bool show = false;
     bool needs_update = true;
-    UIState state = MAIN;
+    UIState state = UIState::MAIN;
 
     SDL_Texture* texture_ui;
     SDL_Texture* texture_base;
