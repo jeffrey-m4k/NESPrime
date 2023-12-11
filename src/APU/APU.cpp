@@ -46,9 +46,11 @@ void APU::sample() {
 }
 
 float APU::get_mixer() {
-    float pulse_out = 0.65 * (0.5 * pulse[0].get_output() + 0.5 * pulse[1].get_output()*0.5);/*0.00752 **/
-    float tnd_out = 0.35 * (0.5 * triangle.get_output() + 0.75 * noise.get_output());
-    float sample = pulse_out + tnd_out;
+    float sample =
+            0.752 * (pulse[0].get_output() + pulse[1].get_output()) +
+            0.851 * triangle.get_output() +
+            0.494 * noise.get_output();
+
     return sample;
 }
 
