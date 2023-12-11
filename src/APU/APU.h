@@ -6,31 +6,39 @@
 #include "Units.h"
 #include <vector>
 
-class APU : public Component {
+class APU : public Component
+{
 public:
-    friend class FrameSequencer;
-    APU();
-    ~APU();
-    void cycle();
-    void write_apu_reg(uint8_t reg, uint8_t data);
-private:
-    void sample();
-    float get_mixer();
-public:
-    SDL_AudioDeviceID audio_device;
-private:
-    SDL_AudioSpec audio_spec;
+	friend class FrameSequencer;
 
-    Pulse pulse[2] = {new Pulse(false), new Pulse(true)};
-    Triangle triangle;
-    Noise noise;
+	APU();
+
+	~APU();
+
+	void cycle();
+
+	void write_apu_reg( uint8_t reg, uint8_t data );
+
+private:
+	void sample();
+
+	float get_mixer();
+
+public:
+	SDL_AudioDeviceID audio_device;
+private:
+	SDL_AudioSpec audio_spec;
+
+	Pulse pulse[2] = {new Pulse( false ), new Pulse( true )};
+	Triangle triangle;
+	Noise noise;
 //    DMC dmc;
-    FrameSequencer frameSeq;
+	FrameSequencer frameSeq;
 
-    bool tick_fs = false;
+	bool tick_fs = false;
 
-    std::vector<int16_t> sample_buffer;
-    float sample_clock = 0;
+	std::vector< int16_t > sample_buffer;
+	float sample_clock = 0;
 
-    static constexpr float sample_per = 21477272/44100.0/12.0;
+	static constexpr float sample_per = 21477272 / 44100.0 / 12.0;
 };

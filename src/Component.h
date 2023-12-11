@@ -2,12 +2,17 @@
 
 #include "NES.h"
 
-class Component {
+class Component
+{
 public:
-    Component() = default;
-    ~Component() = default;
-    NES* get_nes();
-    void set_nes(NES* nes);
+	Component() = default;
+
+	~Component() = default;
+
+	NES *get_nes();
+
+	void set_nes( NES *nes );
+
 protected:
-    NES* nes{};
+	NES *nes{};
 };
