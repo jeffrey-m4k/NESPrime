@@ -4,6 +4,8 @@
 # Overview
 NESPrime is a simple NES emulator written in C++ using the SDL2 library.
 
+![demo](https://github.com/jeffrey-m4k/NESPrime/assets/52832383/590795cf-dc30-4b3d-aed6-664979539a91)
+
 ### Features
 - Mostly cycle-accurate CPU, PPU, and APU emulation
 - Supports a few popular mappers, with more on the way
