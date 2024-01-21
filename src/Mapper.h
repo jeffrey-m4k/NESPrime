@@ -1,9 +1,9 @@
 #pragma once
 
 #include <cstdint>
-#include "../Cartridge.h"
-#include "../PPU.h"
-#include "../CPU.h"
+#include "Cartridge.h"
+#include "PPU.h"
+#include "CPU.h"
 
 enum MIRRORING
 {

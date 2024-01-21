@@ -4,7 +4,7 @@
 #include <sstream>
 #include <functional>
 #include "Processor.h"
-#include "mappers/Mapper.h"
+#include "Mapper.h"
 
 enum ADDRESSING_MODE
 {
