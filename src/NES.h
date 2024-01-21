@@ -2,7 +2,7 @@
 
 #include <string>
 #include <fstream>
-#include <windows.h>
+#include <nfd.h>
 
 class CPU;
 
@@ -27,7 +27,7 @@ public:
 
 	void run();
 
-	bool run( const OPENFILENAME &fn );
+	bool run( const nfdchar_t *fn );
 
 	void check_refresh();
 

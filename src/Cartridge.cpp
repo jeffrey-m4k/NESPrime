@@ -46,11 +46,11 @@ bool Cartridge::read_next( Memory &into, const uint32_t start, const uint32_t by
 	return false;
 }
 
-bool Cartridge::open_file( const OPENFILENAME &filename )
+bool Cartridge::open_file( const nfdchar_t *filename )
 {
 	pos = 0;
-	nes->out << "===== " << filename.lpstrFileTitle << " =====\n\n";
-	file.open( filename.lpstrFile, ios::in | ios::binary );
+	nes->out << "===== " << filename << " =====\n\n";
+	file.open( filename, ios::in | ios::binary );
 	return file.is_open();
 }
 

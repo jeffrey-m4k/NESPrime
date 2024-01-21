@@ -7,7 +7,6 @@
 #include <cstdint>
 #include "Memory.h"
 #include "Component.h"
-#include <windows.h>
 
 class Mapper;
 
@@ -22,7 +21,7 @@ public:
 
 	void load();
 
-	bool open_file( const OPENFILENAME &filename );
+	bool open_file( const nfdchar_t *filename );
 
 	std::ifstream &get_file()
 	{

@@ -62,7 +62,7 @@ void NES::reset()
 	clock = 0;
 }
 
-bool NES::run( const OPENFILENAME &fn )
+bool NES::run( const nfdchar_t *fn )
 {
 	reset();
 	if ( cart->open_file( fn ) )

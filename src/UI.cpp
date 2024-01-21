@@ -1,6 +1,5 @@
 #include "UI.h"
 #include "data.h"
-#include <windows.h>
 
 using namespace std::filesystem;
 
@@ -133,16 +132,16 @@ void UI::handle_global( SDL_Event &e )
 
 void UI::show_rom_dialog()
 {
-	ofn = {};
-	ofn.lStructSize = sizeof(ofn);
-	ofn.lpstrFilter = TEXT( "ROM files (.nes)\0*.NES\0" );
-	ofn.lpstrFile = reinterpret_cast<LPSTR>(buffer), ofn.nMaxFile = MAX_PATH, *buffer = '\0';
-	ofn.Flags = OFN_EXPLORER | OFN_ENABLESIZING | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-	if ( GetOpenFileName( &ofn ) && nes->run( ofn ) )
-	{
-		state = UIState::PAUSE;
-		needs_update = true;
-	}
+    nfdresult_t result = NFD_OpenDialog( "nes", nullptr, &outPath );
+
+    if ( result == NFD_OKAY )
+    {
+        if ( nes->run( outPath ) )
+        {
+            state = UIState::PAUSE;
+            needs_update = true;
+        }
+    }
 }
 
 void UI::draw()

@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <utility>
 #include <vector>
+#include <nfd.h>
 
 enum class UIState
 {
@@ -137,8 +138,7 @@ private:
 	};
 
 	// === STATE: MAIN
-	WCHAR buffer[MAX_PATH];
-	OPENFILENAME ofn = {};
+	nfdchar_t *outPath = nullptr;
 	Uint32 start_tick;
 	bool show_splash = true;
 
