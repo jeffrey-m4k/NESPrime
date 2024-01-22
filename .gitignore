@@ -4,3 +4,4 @@ cmake-build-*
 out
 *.gch
 *.aps
+CMakeSettings.json
