@@ -92,7 +92,7 @@ void NES::check_refresh()
 			else if ( event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE )
 			{
 				SDL_Window *window = SDL_GetWindowFromID( event.window.windowID );
-				if ( SDL_GetWindowID( window ) == 3 )
+				if ( SDL_GetWindowID( window ) == 4 )
 				{
 					quit = true;
 				}
@@ -119,6 +119,7 @@ void NES::check_refresh()
 			ppu->output_pt();
 			ppu->output_nt();
 			display->refresh();
+			display->update_apu();
 		}
 		else
 		{

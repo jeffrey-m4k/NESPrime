@@ -1,5 +1,6 @@
 #include "APU.h"
 #include "../CPU.h"
+#include "../Display.h"
 
 APU::APU()
 {
@@ -47,6 +48,14 @@ void APU::sample()
 	if ( ++sample_clock >= sample_per )
 	{
 		sample_buffer.push_back( get_mixer() * 500 );
+		nes->get_display()->write_apu_sample(
+			std::vector< float > {
+				( float ) pulse[0].get_output() / 15.0f,
+				( float ) pulse[1].get_output() / 15.0f,
+				( float ) triangle.get_output() / 15.0f,
+				( float ) noise.get_output() / 15.0f
+			}
+		);
 		sample_clock -= sample_per;
 	}
 	if ( sample_buffer.size() >= 100 )

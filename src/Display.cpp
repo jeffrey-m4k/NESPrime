@@ -8,6 +8,7 @@ bool Display::init()
 {
 	window_pt = SDL_CreateWindow( "Pattern Tables", 16, 16, 512, 256, SDL_WINDOW_RESIZABLE );
 	window_nt = SDL_CreateWindow( "Nametables", 16, 544, 512, 240, SDL_WINDOW_RESIZABLE );
+	window_apu = SDL_CreateWindow( "APU Channels", 16, 16, APU_WINDOW_WIDTH, 640, SDL_WINDOW_RESIZABLE );
 	window_main = SDL_CreateWindow( "NESPrime",
 	                                SDL_WINDOWPOS_CENTERED,
 	                                SDL_WINDOWPOS_CENTERED,
@@ -15,7 +16,7 @@ bool Display::init()
 	                                HEIGHT * 3,
 	                                SDL_WINDOW_RESIZABLE );
 
-	if ( window_main == nullptr || window_pt == nullptr || window_nt == nullptr )
+	if ( window_main == nullptr || window_pt == nullptr || window_nt == nullptr || window_apu == nullptr )
 	{
 		SDL_Log( "Unable to create window: %s", SDL_GetError() );
 		return false;
@@ -26,8 +27,9 @@ bool Display::init()
 	renderer_main = SDL_CreateRenderer( window_main, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE );
 	renderer_pt = SDL_CreateRenderer( window_pt, -1, SDL_RENDERER_ACCELERATED );
 	renderer_nt = SDL_CreateRenderer( window_nt, -1, SDL_RENDERER_ACCELERATED );
+	renderer_apu = SDL_CreateRenderer( window_apu, -1, SDL_RENDERER_ACCELERATED );
 
-	if ( renderer_main == nullptr || renderer_pt == nullptr || renderer_nt == nullptr )
+	if ( renderer_main == nullptr || renderer_pt == nullptr || renderer_nt == nullptr || renderer_apu == nullptr )
 	{
 		SDL_Log( "Unable to create renderer: %s", SDL_GetError() );
 		return false;
@@ -36,12 +38,14 @@ bool Display::init()
 	SDL_RenderSetLogicalSize( renderer_main, WIDTH * 4, HEIGHT * 4 );
 	SDL_RenderSetLogicalSize( renderer_pt, 256, 128 );
 	SDL_RenderSetLogicalSize( renderer_nt, 512, 240 );
+	SDL_RenderSetLogicalSize( renderer_apu, APU_WINDOW_WIDTH, 640 );
 
 	texture_game = SDL_CreateTexture( renderer_main, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, WIDTH,
 	                                  HEIGHT );
 	texture_pt = SDL_CreateTexture( renderer_pt, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, 256, 128 );
 	texture_nt = SDL_CreateTexture( renderer_nt, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, 512, 240 );
-	if ( texture_game == nullptr || texture_pt == nullptr || texture_nt == nullptr )
+	texture_apu = SDL_CreateTexture( renderer_apu, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, APU_WINDOW_WIDTH, 640 );
+	if ( texture_game == nullptr || texture_pt == nullptr || texture_nt == nullptr || texture_apu == nullptr )
 	{
 		SDL_Log( "Unable to create texture: %s", SDL_GetError() );
 		return false;
@@ -93,6 +97,58 @@ bool Display::update_nt()
 	SDL_RenderClear( renderer_nt );
 	SDL_RenderCopy( renderer_nt, texture_nt, nullptr, nullptr );
 	SDL_RenderPresent( renderer_nt );
+
+	return true;
+}
+
+bool Display::update_apu()
+{
+	uint8_t buf[APU_WINDOW_WIDTH * 640 * 3] = { 0 };
+
+	for ( int i = 0; i < apu_samples.size(); ++i )
+	{
+		std::vector< float > sample = apu_samples.at( i );
+
+		for ( int s = 0; s < sample.size() && s < 4; ++s )
+		{
+			if ( i > 0 )
+			{
+				int diff = sample.at( s ) * APU_CHANNEL_WAVEFORM_WIDTH 
+					- apu_samples.at( i - 1 ).at( s ) * APU_CHANNEL_WAVEFORM_WIDTH;
+
+				int start_x = s * APU_CHANNEL_WIDTH + APU_CHANNEL_PADDING 
+					+ (diff > 0 ? apu_samples.at( i - 1 ).at( s ) : sample.at( s )) * APU_CHANNEL_WAVEFORM_WIDTH;
+
+				for ( int d = 0; d <= abs(diff); ++d )
+				{
+					int buf_idx = (i * APU_WINDOW_WIDTH + start_x + d) * 3;
+					buf[buf_idx] = 255;
+					buf[buf_idx + 1] = 255;
+					buf[buf_idx + 2] = 255;
+				}
+			}
+			else
+			{
+				int buf_idx = (i * APU_WINDOW_WIDTH + s * APU_CHANNEL_WIDTH 
+					+ (APU_CHANNEL_PADDING + sample.at(s) * APU_CHANNEL_WAVEFORM_WIDTH)) * 3;
+				buf[buf_idx] = 255;
+				buf[buf_idx + 1] = 255;
+				buf[buf_idx + 2] = 255;
+			}
+		}
+	}
+
+	int texture_pitch = 0;
+	void* texture_pixels = nullptr;
+	if ( SDL_LockTexture( texture_apu, nullptr, &texture_pixels, &texture_pitch ) == 0 )
+	{
+		memcpy( texture_pixels, buf, texture_pitch * 640 );
+	}
+	SDL_UnlockTexture( texture_apu );
+
+	SDL_RenderClear( renderer_apu );
+	SDL_RenderCopy( renderer_apu, texture_apu, nullptr, nullptr );
+	SDL_RenderPresent( renderer_apu );
 
 	return true;
 }
