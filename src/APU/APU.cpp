@@ -62,9 +62,6 @@ void APU::sample()
 	{
 		SDL_QueueAudio( audio_device, sample_buffer.data(), sample_buffer.size() * 2 );
 		sample_buffer.clear();
-		while ( SDL_GetQueuedAudioSize( audio_device ) > 4096 * 2 )
-		{
-		};
 	}
 }
 

@@ -41,7 +41,10 @@ void NES::run()
 	{
 		if ( !ui->get_show() )
 		{
-			tick( true, 1 );
+			while ( cycles_delta < CPF )
+			{
+				tick( true, 1 );
+			}
 		}
 		check_refresh();
 	}
@@ -80,7 +83,7 @@ bool NES::run( const nfdchar_t *fn )
 void NES::check_refresh()
 {
 	Uint32 t = SDL_GetTicks();
-	if ( t - display->last_update >= 1000 / 60 )
+	if ( t - display->last_update >= 1000 / 60 && SDL_GetQueuedAudioSize( apu->audio_device ) < 8192 )
 	{
 		SDL_Event event;
 		while ( SDL_PollEvent( &event ) )
@@ -120,6 +123,7 @@ void NES::check_refresh()
 			ppu->output_nt();
 			display->refresh();
 			display->update_apu();
+			cycles_delta -= CPF;
 		}
 		else
 		{
@@ -152,7 +156,8 @@ void NES::tick( bool do_cpu, int times )
 			apu->cycle();
 		}
 
-		clock++;
+		++clock;
+		++cycles_delta;
 	}
 }
 

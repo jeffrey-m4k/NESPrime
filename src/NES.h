@@ -100,6 +100,10 @@ private:
 	APU *apu;
 	UI *ui;
 
+	static const int CPS = 21477272;
+	static constexpr float CPF = CPS / 60.0;
+	float cycles_delta = 0;
+
 	long clock = 0;
 	bool quit = false;
 };
