@@ -178,9 +178,22 @@ bool PPU::run()
 				}
 
 				uint8_t rgb_cpy[3];
-				rgb_cpy[0] = (emphasis_g || emphasis_b) ? final_rgb[0] / 2 : final_rgb[0];
-				rgb_cpy[1] = (emphasis_r || emphasis_b) ? final_rgb[1] / 2 : final_rgb[1];
-				rgb_cpy[2] = (emphasis_r || emphasis_g) ? final_rgb[2] / 2 : final_rgb[2];
+				std::copy(final_rgb, final_rgb + 3, rgb_cpy);
+				if (emphasis_r)
+				{
+					rgb_cpy[1] *= 0.85;
+					rgb_cpy[2] *= 0.85;
+				}
+				if (emphasis_g)
+				{
+					rgb_cpy[0] *= 0.85;
+					rgb_cpy[2] *= 0.85;
+				}
+				if (emphasis_b)
+				{
+					rgb_cpy[0] *= 0.85;
+					rgb_cpy[1] *= 0.85;
+				}
 
 				nes->get_display()->set_pixel_buffer( scan_cycle - 1, scanline, rgb_cpy );
 			}
