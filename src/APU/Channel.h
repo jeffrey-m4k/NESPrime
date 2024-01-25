@@ -86,6 +86,8 @@ protected:
 class Pulse : public Channel
 {
 public:
+	Pulse() : Pulse( false ) {}
+
 	Pulse( bool p2 ) : Channel(), sweep_divider( 1 ), p2( p2 )
 	{
 		sequencer.steps = 8;
@@ -93,6 +95,11 @@ public:
 	};
 
 	void set_duty( uint8_t duty );
+
+	void set_p2( bool is_p2 )
+	{
+		p2 = is_p2;
+	}
 
 	uint8_t get_output() override;
 

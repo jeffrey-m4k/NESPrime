@@ -29,7 +29,7 @@ public:
 private:
 	SDL_AudioSpec audio_spec;
 
-	Pulse pulse[2] = {*new Pulse( false ), *new Pulse( true )};
+	Pulse pulse[2];
 	Triangle triangle;
 	Noise noise;
 //    DMC dmc;

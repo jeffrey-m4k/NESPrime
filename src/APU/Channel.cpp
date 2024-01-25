@@ -45,16 +45,16 @@ void Pulse::update_sweep( uint8_t byte )
 void Pulse::tick_sweep()
 {
 	uint16_t curr_period = timer.get_period();
-	uint16_t change_amt = curr_period >> sweep_shift;
+	int16_t change_amt = curr_period >> sweep_shift;
 	if ( sweep_negate )
 	{
-		change_amt = ~change_amt;
+		change_amt = -change_amt;
 		if ( p2 )
 		{
 			change_amt++;
 		}
 	}
-	uint16_t target_period = curr_period + change_amt;
+	uint16_t target_period = curr_period + (change_amt % 0x800);
 	muted = curr_period < 8 || target_period > 0x7FF;
 
 	bool zero = sweep_divider.clock();

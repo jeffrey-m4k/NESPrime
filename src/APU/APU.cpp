@@ -17,6 +17,8 @@ APU::APU()
 	SDL_PauseAudioDevice( audio_device, 0 );
 
 	frameSeq.set_apu( this );
+
+	pulse[1].set_p2( true );
 }
 
 APU::~APU()
