@@ -591,15 +591,14 @@ void PPU::output_pt()
 void PPU::output_nt()
 {
 	uint8_t *memory = this->mem.get_mem();
-	for ( int i = 0; i < 2; i++ )
+	for ( int i = 0; i < 4; i++ )
 	{
-
 		for ( int y = 0; y < 30; y++ )
 		{
 			for ( int cx = 0; cx < 32; cx++ )
 			{
 				uint8_t tile_num = read(
-						0x2000 + 0x400 * i * (mapper->get_mirroring() == Vertical ? 1 : 2) + y * 32 + cx );
+						0x2000 + 0x400 * i + y * 32 + cx );
 				uint16_t pattern_idx = 0x1000 * ((regs[PPUCTRL] >> 4) & 0x1) + ((uint16_t) tile_num << 4);
 				Tile tile;
 				for ( int b = 0; b < 16; b++ )
@@ -620,7 +619,7 @@ void PPU::output_nt()
 						{
 							rgb[col - 1] = 255;
 						}
-						nes->get_display()->write_nt_pixel( y * 32 + cx, fine_x, fine_y, i == 1, rgb );
+						nes->get_display()->write_nt_pixel( y * 32 + cx, fine_x, fine_y, i, rgb );
 					}
 				}
 			}

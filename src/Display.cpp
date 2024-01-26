@@ -6,11 +6,14 @@
 
 bool Display::init()
 {
-	window_pt = SDL_CreateWindow( "Pattern Tables", 16, 16, 512, 256, SDL_WINDOW_RESIZABLE );
-	window_nt = SDL_CreateWindow( "Nametables", 16, 544, 512, 240, SDL_WINDOW_RESIZABLE );
-	window_apu = SDL_CreateWindow( "APU Channels", 16, 16, APU_WINDOW_WIDTH, 640, SDL_WINDOW_RESIZABLE );
+	SDL_DisplayMode mode;
+	SDL_GetCurrentDisplayMode(0, &mode);
+
+	window_pt = SDL_CreateWindow( "Pattern Tables", 0, 28, 512, 256, SDL_WINDOW_RESIZABLE );
+	window_nt = SDL_CreateWindow( "Nametables", 0, 312, 512, 480, SDL_WINDOW_RESIZABLE );
+	window_apu = SDL_CreateWindow( "APU Channels", mode.w - APU_WINDOW_WIDTH, 28, APU_WINDOW_WIDTH, 640, SDL_WINDOW_RESIZABLE );
 	window_main = SDL_CreateWindow( "NESPrime",
-	                                SDL_WINDOWPOS_CENTERED,
+	                                512,
 	                                SDL_WINDOWPOS_CENTERED,
 	                                WIDTH * 3,
 	                                HEIGHT * 3,
@@ -37,13 +40,13 @@ bool Display::init()
 
 	SDL_RenderSetLogicalSize( renderer_main, WIDTH * 4, HEIGHT * 4 );
 	SDL_RenderSetLogicalSize( renderer_pt, 256, 128 );
-	SDL_RenderSetLogicalSize( renderer_nt, 512, 240 );
+	SDL_RenderSetLogicalSize( renderer_nt, 512, 480 );
 	SDL_RenderSetLogicalSize( renderer_apu, APU_WINDOW_WIDTH, 640 );
 
 	texture_game = SDL_CreateTexture( renderer_main, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, WIDTH,
 	                                  HEIGHT );
 	texture_pt = SDL_CreateTexture( renderer_pt, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, 256, 128 );
-	texture_nt = SDL_CreateTexture( renderer_nt, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, 512, 240 );
+	texture_nt = SDL_CreateTexture( renderer_nt, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, 512, 480 );
 	texture_apu = SDL_CreateTexture( renderer_apu, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, APU_WINDOW_WIDTH, 640 );
 	if ( texture_game == nullptr || texture_pt == nullptr || texture_nt == nullptr || texture_apu == nullptr )
 	{
@@ -90,7 +93,7 @@ bool Display::update_nt()
 	void *texture_pixels = nullptr;
 	if ( SDL_LockTexture( texture_nt, nullptr, &texture_pixels, &texture_pitch ) == 0 )
 	{
-		memcpy( texture_pixels, nts, texture_pitch * 240 );
+		memcpy( texture_pixels, nts, texture_pitch * 480 );
 	}
 	SDL_UnlockTexture( texture_nt );
 
@@ -250,9 +253,9 @@ void Display::write_pt_pixel( uint8_t tile, uint8_t x, uint8_t y, bool pt2, cons
 	pt[index + 2] = rgb[2];
 }
 
-void Display::write_nt_pixel( int tile, uint8_t x, uint8_t y, bool nt2, const uint8_t *rgb )
+void Display::write_nt_pixel( int tile, uint8_t x, uint8_t y, short nt, const uint8_t *rgb )
 {
-	int index = (256 * nt2 + 512 * 8 * (tile / 32) + 8 * (tile % 32) + x + 512 * y) * 3;
+	int index = (256 * (nt % 2) + (256 * 240 * 2) * (nt / 2) + 512 * 8 * (tile / 32) + 8 * (tile % 32) + x + 512 * y) * 3;
 	nts[index] = rgb[0];
 	nts[index + 1] = rgb[1];
 	nts[index + 2] = rgb[2];

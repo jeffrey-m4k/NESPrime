@@ -36,7 +36,7 @@ public:
 
 	void write_pt_pixel( uint8_t tile, uint8_t x, uint8_t y, bool pt2, const uint8_t rgb[3] );
 
-	void write_nt_pixel( int tile, uint8_t x, uint8_t y, bool nt2, const uint8_t rgb[3] );
+	void write_nt_pixel( int tile, uint8_t x, uint8_t y, short nt, const uint8_t rgb[3] );
 
 	void write_apu_sample( std::vector< float > sample )
 	{
@@ -101,7 +101,7 @@ private:
 	uint8_t buffer[WIDTH * HEIGHT * 3] = {0};
 
 	uint8_t pt[256 * 128 * 3] = {0};
-	uint8_t nts[256 * 240 * 2 * 3] = {0};
+	uint8_t nts[256 * 240 * 4 * 3] = {0};
 
 	// 0: Pulse 1, 1 : Pulse 2, 2 : Triangle, 3 : Noise
 	std::deque< std::vector< float > > apu_samples;
