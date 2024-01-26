@@ -90,6 +90,8 @@ protected:
 	bool write( uint16_t addr, uint8_t data ) override;
 
 private:
+	void log_state();
+
 	void interrupt( INTERRUPT_TYPE type );
 
 	void skip_cycles( int num, CYCLE type );
@@ -181,6 +183,9 @@ private:
 
 	bool PIN_NMI = false;
 	bool PIN_IRQ = false;
+
+	bool polled_interrupt = false;
+	bool suppress_skip_cycles = false;
 
 	CYCLE state;
 
@@ -423,5 +428,5 @@ private:
 	registers_6502 reg{};
 
 	std::ostringstream regs_log;
-	bool logging = false;
+	static constexpr bool logging = false;
 };

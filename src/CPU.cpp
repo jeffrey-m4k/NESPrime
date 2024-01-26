@@ -19,7 +19,7 @@ void CPU::reset()
 
 void CPU::init()
 {
-	cycle = 0;//8;
+	cycle = 0;
 	nes->out.fill( '0' );
 
 	skip_cycles( 3, READ );
@@ -39,53 +39,25 @@ void CPU::init()
 
 bool CPU::run()
 {
-	//if (!this->Processor::run()) return false;
-
 	oper_set = false;
+	polled_interrupt = false;
+	suppress_skip_cycles = false;
 
-	if ( logging )
+	if constexpr( logging )
 	{
-		regs_log.str( "" );
-		regs_log.clear();
-		regs_log << "A:";
-		print_hex( regs_log, reg.acc );
-		regs_log << " X:";
-		print_hex( regs_log, reg.x );
-		regs_log << " Y:";
-		print_hex( regs_log, reg.y );
-		regs_log << " P:";
-		print_hex( regs_log, reg.p );
-		regs_log << " SP:";
-		print_hex( regs_log, reg.s );
-		regs_log << " CYC:" << cycle;
-		regs_log << " | PPU:";
-		for ( int i = 0; i < 9; i++ )
-		{
-			print_hex( regs_log, nes->get_ppu()->read_reg( i, cycle, false ) );
-			regs_log << " ";
-		}
-		regs_log << "CYC:" << nes->get_ppu()->get_y() << "," << nes->get_ppu()->get_x() << ":"
-		         << nes->get_ppu()->get_frame();
-		regs_log << " | v:";
-		print_hex( regs_log, nes->get_ppu()->get_v() );
-		regs_log << " | t:";
-		print_hex( regs_log, nes->get_ppu()->get_t() );
-		regs_log << " | w:";
-		print_hex( regs_log, nes->get_ppu()->get_w() );
-		regs_log << " | x:";
-		print_hex( regs_log, nes->get_ppu()->get_finex() );
-		nes->out << "\n";
+		log_state();
 	}
 
 	uint8_t opcode = read( reg.pc );
-	if ( logging )
+
+	if constexpr( logging )
 	{
 		print_hex( nes->out, reg.pc, "  " );
 	}
 
 	exec( opcode );
 
-	if ( logging )
+	if constexpr( logging )
 	{
 		nes->out << setw( 35 ) << std::left << regs_log.str();
 	}
@@ -93,7 +65,7 @@ bool CPU::run()
 	if ( PIN_NMI )
 	{
 		interrupt( NMI );
-		if ( logging )
+		if constexpr( logging )
 		{
 			nes->out << "\n!!! NMI TRIGGERED !!!";
 		}
@@ -140,7 +112,7 @@ uint8_t CPU::oper()
 
 void CPU::exec( const uint8_t opcode )
 {
-	if ( logging )
+	if constexpr( logging )
 	{
 		oss.str( "" );
 	}
@@ -148,7 +120,7 @@ void CPU::exec( const uint8_t opcode )
 	auto it = OPCODES.find( opcode );
 	if ( it == OPCODES.end() )
 	{
-		if ( logging )
+		if constexpr( logging )
 		{
 			nes->out << "\n\nError: unknown opcode! ";
 			print_hex( nes->out, opcode );
@@ -162,7 +134,7 @@ void CPU::exec( const uint8_t opcode )
 	bool page_sensitive = ((curr_op.cycles & PAGE_SENSITIVE) >> 4) & 1;
 
 	//idle_cycles += (curr_op.cycles & ~PAGE_SENSITIVE);
-	if ( logging )
+	if constexpr( logging )
 	{
 		print_hex( oss, opcode, " " );
 	}
@@ -175,7 +147,7 @@ void CPU::exec( const uint8_t opcode )
 	switch ( curr_op.mode )
 	{
 		case Accumulator:
-			if ( logging )
+			if constexpr( logging )
 			{
 				nes->out << setw( 10 ) << std::left << oss.str();
 				oss.str( "" );
@@ -183,7 +155,7 @@ void CPU::exec( const uint8_t opcode )
 			}
 			break;
 		case Implicit:
-			if ( logging )
+			if constexpr( logging )
 			{
 				nes->out << setw( 10 ) << std::left << oss.str();
 				oss.str( "" );
@@ -193,7 +165,7 @@ void CPU::exec( const uint8_t opcode )
 		case Immediate:
 			addrs[0] = ++reg.pc;
 
-			if ( logging )
+			if constexpr( logging )
 			{
 				print_hex( oss, read( addrs[0], false ), " " );
 
@@ -210,7 +182,7 @@ void CPU::exec( const uint8_t opcode )
 			uint8_t hi = read( ++reg.pc );
 			addrs[0] = create_address( lo, hi );
 
-			if ( logging )
+			if constexpr( logging )
 			{
 				print_hex( oss, lo, " " );
 				print_hex( oss, hi, " " );
@@ -229,7 +201,7 @@ void CPU::exec( const uint8_t opcode )
 			uint8_t lo = read( ++reg.pc );
 			addrs[0] = lo;
 
-			if ( logging )
+			if constexpr( logging )
 			{
 				print_hex( oss, lo, " " );
 				nes->out << setw( 10 ) << std::left << oss.str();
@@ -254,7 +226,7 @@ void CPU::exec( const uint8_t opcode )
 				skip_cycles( 1, READ );
 			}
 
-			if ( logging )
+			if constexpr( logging )
 			{
 				print_hex( oss, lo, " " );
 				print_hex( oss, hi, " " );
@@ -277,7 +249,7 @@ void CPU::exec( const uint8_t opcode )
 			addrs[0] = (uint8_t) (lo + (curr_op.mode == IndexedZeroX ? reg.x : reg.y));
 			skip_cycles( 1, READ );
 
-			if ( logging )
+			if constexpr( logging )
 			{
 				print_hex( oss, lo, " " );
 				nes->out << setw( 10 ) << std::left << oss.str();
@@ -300,7 +272,7 @@ void CPU::exec( const uint8_t opcode )
 			addrs[0] = create_address( read( at ), read( (uint8_t) (at + 1) | (at & 0xFF00) ) );
 			// Jump address wraps around in indirect mode due to 6502 bug
 
-			if ( logging )
+			if constexpr( logging )
 			{
 				print_hex( oss, lo, " " );
 				print_hex( oss, hi, " " );
@@ -320,7 +292,7 @@ void CPU::exec( const uint8_t opcode )
 			addrs[0] = create_address( read( addr ), read( (uint8_t) (addr + 1) ) );
 			skip_cycles( 1, READ );
 
-			if ( logging )
+			if constexpr( logging )
 			{
 				print_hex( oss, base, " " );
 				nes->out << setw( 10 ) << std::left << oss.str();
@@ -347,7 +319,7 @@ void CPU::exec( const uint8_t opcode )
 				skip_cycles( 1, READ );
 			}
 
-			if ( logging )
+			if constexpr( logging )
 			{
 				print_hex( oss, base, " " );
 				nes->out << setw( 10 ) << std::left << oss.str();
@@ -368,7 +340,7 @@ void CPU::exec( const uint8_t opcode )
 			offset = (int8_t) read( ++reg.pc );
 			addrs[0] = reg.pc + 1 + offset;
 
-			if ( logging )
+			if constexpr( logging )
 			{
 				print_hex( oss, offset, " " );
 				nes->out << setw( 10 ) << std::left << oss.str();
@@ -384,7 +356,7 @@ void CPU::exec( const uint8_t opcode )
 
 	(*this.*curr_op.op_func)();
 
-	if ( logging )
+	if constexpr( logging )
 	{
 		nes->out << setw( 30 ) << std::left << oss.str();
 	}
@@ -1064,4 +1036,38 @@ void CPU::dummy_write( const uint16_t addr, const uint8_t data )
 	{
 		mapper->handle_write( data, addr );
 	}
+}
+
+void CPU::log_state()
+{
+	regs_log.str("");
+	regs_log.clear();
+	regs_log << "A:";
+	print_hex(regs_log, reg.acc);
+	regs_log << " X:";
+	print_hex(regs_log, reg.x);
+	regs_log << " Y:";
+	print_hex(regs_log, reg.y);
+	regs_log << " P:";
+	print_hex(regs_log, reg.p);
+	regs_log << " SP:";
+	print_hex(regs_log, reg.s);
+	regs_log << " CYC:" << cycle;
+	regs_log << " | PPU:";
+	for (int i = 0; i < 9; i++)
+	{
+		print_hex(regs_log, nes->get_ppu()->read_reg(i, cycle, false));
+		regs_log << " ";
+	}
+	regs_log << "CYC:" << nes->get_ppu()->get_y() << "," << nes->get_ppu()->get_x() << ":"
+		<< nes->get_ppu()->get_frame();
+	regs_log << " | v:";
+	print_hex(regs_log, nes->get_ppu()->get_v());
+	regs_log << " | t:";
+	print_hex(regs_log, nes->get_ppu()->get_t());
+	regs_log << " | w:";
+	print_hex(regs_log, nes->get_ppu()->get_w());
+	regs_log << " | x:";
+	print_hex(regs_log, nes->get_ppu()->get_finex());
+	nes->out << "\n";
 }
