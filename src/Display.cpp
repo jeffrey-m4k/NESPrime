@@ -114,6 +114,13 @@ bool Display::update_apu()
 
 		for ( int s = 0; s < sample.size() && s < 4; ++s )
 		{
+			uint8_t rgb[3] = { 255, 255, 255 };
+			if ( apu_debug_muted[s] )
+			{
+				rgb[1] = 0;
+				rgb[2] = 0;
+			}
+
 			if ( i > 0 )
 			{
 				int diff = sample.at( s ) * APU_CHANNEL_WAVEFORM_WIDTH 
@@ -125,18 +132,14 @@ bool Display::update_apu()
 				for ( int d = 0; d <= abs(diff); ++d )
 				{
 					int buf_idx = (i * APU_WINDOW_WIDTH + start_x + d) * 3;
-					buf[buf_idx] = 255;
-					buf[buf_idx + 1] = 255;
-					buf[buf_idx + 2] = 255;
+					memcpy( &buf[buf_idx], rgb, 3 );
 				}
 			}
 			else
 			{
 				int buf_idx = (i * APU_WINDOW_WIDTH + s * APU_CHANNEL_WIDTH 
 					+ (APU_CHANNEL_PADDING + sample.at(s) * APU_CHANNEL_WAVEFORM_WIDTH)) * 3;
-				buf[buf_idx] = 255;
-				buf[buf_idx + 1] = 255;
-				buf[buf_idx + 2] = 255;
+				memcpy( &buf[buf_idx], rgb, 3 );
 			}
 		}
 	}

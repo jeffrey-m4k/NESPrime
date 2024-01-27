@@ -47,6 +47,11 @@ public:
 		}
 	}
 
+	int get_apu_channel_from_x( int x )
+	{
+		return x / APU_CHANNEL_WIDTH;
+	}
+
 	void push_buffer();
 
 	uint8_t *get_pixels()
@@ -83,6 +88,8 @@ public:
 
 public:
 	uint32_t last_update = 0;
+	bool apu_debug_muted[4] = {false};
+
 private:
 	SDL_Window *window_main;
 	SDL_Window *window_pt;

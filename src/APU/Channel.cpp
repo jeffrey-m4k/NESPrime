@@ -70,6 +70,7 @@ void Pulse::tick_sweep()
 
 uint8_t Pulse::get_output()
 {
+	if (debug_muted) return 0;
 	return (enabled && timer.get_period() > 8 && !muted && length > 0) ? seq_out * envelope.get_volume() : 0;
 }
 
@@ -100,6 +101,7 @@ void Triangle::tick_lc()
 
 uint8_t Triangle::get_output()
 {
+	if (debug_muted) return 0;
 	return (enabled && timer.get_period() > 8 && (length > 0 && linear_counter > 0 || length_halt)) ? seq_out : 0;
 }
 
@@ -115,5 +117,6 @@ void Noise::tick_timer()
 
 uint8_t Noise::get_output()
 {
+	if (debug_muted) return 0;
 	return (enabled && timer.get_period() > 8 && length > 0 && !(shifter & 0x1)) ? envelope.get_volume() : 0;
 }

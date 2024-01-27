@@ -58,7 +58,15 @@ public:
 
 	void tick_timer();
 
+	void toggle_debug_mute()
+	{
+		debug_muted = !debug_muted;
+	}
+
 	virtual uint8_t get_output() = 0;
+
+public:
+	bool debug_muted = false;
 
 protected:
 	bool enabled = false;

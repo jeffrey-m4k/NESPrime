@@ -141,3 +141,27 @@ void APU::write_apu_reg( uint8_t reg, uint8_t data )
 			break;
 	}
 }
+
+void APU::toggle_debug_mute( int channel )
+{
+	if ( channel > 3 ) return;
+	switch ( channel )
+	{
+		case 0:
+			pulse[0].toggle_debug_mute();
+			break;
+		case 1:
+			pulse[1].toggle_debug_mute();
+			break;
+		case 2:
+			triangle.toggle_debug_mute();
+			break;
+		case 3:
+		default:
+			noise.toggle_debug_mute();
+			break;
+	}
+
+	bool *disp_arr = nes->get_display()->apu_debug_muted;
+	disp_arr[channel] = !disp_arr[channel];
+}

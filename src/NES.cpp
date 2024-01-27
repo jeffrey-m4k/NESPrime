@@ -72,6 +72,10 @@ bool NES::run( const nfdchar_t *fn )
 	{
 		cart->load();
 		cpu->init();
+		for ( int i = 0; i < 4; ++i )
+		{
+			display->apu_debug_muted[i] = false;
+		}
 		ui->set_state( UIState::PAUSE );
 		ui->set_show( false );
 		SDL_Delay( 250 );
@@ -102,6 +106,15 @@ void NES::check_refresh()
 				else
 				{
 					SDL_HideWindow( window );
+				}
+			}
+			else if ( event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT )
+			{
+				SDL_Window* window = SDL_GetWindowFromID( event.button.windowID );
+				if ( SDL_GetWindowID(window) == 3 )
+				{
+					int channel = display->get_apu_channel_from_x( event.button.x );
+					apu->toggle_debug_mute( channel );
 				}
 			}
 			else if ( event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_ESCAPE )
