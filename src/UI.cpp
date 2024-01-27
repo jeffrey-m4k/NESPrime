@@ -11,7 +11,7 @@ bool UI::init()
 
 	SDL_RWops *font_mem = SDL_RWFromConstMem( ui_font, sizeof(ui_font) );
 	SDL_RWops *splash_mem = SDL_RWFromConstMem( splash, sizeof(splash) );
-	font_ui = TTF_OpenFontRW( font_mem, 1, 24 );
+	font_ui = TTF_OpenFontRW( font_mem, 1, 32 );
 	splash_img = IMG_Load_RW( splash_mem, 1 );
 
 	if ( font_ui == nullptr || splash_img == nullptr )
