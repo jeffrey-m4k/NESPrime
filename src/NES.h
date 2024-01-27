@@ -40,6 +40,11 @@ public:
 		quit = true;
 	}
 
+	float get_emu_speed()
+	{
+		return EMU_SPEED;
+	}
+
 	CPU *get_cpu()
 	{
 		return cpu;
@@ -100,8 +105,11 @@ private:
 	APU *apu;
 	UI *ui;
 
-	static const int CPS = 21477272;
-	static constexpr float CPF = CPS / 60.0;
+	static constexpr int CPS = 21477272;
+	static constexpr int FPS = 60;
+	static constexpr float EMU_SPEED = 1.0;
+	static constexpr float CPF = CPS / FPS * EMU_SPEED;
+
 	float cycles_delta = 0;
 
 	long clock = 0;

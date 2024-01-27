@@ -83,7 +83,7 @@ bool NES::run( const nfdchar_t *fn )
 void NES::check_refresh()
 {
 	Uint32 t = SDL_GetTicks();
-	if ( t - display->last_update >= 1000 / 60 && SDL_GetQueuedAudioSize( apu->audio_device ) < 8192 )
+	if ( t - display->last_update >= 1000 / FPS && SDL_GetQueuedAudioSize( apu->audio_device ) < 8192 )
 	{
 		SDL_Event event;
 		while ( SDL_PollEvent( &event ) )

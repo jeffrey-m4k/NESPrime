@@ -6,7 +6,7 @@ APU::APU()
 {
 	SDL_setenv( "SDL_AUDIODRIVER", "directsound", 1 );
 	SDL_zero( audio_spec );
-	audio_spec.freq = 44100;
+	audio_spec.freq = 44100 * nes->get_emu_speed();
 	audio_spec.format = AUDIO_S16SYS;
 	audio_spec.channels = 1;
 	audio_spec.samples = 1024;
