@@ -61,7 +61,7 @@ uint8_t *Mapper::map_ppu( uint16_t addr )
 		case OneScreen_LB:
 			return base + addr % 0x400;
 		case OneScreen_HB:
-			return base + addr % 0x400 + 0x800;
+			return base + addr % 0x400 + 0x400;
 		case FourScreen:
 			if ( addr < 0x2000 )
 			{
@@ -368,3 +368,25 @@ void Mapper4::handle_ppu_rising_edge()
 	}
 }
 
+// === MAPPER 7 (AxROM) ===
+
+uint8_t *Mapper7::map_cpu( uint16_t address )
+{
+	if ( address < 0x8000 )
+	{
+		return Mapper::map_cpu( address );
+	}
+
+	return prg_rom + (bank_prg * 0x8000) + (address - 0x8000);
+}
+
+void Mapper7::handle_write( uint8_t data, uint16_t addr )
+{
+	if ( addr < 0x8000 )
+	{
+		return;
+	}
+
+	bank_prg = data & 0x7;
+	set_mirroring( ((data >> 4) & 0x1) ? OneScreen_HB : OneScreen_LB );
+}

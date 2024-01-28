@@ -157,9 +157,8 @@ public:
 class Mapper4 : public Mapper
 {
 public:
-	explicit Mapper4( Cartridge* cart ) : Mapper( cart )
-	{
-	};
+	explicit Mapper4( Cartridge *cart ) : Mapper( cart )
+	{};
 
 	uint8_t *map_cpu( uint16_t address ) override;
 
@@ -183,4 +182,15 @@ private:
 	uint8_t irq_reload_val = 0;
 	bool irq_reload = false;
 	bool irq_disable = false;
+};
+
+class Mapper7 : public Mapper
+{
+public:
+	explicit Mapper7( Cartridge *cart ) : Mapper( cart )
+	{};
+
+	uint8_t *map_cpu( uint16_t address ) override;
+
+	void handle_write( uint8_t data, uint16_t addr ) override;
 };
