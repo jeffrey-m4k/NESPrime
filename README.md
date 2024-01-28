@@ -8,8 +8,8 @@ NESPrime is a simple NES emulator written in C++ using the SDL2 library.
 
 ### Features
 - Mostly cycle-accurate CPU, PPU, and APU emulation
-- Debug display for nametable and pattern table contents
-- Supports a few popular mappers, with more on the way
+- Debug display for nametables, pattern tables, and APU channel waveforms
+- Supports the most popular mappers, with more on the way
 
 ### Keybinds
 - Console:
@@ -27,9 +27,10 @@ NESPrime is a simple NES emulator written in C++ using the SDL2 library.
   - 1 (MMC1) - *Metroid, Mega Man 2, Legend of Zelda...*
   - 2 (UNROM) - *Mega Man, Castlevania, DuckTales...*
   - 3 (CNROM) - *Back to the Future, Ghostbusters, Friday the 13th...*
+  - 4 (MMC3) - *Mega Man 3-6, Super Mario Bros 2+3, Kirby's Adventure...* 
 
 ### Roadmap:
-- More mappers - MMC3, etc...
+- More mappers!
 - More fleshed-out UI with emulation settings, better ROM browsing, keybinds
 - PAL compatibility? (for troublesome games like Elite)
 - Debugging features
