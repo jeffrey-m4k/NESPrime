@@ -92,6 +92,8 @@ protected:
 private:
 	void log_state();
 
+	bool poll_interrupt();
+
 	void interrupt( INTERRUPT_TYPE type );
 
 	void skip_cycles( int num, CYCLE type );
@@ -183,6 +185,7 @@ private:
 
 	bool PIN_NMI = false;
 	bool PIN_IRQ = false;
+	int pending_interrupt = -1;
 
 	bool polled_interrupt = false;
 	bool suppress_skip_cycles = false;

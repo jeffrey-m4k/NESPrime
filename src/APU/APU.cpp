@@ -43,6 +43,11 @@ void APU::cycle()
 
 	triangle.tick_timer();
 	sample();
+
+	if ( frameSeq.interrupt )
+	{
+		get_nes()->get_cpu()->trigger_irq();
+	}
 }
 
 void APU::sample()
@@ -140,6 +145,20 @@ void APU::write_apu_reg( uint8_t reg, uint8_t data )
 		default:
 			break;
 	}
+}
+
+uint8_t APU::read_status()
+{
+	uint8_t s =
+		pulse[0].get_length_halt() |
+		pulse[1].get_length_halt() << 1 |
+		triangle.get_length_halt() << 2 |
+		noise.get_length_halt() << 3 |
+		frameSeq.interrupt << 6;
+
+	frameSeq.interrupt = false;
+
+	return s;
 }
 
 void APU::toggle_debug_mute( int channel )

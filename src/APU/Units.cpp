@@ -65,6 +65,11 @@ void Envelope::clock()
 void FrameSequencer::reset( uint8_t byte )
 {
 	irq_disable = (byte >> 6) & 0x1;
+	if ( irq_disable )
+	{
+		interrupt = false;
+	}
+
 	bool mode = (byte >> 7) & 0x1;
 	if ( !mode )
 	{
@@ -115,7 +120,7 @@ void FrameSequencer::set_interrupt()
 {
 	if ( !irq_disable )
 	{
-		apu->get_nes()->get_cpu()->trigger_irq();
+		interrupt = true;
 	}
 }
 

@@ -131,6 +131,9 @@ private:
 
 	void do_env_clock();
 
+public:
+	bool interrupt = false;
+
 private:
 	Divider divider;
 	Sequencer sequencer;

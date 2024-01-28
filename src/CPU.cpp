@@ -41,6 +41,7 @@ bool CPU::run()
 {
 	oper_set = false;
 	polled_interrupt = false;
+	pending_interrupt = -1;
 	suppress_skip_cycles = false;
 
 	if constexpr( logging )
@@ -62,16 +63,37 @@ bool CPU::run()
 		nes->out << setw( 35 ) << std::left << regs_log.str();
 	}
 
-	if ( PIN_NMI )
+	poll_interrupt();
+	PIN_NMI = false;
+	PIN_IRQ = false;
+
+	if ( pending_interrupt == INTERRUPT_TYPE::NMI || pending_interrupt == INTERRUPT_TYPE::IRQ )
 	{
-		interrupt( NMI );
-		if constexpr( logging )
-		{
-			nes->out << "\n!!! NMI TRIGGERED !!!";
-		}
+		interrupt( (INTERRUPT_TYPE)pending_interrupt );
 	}
 
 	return true;
+}
+
+bool CPU::poll_interrupt()
+{
+	if ( !polled_interrupt )
+	{
+		polled_interrupt = true;
+
+		if ( PIN_NMI )
+		{
+			pending_interrupt = INTERRUPT_TYPE::NMI;
+			return true;
+		}
+		else if ( PIN_IRQ && !(reg.p & STATUS::i) )
+		{
+			pending_interrupt = INTERRUPT_TYPE::IRQ;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void CPU::interrupt( INTERRUPT_TYPE type )
@@ -83,11 +105,13 @@ void CPU::interrupt( INTERRUPT_TYPE type )
 	uint8_t push_p = type == BREAK ? reg.p | STATUS::b : reg.p & ~STATUS::b;
 	uint16_t vector = type == NMI ? 0xFFFA : 0xFFFE;
 	uint16_t push_addr = type == BREAK ? ++reg.pc + 1 : reg.pc;
-	reg.p |= STATUS::i;
+	if ( type == IRQ )
+	{
+		reg.p |= STATUS::i;
+	}
 	push_address( push_addr );
 	push_stack( push_p );
 	reg.pc = read_address( vector );
-	PIN_NMI = false;
 }
 
 void CPU::skip_cycles( int num, CYCLE type )
@@ -601,6 +625,7 @@ void CPU::CLD()
 
 void CPU::CLI()
 {
+	poll_interrupt();
 	set_status( STATUS::i, false );
 	skip_cycles( 1, READ );
 }
@@ -780,6 +805,8 @@ void CPU::PLP()
 	uint8_t status = pop_stack();
 	bool b = get_status( STATUS::b );
 	bool bit_5 = get_status( STATUS::bit_5 );
+
+	poll_interrupt();
 	reg.p = status;
 	set_status( STATUS::b, b );
 	set_status( STATUS::bit_5, bit_5 );
@@ -878,6 +905,7 @@ void CPU::SED()
 
 void CPU::SEI()
 {
+	poll_interrupt();
 	set_status( STATUS::i, true );
 	skip_cycles( 1, READ );
 }
@@ -973,7 +1001,11 @@ uint8_t CPU::read( int addr, bool physical_read )
 	}
 	else if ( addr >= 0x4000 && addr < 0x4018 )
 	{
-		if ( addr == 0x4016 )
+		if ( addr == 0x4015 )
+		{
+			return nes->get_apu()->read_status();
+		}
+		else if ( addr == 0x4016 )
 		{
 			return nes->get_io()->read_joy();
 		}

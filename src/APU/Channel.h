@@ -43,6 +43,11 @@ public:
 		envelope.set_param( v );
 	}
 
+	bool get_length_halt()
+	{
+		return length_halt;
+	}
+
 	void clock_length()
 	{
 		if ( !length_halt && length > 0 )

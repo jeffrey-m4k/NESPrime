@@ -19,6 +19,8 @@ public:
 
 	void write_apu_reg( uint8_t reg, uint8_t data );
 
+	uint8_t read_status();
+
 	void toggle_debug_mute( int channel );
 
 private:
