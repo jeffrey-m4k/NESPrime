@@ -146,6 +146,7 @@ void Cartridge::load()
 		if ( flags[0][3] )
 		{
 			mapper->set_mirroring( FourScreen );
+			mapper->set_force_mirroring( true );
 		}
 		else
 		{

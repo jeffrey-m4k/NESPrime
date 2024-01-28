@@ -47,7 +47,7 @@ uint8_t *Mapper::map_ppu( uint16_t addr )
 	}
 	if ( addr < 0x2000 )
 	{
-		return chr_ram == nullptr ? chr_rom + addr : chr_ram + addr;
+		return chr_rom == nullptr ? chr_ram + addr : chr_rom + addr;
 	}
 	addr &= ~0x1000; // $3000-$3FFF is a mirror of $2000-$2FFF
 	addr -= 0x2000;
@@ -62,6 +62,15 @@ uint8_t *Mapper::map_ppu( uint16_t addr )
 			return base + addr % 0x400;
 		case OneScreen_HB:
 			return base + addr % 0x400 + 0x800;
+		case FourScreen:
+			if ( addr < 0x2000 )
+			{
+				return base + addr;
+			}
+			else
+			{
+				return chr_ram + addr;
+			}
 		default:
 			return nullptr;
 	}

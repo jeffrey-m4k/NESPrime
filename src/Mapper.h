@@ -31,7 +31,15 @@ public:
 
 	void set_mirroring( MIRRORING mirr )
 	{
-		mirroring = mirr;
+		if ( !force_mirroring )
+		{
+			mirroring = mirr;
+		}
+	}
+	
+	void set_force_mirroring( bool force )
+	{
+		force_mirroring = force;
 	}
 
 	MIRRORING get_mirroring()
@@ -58,6 +66,8 @@ protected:
 	uint8_t *chr_rom;
 	uint8_t *prg_ram;
 	uint8_t *chr_ram;
+
+	bool force_mirroring = false;
 };
 
 class Mapper1 : public Mapper
