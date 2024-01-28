@@ -27,7 +27,8 @@ NESPrime is a simple NES emulator written in C++ using the SDL2 library.
   - 1 (MMC1) - *Metroid, Mega Man 2, Legend of Zelda...*
   - 2 (UNROM) - *Mega Man, Castlevania, DuckTales...*
   - 3 (CNROM) - *Back to the Future, Ghostbusters, Friday the 13th...*
-  - 4 (MMC3) - *Mega Man 3-6, Super Mario Bros 2+3, Kirby's Adventure...* 
+  - 4 (MMC3) - *Mega Man 3-6, Super Mario Bros 2+3, Kirby's Adventure...*
+  - 7 (AxROM) - *Battletoads, Solstice...*
 
 ### Roadmap:
 - More mappers!
