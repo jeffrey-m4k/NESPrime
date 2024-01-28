@@ -390,3 +390,36 @@ void Mapper7::handle_write( uint8_t data, uint16_t addr )
 	bank_prg = data & 0x7;
 	set_mirroring( ((data >> 4) & 0x1) ? OneScreen_HB : OneScreen_LB );
 }
+
+// === MAPPER 11 (Color Dreams) ===
+
+uint8_t *Mapper11::map_cpu( uint16_t address )
+{
+	if ( address < 0x8000 )
+	{
+		return Mapper::map_cpu( address );
+	}
+
+	return prg_rom + (bank_prg * 0x8000) + (address - 0x8000);
+}
+
+uint8_t *Mapper11::map_ppu( uint16_t address )
+{
+	if ( address >= 0x2000 )
+	{
+		return Mapper::map_ppu( address );
+	}
+
+	return chr_rom + (bank_chr * 0x2000) + address;
+}
+
+void Mapper11::handle_write( uint8_t data, uint16_t addr )
+{
+	if ( addr < 0x8000 )
+	{
+		return;
+	}
+
+	bank_prg = data & 0x3;
+	bank_chr = data >> 4;
+}
