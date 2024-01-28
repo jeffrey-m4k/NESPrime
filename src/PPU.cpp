@@ -22,6 +22,7 @@ void PPU::init()
 
 bool PPU::run()
 {
+	a12_set = false;
 	bool tall_sprites = (regs[PPUCTRL] >> 5) & 0x1;
 
 	if ( scanline == 241 && scan_cycle == 4 )
@@ -254,6 +255,17 @@ bool PPU::run()
 					}
 				}
 			}
+
+			if ( scan_cycle >= 257 && scan_cycle <= 320 && (scan_cycle + 4) % 8 == 0 )
+			{
+				uint16_t pattern_table = (regs[ PPUCTRL ] >> 3) & 0x1 ? 0x1000 : 0x0;
+				Sprite sprite = scanline_sprites[ (scan_cycle - 260) / 8 ]; 
+				if ( tall_sprites )
+				{
+					pattern_table = 0x1000 * (sprite[ SPRITE::TILE ] & 0x1);
+				}
+				set_a12( pattern_table + sprite[ SPRITE::TILE ] * 16 );
+			}
 		}
 
 		// Move vertical bits from temp VRAM address at end of vblank
@@ -328,6 +340,8 @@ bool PPU::run()
 				tile_shift_regs[0] = tile_shift_regs[0] & 0xFF00 | (read( pattern_addr ));
 				tile_shift_regs[1] = tile_shift_regs[1] & 0xFF00 | (read( pattern_addr + 8 ));
 
+				set_a12( pattern_addr );
+
 				if ( (v & 0x001F) == 31 )
 				{
 					v &= ~0x001F;
@@ -373,15 +387,29 @@ bool PPU::run()
 			}
 		}
 	}
-	else if ( (v & 0x3F00) == 0x3F00 && scan_cycle >= 1 && scan_cycle <= 256 && scanline >= 0 && scanline <= 239 )
+	else
 	{
-		// Background palette_data hack
-		nes->get_display()->set_pixel_buffer( scan_cycle - 1, scanline, rgb_palette[read( v )] );
+		if ( (v & 0x3F00) == 0x3F00 && scan_cycle >= 1 && scan_cycle <= 256 && scanline >= 0 && scanline <= 239 )
+		{
+			// Background palette_data hack
+			nes->get_display()->set_pixel_buffer( scan_cycle - 1, scanline, rgb_palette[ read( v ) ] );
+		}
+		set_a12( v );
 	}
 
-	// Display test
-//    uint8_t test[3] = {static_cast<uint8_t>((128 + sin(cycle)*63)*0.25), 0, static_cast<uint8_t>((128+cos(nes->get_clock()/1000000.0)*63)*0.25)};
-//    if (scan_cycle <= 255 && scanline <= 239) nes->get_display()->set_pixel_buffer(scan_cycle - 1, scanline, test);
+	if ( !a12 )
+	{
+		if ( a12_low_cycles >= 8 )
+		{
+			a12_rising_filter = false;
+		}
+		else
+		{
+			++a12_low_cycles;
+		}
+	}
+
+	check_rising_edge();
 
 	scan_cycle++;
 	if ( scan_cycle > 340 || (do_render && scan_cycle == 340 && scanline == -1 && frame % 2 != 0) )
@@ -651,4 +679,17 @@ bool PPU::write( const uint16_t addr, const uint8_t data )
 		*mapper->map_ppu( addr ) = data;
 	}
 	return true;
+}
+
+void PPU::check_rising_edge()
+{
+	if ( a12 )
+	{
+		if ( !a12_rising_filter )
+		{
+			mapper->handle_ppu_rising_edge();
+		}
+		a12_low_cycles = 0;
+		a12_rising_filter = true;
+	}
 }

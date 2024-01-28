@@ -25,6 +25,10 @@ public:
 	{
 	};
 
+	virtual void handle_ppu_rising_edge()
+	{
+	};
+
 	void set_mirroring( MIRRORING mirr )
 	{
 		mirroring = mirr;
@@ -138,4 +142,35 @@ public:
 		}
 		bank_chr = data & 0x3;//((chr_size / 0x2000) - 1);
 	}
+};
+
+class Mapper4 : public Mapper
+{
+public:
+	explicit Mapper4( Cartridge* cart ) : Mapper( cart )
+	{
+	};
+
+	uint8_t *map_cpu( uint16_t address ) override;
+
+	uint8_t *map_ppu( uint16_t address ) override;
+
+	void handle_write( uint8_t data, uint16_t addr ) override;
+
+	void handle_ppu_rising_edge() override;
+
+private:
+	bool bankmode_prg = 0;
+	bool bankmode_chr = 0;
+
+	uint8_t bank_prg_2 = 0;
+	uint8_t bank_chr_2kb[ 2 ] = { 0 };
+	uint8_t bank_chr_1kb[ 4 ] = { 0 };
+
+	uint8_t bank_select = 0;
+
+	uint8_t irq_counter = 0;
+	uint8_t irq_reload_val = 0;
+	bool irq_reload = false;
+	bool irq_disable = false;
 };

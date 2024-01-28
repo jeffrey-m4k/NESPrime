@@ -67,7 +67,7 @@ uint8_t *Mapper::map_ppu( uint16_t addr )
 	}
 }
 
-// === MAPPER 1 ===
+// === MAPPER 1 (MMC1) ===
 
 uint8_t *Mapper1::map_cpu( uint16_t address )
 {
@@ -197,5 +197,165 @@ void Mapper1::handle_write( uint8_t data, uint16_t addr )
 	}
 
 	last_write = cyc;
+}
+
+// === MAPPER 4 (MMC3) ===
+
+uint8_t *Mapper4::map_cpu( uint16_t address )
+{
+	if ( address < 0x8000 )
+	{
+		return Mapper::map_cpu( address );
+	}
+	
+	if ( address >= 0xE000 )
+	{
+		return prg_rom + (prg_size - 0x2000) + (address - 0xE000);
+	}
+	else if ( address >= 0xC000 )
+	{
+		if ( !bankmode_prg )
+		{
+			return prg_rom + (prg_size - 0x4000) + (address - 0xC000);
+		}
+		else
+		{
+			return prg_rom + (bank_prg * 0x2000) + (address - 0xC000);
+		}
+	}
+	else if ( address >= 0xA000 )
+	{
+		return prg_rom + (bank_prg_2 * 0x2000) + (address - 0xA000);
+	}
+	else
+	{
+		if ( !bankmode_prg )
+		{
+			return prg_rom + (bank_prg * 0x2000) + (address - 0x8000);
+		}
+		else
+		{
+			return prg_rom + (prg_size - 0x4000) + (address - 0x8000);
+		}
+	}
+}
+
+uint8_t *Mapper4::map_ppu( uint16_t address )
+{
+	if ( address >= 0x2000 )
+	{
+		return Mapper::map_ppu( address );
+	}
+
+	uint8_t *chr_mem = chr_ram == nullptr ? chr_rom : chr_ram;
+
+	if ( bankmode_chr )
+	{
+		address ^= 0x1000;
+	}
+
+	if ( address < 0x1000 )
+	{
+		return chr_mem + (bank_chr_2kb[ address / 0x800 ] * 0x400) + (address % 0x800);
+	}
+	else
+	{
+		return chr_mem + (bank_chr_1kb[ (address - 0x1000) / 0x400 ] * 0x400) + (address % 0x400);
+	}
+}
+
+void Mapper4::handle_write( uint8_t data, uint16_t addr )
+{
+	if ( addr < 0x8000 )
+	{
+		return;
+	}
+
+	bool even = addr % 2 == 0;
+	
+	if ( addr < 0xA000 )			// $8000-$9FFF: bank switching
+	{
+		if ( even )						// even: bank select
+		{
+			bank_select = data & 0x7;
+			bankmode_prg = (data >> 0x6) & 0x1;
+			bankmode_chr = (data >> 0x7) & 0x1;
+		}
+		else							// odd: bank data
+		{
+			if ( bank_select <= 1 )
+			{
+				data &= ~0x1;				// ignore lowest bit for 2kb banks (even only)
+				bank_chr_2kb[ bank_select ] = data;
+			}
+			else if ( bank_select <= 5 )
+			{
+				bank_chr_1kb[ bank_select - 2 ] = data;
+			}
+			else							
+			{
+				data &= 0x3F;				// ignore top two bits for prg banks (max 512kb)
+				if ( bank_select - 6 == 0 )
+				{
+					bank_prg = data;
+				}
+				else
+				{
+					bank_prg_2 = data;
+				}
+			}
+		}
+	}
+	else if ( addr < 0xC000 )		// $A000-$BFFF: mirroring/ram protect
+	{
+		if ( even )						// even: select mirroring
+		{
+			if ( data & 0x1 )
+			{
+				set_mirroring( Horizontal );
+			}
+			else
+			{
+				set_mirroring( Vertical );
+			}
+		}
+		else							// odd: prg ram protection (ignore for now)
+		{
+		}
+	}
+	else if ( addr < 0xE000 )		// $C000-$DFFF: irq reload control
+	{
+		if ( even )						// even: irq counter reload value
+		{
+			irq_reload_val = data;
+		}
+		else							// odd: clear irq counter and set reload flag
+		{
+			irq_counter = 0;
+			irq_reload = true;
+		}
+	}
+	else							// $E000-$FFFF: irq disable/enable
+	{
+		irq_disable = even;
+	}
+}
+
+void Mapper4::handle_ppu_rising_edge()
+{
+	if ( irq_counter == 0 || irq_reload )
+	{
+		irq_counter = irq_reload_val;
+		irq_reload = false;
+	}
+	else
+	{
+		--irq_counter;
+	}
+
+	if ( irq_counter == 0 && !irq_disable )
+	{
+		cartridge->get_nes()->get_cpu()->trigger_irq();
+	}
 }
 
