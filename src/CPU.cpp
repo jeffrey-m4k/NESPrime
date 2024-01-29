@@ -44,6 +44,11 @@ bool CPU::run()
 	pending_interrupt = -1;
 	suppress_skip_cycles = false;
 
+	if ( mapper->check_irq() )
+	{
+		trigger_irq();
+	}
+
 	if constexpr( logging )
 	{
 		log_state();
@@ -120,6 +125,7 @@ void CPU::skip_cycles( int num, CYCLE type )
 	{
 		state = type;
 		nes->tick( false, 12 - 1 * (i == num - 1) );
+		mapper->handle_cpu_cycle();
 		cycle++;
 	}
 }

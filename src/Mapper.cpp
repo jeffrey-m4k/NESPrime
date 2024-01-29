@@ -347,6 +347,10 @@ void Mapper4::handle_write( uint8_t data, uint16_t addr )
 	else							// $E000-$FFFF: irq disable/enable
 	{
 		irq_disable = even;
+		if ( irq_disable )
+		{
+			irq_pending = false;
+		}
 	}
 }
 
@@ -364,7 +368,7 @@ void Mapper4::handle_ppu_rising_edge()
 
 	if ( irq_counter == 0 && !irq_disable )
 	{
-		cartridge->get_nes()->get_cpu()->trigger_irq();
+		irq_pending = true;
 	}
 }
 
@@ -422,4 +426,112 @@ void Mapper11::handle_write( uint8_t data, uint16_t addr )
 
 	bank_prg = data & 0x3;
 	bank_chr = data >> 4;
+}
+
+// === MAPPER 69 (FME-7) ===
+
+uint8_t *Mapper69::map_cpu( uint16_t address )
+{
+	if ( address < 0x6000 )
+	{
+		return Mapper::map_cpu( address );
+	}
+
+	if ( address >= 0xE000 )
+	{
+		return prg_rom + (prg_size - 0x2000) + (address - 0xE000);
+	}
+	else if ( address >= 0x8000 )
+	{
+		return prg_rom + (prg_banks[ 1 + (address - 0x8000) / 0x2000 ] * 0x2000) + (address % 0x2000);
+	}
+	else
+	{
+		uint16_t offset = (prg_banks[ 0 ] * 0x2000) + (address - 0x6000);
+		return prg_bank0_ram ? prg_ram + offset : prg_rom + offset;
+	}
+}
+
+uint8_t *Mapper69::map_ppu( uint16_t address )
+{
+	if ( address >= 0x2000 )
+	{
+		return Mapper::map_ppu( address );
+	}
+
+	uint8_t *chr_mem = chr_ram == nullptr ? chr_rom : chr_ram;
+
+	return chr_mem + (chr_banks[ address / 0x400 ] * 0x400) + (address % 0x400);
+}
+
+void Mapper69::handle_write( uint8_t data, uint16_t addr )
+{
+	if ( addr < 0x8000 || addr >= 0xC000)
+	{
+		return;
+	}
+
+	if ( addr < 0xA000 )			// $8000-$9FFF: command register
+	{
+		command = data & 0xF;
+	}
+	else							// $A000-$BFFF: parameter register
+	{
+		if ( command <= 0x7 )			// $0-$7: CHR bank select
+		{
+			chr_banks[ command ] = data % (chr_size / 0x400);
+		}
+		else if ( command <= 0xB )		// $8-$B: PRG bank select
+		{
+			prg_banks[ command - 8 ] = (data & 0x1F) % (prg_size / 0x2000);
+
+			if ( command == 8 )
+			{
+				prg_bank0_ram = (data >> 6) & 0x1;
+			}
+		}
+		else if ( command == 0xC )		// $C: mirroring select
+		{
+			switch ( data & 0x3 )
+			{
+				case 0:
+					set_mirroring( Vertical );
+					break;
+				case 1:
+					set_mirroring( Horizontal );
+					break;
+				case 2: 
+					set_mirroring( OneScreen_LB );
+					break;
+				case 3:
+					set_mirroring( OneScreen_HB );
+					break;
+			}
+		}
+		else if ( command == 0xD )		// $D: IRQ control
+		{
+			irq_pending = false;
+			irq_disable = !(data & 0x1);
+			irq_counter_enable = (data >> 7) & 0x1;
+		}
+		else if ( command == 0xE )		// $E: IRQ counter low byte
+		{
+			irq_counter = (irq_counter & 0xFF00) | data;
+		}
+		else							// $F: IRQ counter high byte
+		{
+			irq_counter = (irq_counter & 0x00FF) | (((uint16_t)data) << 8);
+		}
+	}
+}
+
+void Mapper69::handle_cpu_cycle()
+{
+	if ( irq_counter_enable )
+	{
+		if ( --irq_counter == 0xFFFF && !irq_disable )
+		{
+			irq_pending = true;
+		}
+	}
 }

@@ -145,6 +145,9 @@ void Cartridge::load()
 			case 11:
 				mapper = new Mapper11( this );
 				break;
+			case 69:
+				mapper = new Mapper69( this );
+				break;
 			default:
 				exit( EXIT_FAILURE );
 		}

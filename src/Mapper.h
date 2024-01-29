@@ -10,6 +10,7 @@ enum MIRRORING
 	Horizontal, Vertical, OneScreen_LB, OneScreen_HB, FourScreen
 };
 
+
 class Mapper
 {
 public:
@@ -22,12 +23,13 @@ public:
 	virtual uint8_t *map_ppu( uint16_t addr );
 
 	virtual void handle_write( uint8_t data, uint16_t addr )
-	{
-	};
+	{}
 
 	virtual void handle_ppu_rising_edge()
-	{
-	};
+	{}
+
+	virtual void handle_cpu_cycle()
+	{}
 
 	void set_mirroring( MIRRORING mirr )
 	{
@@ -52,6 +54,11 @@ public:
 		return prg_ram != nullptr;
 	}
 
+	bool check_irq()
+	{
+		return irq_pending && !irq_disable;
+	}
+
 protected:
 	Cartridge *cartridge;
 	MIRRORING mirroring;
@@ -68,7 +75,10 @@ protected:
 	uint8_t *chr_ram;
 
 	bool force_mirroring = false;
+	bool irq_pending = false;
+	bool irq_disable = false;
 };
+
 
 class Mapper1 : public Mapper
 {
@@ -93,6 +103,7 @@ private:
 
 	long last_write = 0;
 };
+
 
 class Mapper2 : public Mapper
 {
@@ -127,6 +138,7 @@ public:
 	}
 };
 
+
 // TODO emulate bus conflicts (e.g. Cybernoid)
 class Mapper3 : public Mapper
 {
@@ -153,6 +165,7 @@ public:
 		bank_chr = data & 0x3;//((chr_size / 0x2000) - 1);
 	}
 };
+
 
 class Mapper4 : public Mapper
 {
@@ -181,8 +194,8 @@ private:
 	uint8_t irq_counter = 0;
 	uint8_t irq_reload_val = 0;
 	bool irq_reload = false;
-	bool irq_disable = false;
 };
+
 
 class Mapper7 : public Mapper
 {
@@ -195,6 +208,7 @@ public:
 	void handle_write( uint8_t data, uint16_t addr ) override;
 };
 
+
 class Mapper11 : public Mapper
 {
 public:
@@ -206,4 +220,30 @@ public:
 	uint8_t *map_ppu( uint16_t address ) override;
 
 	void handle_write( uint8_t data, uint16_t addr ) override;
+};
+
+
+class Mapper69 : public Mapper
+{
+public:
+	explicit Mapper69( Cartridge *cart ) : Mapper( cart ) 
+	{};
+
+	uint8_t *map_cpu( uint16_t address ) override;
+
+	uint8_t *map_ppu( uint16_t address ) override;
+
+	void handle_write( uint8_t data, uint16_t addr ) override;
+
+	void handle_cpu_cycle() override;
+
+private:
+	uint16_t irq_counter = 0;
+	bool irq_counter_enable = false;
+
+	uint8_t prg_banks[ 4 ];
+	uint8_t chr_banks[ 8 ];
+	bool prg_bank0_ram = false;
+
+	uint8_t command = 0;
 };
