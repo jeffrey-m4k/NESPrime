@@ -68,6 +68,10 @@ public:
 		debug_muted = !debug_muted;
 	}
 
+	virtual bool at_midpoint() = 0;
+
+	virtual bool is_playing() = 0;
+
 	virtual uint8_t get_output() = 0;
 
 public:
@@ -120,6 +124,28 @@ public:
 
 	void tick_sweep();
 
+	bool at_midpoint() override
+	{
+		switch ( duty )
+		{
+			case 0:
+				return sequencer.step == 6 && (timer.get_counter() < timer.get_period() / 2);
+			case 1:
+				return sequencer.step == 5;
+			case 2:
+				return sequencer.step == 4;
+			case 3:
+				return sequencer.step == 1;
+			default:
+				return false;
+		}
+	}
+
+	bool is_playing() override
+	{
+		return enabled && timer.get_period() > 8 && !muted && length > 0;
+	}
+
 private:
 	static constexpr uint8_t seqs[4][8] = {
 			{0, 0, 0, 0, 0, 0, 0, 1},
@@ -127,6 +153,8 @@ private:
 			{0, 0, 0, 0, 1, 1, 1, 1},
 			{1, 1, 1, 1, 1, 1, 0, 0}
 	};
+
+	int duty = 0;
 
 	Divider sweep_divider;
 	bool sweep_enable = false;
@@ -164,6 +192,16 @@ public:
 
 	uint8_t get_output() override;
 
+	bool at_midpoint() override
+	{
+		return sequencer.step == sequencer.steps - 2;
+	}
+
+	bool is_playing() override
+	{
+		return enabled && timer.get_period() > 8 && (length > 0 && linear_counter > 0 || length_halt);
+	}
+
 private:
 	static constexpr uint8_t seq[32] = {
 			15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
@@ -197,6 +235,16 @@ public:
 	void tick_timer();
 
 	uint8_t get_output() override;
+
+	bool at_midpoint() override
+	{
+		return true;
+	}
+
+	bool is_playing() override
+	{
+		return enabled && timer.get_period() > 8 && length > 0;
+	}
 
 private:
 	static constexpr uint16_t periods[16] = {

@@ -54,15 +54,11 @@ void APU::sample()
 {
 	if ( ++sample_clock >= sample_per )
 	{
-		sample_buffer.push_back( get_mixer() * 500 );
-		nes->get_display()->write_apu_sample(
-			std::vector< float > {
-				( float ) pulse[0].get_output() / 15.0f,
-				( float ) pulse[1].get_output() / 15.0f,
-				( float ) triangle.get_output() / 15.0f,
-				( float ) noise.get_output() / 15.0f
-			}
-		);
+		sample_buffer.push_back( get_mixer() * 50 );
+		nes->get_display()->write_apu_sample( (float)pulse[ 0 ].get_output() / 15.0f, 0, is_playing( 0 ), pulse[ 0 ].at_midpoint() );
+		nes->get_display()->write_apu_sample( (float)pulse[ 1 ].get_output() / 15.0f, 1, is_playing( 1 ), pulse[ 1 ].at_midpoint() );
+		nes->get_display()->write_apu_sample( (float)triangle.get_output() / 15.0f, 2, is_playing( 2 ), triangle.at_midpoint() );
+		nes->get_display()->write_apu_sample( (float)noise.get_output() / 15.0f, 3, is_playing( 3 ), true );
 		sample_clock -= sample_per;
 	}
 	if ( sample_buffer.size() >= 100 )
@@ -183,4 +179,21 @@ void APU::toggle_debug_mute( int channel )
 
 	bool *disp_arr = nes->get_display()->apu_debug_muted;
 	disp_arr[channel] = !disp_arr[channel];
+}
+
+bool APU::is_playing( int channel )
+{
+	switch ( channel )
+	{
+		case 0:
+			return pulse[ 0 ].is_playing();
+		case 1:
+			return pulse[ 1 ].is_playing();
+		case 2:
+			return triangle.is_playing();
+		case 3:
+			return noise.is_playing();
+		default:
+			return false;
+	}
 }

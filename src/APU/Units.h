@@ -25,6 +25,11 @@ public:
 		return period;
 	}
 
+	uint16_t get_counter() const
+	{
+		return counter;
+	}
+
 	void set_hi( uint8_t hi )
 	{
 		period = (period & 0x00FF) | ((hi & 0x7) << 8);

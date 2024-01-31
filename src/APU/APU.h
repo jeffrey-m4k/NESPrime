@@ -23,6 +23,8 @@ public:
 
 	void toggle_debug_mute( int channel );
 
+	bool is_playing( int channel );
+
 private:
 	void sample();
 

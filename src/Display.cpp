@@ -106,43 +106,49 @@ bool Display::update_nt()
 
 bool Display::update_apu()
 {
-	uint8_t buf[APU_WINDOW_WIDTH * 640 * 3] = { 0 };
+	uint8_t buf[ APU_WINDOW_WIDTH * 640 * 3 ] = { 0 };
 
-	for ( int i = 0; i < apu_samples.size(); ++i )
+	for ( int c = 0; c < APU_CHANNELS; ++c )
 	{
-		std::vector< float > sample = apu_samples.at( i );
-
-		for ( int s = 0; s < sample.size() && s < 4; ++s )
+		for ( int s = 0; s < apu_samples[ c ].size() / 2; ++s )
 		{
-			uint8_t rgb[3] = { 255, 255, 255 };
-			if ( apu_debug_muted[s] )
+			float sample = apu_samples[ c ].at( s );
+			uint8_t rgb[ 3 ] = { 255, 255, 255 };
+			if ( apu_debug_muted[ c ] )
 			{
-				rgb[1] = 0;
-				rgb[2] = 0;
+				rgb[ 1 ] = 0;
+				rgb[ 2 ] = 0;
 			}
 
-			if ( i > 0 )
+			if ( s > 0 )
 			{
-				int diff = sample.at( s ) * APU_CHANNEL_WAVEFORM_WIDTH 
-					- apu_samples.at( i - 1 ).at( s ) * APU_CHANNEL_WAVEFORM_WIDTH;
+				int diff = sample * APU_CHANNEL_WAVEFORM_WIDTH 
+					- apu_samples[ c ].at(s - 1) * APU_CHANNEL_WAVEFORM_WIDTH;
 
-				int start_x = s * APU_CHANNEL_WIDTH + APU_CHANNEL_PADDING 
-					+ (diff > 0 ? apu_samples.at( i - 1 ).at( s ) : sample.at( s )) * APU_CHANNEL_WAVEFORM_WIDTH;
+				int start_x = c * APU_CHANNEL_WIDTH + APU_CHANNEL_PADDING 
+					+ (diff > 0 ? apu_samples[ c ].at( s - 1 ) : sample) * APU_CHANNEL_WAVEFORM_WIDTH;
 
 				for ( int d = 0; d <= abs(diff); ++d )
 				{
-					int buf_idx = (i * APU_WINDOW_WIDTH + start_x + d) * 3;
-					memcpy( &buf[buf_idx], rgb, 3 );
+					int buf_idx_a = ((319 - s) * APU_WINDOW_WIDTH + start_x + d) * 3;
+					int buf_idx_b = ((320 + s) * APU_WINDOW_WIDTH + start_x + d) * 3;
+					memcpy( &buf[ buf_idx_a ], rgb, 3 );
+					memcpy( &buf[ buf_idx_b ], rgb, 3 );
 				}
 			}
 			else
 			{
-				int buf_idx = (i * APU_WINDOW_WIDTH + s * APU_CHANNEL_WIDTH 
-					+ (APU_CHANNEL_PADDING + sample.at(s) * APU_CHANNEL_WAVEFORM_WIDTH)) * 3;
-				memcpy( &buf[buf_idx], rgb, 3 );
+				int buf_idx_a = ((319 - s) * APU_WINDOW_WIDTH + c * APU_CHANNEL_WIDTH
+					+ (APU_CHANNEL_PADDING + sample * APU_CHANNEL_WAVEFORM_WIDTH)) * 3;
+				int buf_idx_b = ((320 + s) * APU_WINDOW_WIDTH + c * APU_CHANNEL_WIDTH
+					+ (APU_CHANNEL_PADDING + sample * APU_CHANNEL_WAVEFORM_WIDTH)) * 3;
+				memcpy( &buf[ buf_idx_a ], rgb, 3 );
+				memcpy( &buf[ buf_idx_b ], rgb, 3 );
 			}
 		}
 	}
+
+	clear_apu_samples();
 
 	int texture_pitch = 0;
 	void* texture_pixels = nullptr;
