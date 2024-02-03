@@ -44,6 +44,8 @@ void APU::cycle()
 	triangle.tick_timer();
 	sample();
 
+	++noise.waveform_rand;
+
 	if ( frameSeq.interrupt )
 	{
 		get_nes()->get_cpu()->trigger_irq();
@@ -54,15 +56,7 @@ void APU::sample()
 {
 	if ( ++sample_clock >= sample_per )
 	{
-		sample_buffer.push_back( get_mixer() * 500 );
-		nes->get_display()->write_apu_sample(
-			std::vector< float > {
-				( float ) pulse[0].get_output() / 15.0f,
-				( float ) pulse[1].get_output() / 15.0f,
-				( float ) triangle.get_output() / 15.0f,
-				( float ) noise.get_output() / 15.0f
-			}
-		);
+		sample_buffer.push_back( get_mixer() * 50 );
 		sample_clock -= sample_per;
 	}
 	if ( sample_buffer.size() >= 100 )
@@ -161,26 +155,39 @@ uint8_t APU::read_status()
 	return s;
 }
 
-void APU::toggle_debug_mute( int channel )
+Channel *APU::get_channel( int channel )
 {
-	if ( channel > 3 ) return;
+	if ( channel > 3 || channel < 0 )
+	{
+		channel = 0;
+	}
 	switch ( channel )
 	{
-		case 0:
-			pulse[0].toggle_debug_mute();
-			break;
-		case 1:
-			pulse[1].toggle_debug_mute();
-			break;
-		case 2:
-			triangle.toggle_debug_mute();
-			break;
-		case 3:
-		default:
-			noise.toggle_debug_mute();
-			break;
+		case 0: 
+			return &pulse[ 0 ];
+		case 1: 
+			return &pulse[ 1 ];
+		case 2: 
+			return &triangle;
+		case 3: 
+			return &noise;
 	}
+}
+
+void APU::toggle_debug_mute( int channel )
+{
+	get_channel( channel )->toggle_debug_mute();
 
 	bool *disp_arr = nes->get_display()->apu_debug_muted;
 	disp_arr[channel] = !disp_arr[channel];
+}
+
+bool APU::is_playing( int channel )
+{
+	return get_channel( channel )->is_playing();
+}
+
+float APU::get_waveform_at_time( float time, int channel )
+{
+	return get_channel( channel )->get_waveform_at_time( time );
 }

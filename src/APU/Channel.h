@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <cmath>
+#include <random>
 #include "Units.h"
 
 class Channel
@@ -68,6 +70,10 @@ public:
 		debug_muted = !debug_muted;
 	}
 
+	virtual float get_waveform_at_time( float time ) = 0;
+
+	virtual bool is_playing() = 0;
+
 	virtual uint8_t get_output() = 0;
 
 public:
@@ -120,6 +126,26 @@ public:
 
 	void tick_sweep();
 
+	bool is_playing() override
+	{
+		return enabled && timer.get_period() > 8 && !muted && length > 0;
+	}
+
+	float get_waveform_at_time( float time ) override
+	{
+		if ( !is_playing() ) return 0;
+
+		// TODO remove magic number (make global const for cycle rates - 1.79MHz is CPU frequency)
+		float period = 1 / (1789773.0 / (16 * (timer.get_period() + 1)));
+		double period_mod = fmod( time, period );
+		if ( period_mod < 0 )
+		{
+			period_mod = period + period_mod;
+		}
+		int step = sequencer.steps * (period_mod / period);
+		return envelope.get_volume() * sequencer.sequence[ step ] / 15.0;
+	}
+
 private:
 	static constexpr uint8_t seqs[4][8] = {
 			{0, 0, 0, 0, 0, 0, 0, 1},
@@ -127,6 +153,8 @@ private:
 			{0, 0, 0, 0, 1, 1, 1, 1},
 			{1, 1, 1, 1, 1, 1, 0, 0}
 	};
+
+	int duty = 0;
 
 	Divider sweep_divider;
 	bool sweep_enable = false;
@@ -164,6 +192,26 @@ public:
 
 	uint8_t get_output() override;
 
+	bool is_playing() override
+	{
+		return enabled && timer.get_period() > 8 && (length > 0 && linear_counter > 0);
+	}
+
+	float get_waveform_at_time( float time ) override
+	{
+		if ( !is_playing() ) return 0;
+
+		// TODO remove magic number (make global const for cycle rates - 1.79MHz is CPU frequency)
+		float period = 1 / (1789773.0 / (32 * (timer.get_period() + 1)));
+		double period_mod = fmod( time, period );
+		if ( period_mod < 0 )
+		{
+			period_mod = period + period_mod;
+		}
+		int step = sequencer.steps * (period_mod / period);
+		return sequencer.sequence[ step ] / 15.0;
+	}
+
 private:
 	static constexpr uint8_t seq[32] = {
 			15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
@@ -197,6 +245,28 @@ public:
 	void tick_timer();
 
 	uint8_t get_output() override;
+
+	bool is_playing() override
+	{
+		return enabled && timer.get_period() > 8 && length > 0;
+	}
+
+	float get_waveform_at_time( float time ) override
+	{
+		if ( !is_playing() ) return 0;
+
+		float period = 1 / (1789773.0 / (16 * (timer.get_period() + 1)));
+		int step = floor( time / period );
+
+		static std::default_random_engine generator( std::random_device{}() );
+		generator.seed( step + waveform_rand );
+		static std::bernoulli_distribution distribution( 0.5 );
+		distribution.reset();
+
+		return envelope.get_volume() * distribution( generator ) / 15.0;
+	}
+
+	uint16_t waveform_rand = 0;
 
 private:
 	static constexpr uint16_t periods[16] = {
