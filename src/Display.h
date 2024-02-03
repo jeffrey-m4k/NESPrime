@@ -38,23 +38,6 @@ public:
 
 	void write_nt_pixel( int tile, uint8_t x, uint8_t y, short nt, const uint8_t rgb[3] );
 
-	void write_apu_sample( float sample, int channel, bool is_playing, bool start_of_sequence )
-	{
-		if ( apu_samples[ channel ].empty() && !apu_debug_muted[ channel ] && is_playing && !start_of_sequence ) return;
-		if (apu_samples[ channel ].size() < APU_SAMPLES_MAX )
-		{
-			apu_samples[ channel ].push_back( sample );
-		}
-	}
-
-	void clear_apu_samples()
-	{
-		for ( int i = 0; i < APU_CHANNELS; ++i )
-		{
-			apu_samples[ i ].clear();
-		}
-	}
-
 	int get_apu_channel_from_x( int x )
 	{
 		return x / APU_CHANNEL_WIDTH;
@@ -119,13 +102,12 @@ private:
 	uint8_t nts[256 * 240 * 4 * 3] = {0};
 
 	// 0: Pulse 1, 1 : Pulse 2, 2 : Triangle, 3 : Noise
-	static const int APU_SAMPLES_MAX = 640;
 	static const int APU_WINDOW_WIDTH = 240;
 	static const int APU_CHANNELS = 4;
 	static const int APU_CHANNEL_WIDTH = APU_WINDOW_WIDTH / APU_CHANNELS;
 	static const int APU_CHANNEL_PADDING = APU_CHANNEL_WIDTH / 8;
 	static const int APU_CHANNEL_WAVEFORM_WIDTH = APU_CHANNEL_WIDTH - APU_CHANNEL_PADDING * 2;
-	std::deque< float > apu_samples[ APU_CHANNELS ];
+	static constexpr double APU_WAVEFORM_LENGTH_SECONDS = 0.03;
 
 	uint32_t fps_lasttime;
 	uint32_t fps_current;

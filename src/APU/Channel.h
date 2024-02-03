@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <cmath>
+#include <random>
 #include "Units.h"
 
 class Channel
@@ -68,7 +70,7 @@ public:
 		debug_muted = !debug_muted;
 	}
 
-	virtual bool at_midpoint() = 0;
+	virtual float get_waveform_at_time( float time ) = 0;
 
 	virtual bool is_playing() = 0;
 
@@ -124,26 +126,24 @@ public:
 
 	void tick_sweep();
 
-	bool at_midpoint() override
-	{
-		switch ( duty )
-		{
-			case 0:
-				return sequencer.step == 6 && (timer.get_counter() < timer.get_period() / 2);
-			case 1:
-				return sequencer.step == 5;
-			case 2:
-				return sequencer.step == 4;
-			case 3:
-				return sequencer.step == 1;
-			default:
-				return false;
-		}
-	}
-
 	bool is_playing() override
 	{
 		return enabled && timer.get_period() > 8 && !muted && length > 0;
+	}
+
+	float get_waveform_at_time( float time ) override
+	{
+		if ( !is_playing() ) return 0;
+
+		// TODO remove magic number (make global const for cycle rates - 1.79MHz is CPU frequency)
+		float period = 1 / (1789773.0 / (16 * (timer.get_period() + 1)));
+		double period_mod = fmod( time, period );
+		if ( period_mod < 0 )
+		{
+			period_mod = period + period_mod;
+		}
+		int step = sequencer.steps * (period_mod / period);
+		return envelope.get_volume() * sequencer.sequence[ step ] / 15.0;
 	}
 
 private:
@@ -192,14 +192,24 @@ public:
 
 	uint8_t get_output() override;
 
-	bool at_midpoint() override
-	{
-		return sequencer.step == sequencer.steps - 2;
-	}
-
 	bool is_playing() override
 	{
-		return enabled && timer.get_period() > 8 && (length > 0 && linear_counter > 0 || length_halt);
+		return enabled && timer.get_period() > 8 && (length > 0 && linear_counter > 0);
+	}
+
+	float get_waveform_at_time( float time ) override
+	{
+		if ( !is_playing() ) return 0;
+
+		// TODO remove magic number (make global const for cycle rates - 1.79MHz is CPU frequency)
+		float period = 1 / (1789773.0 / (32 * (timer.get_period() + 1)));
+		double period_mod = fmod( time, period );
+		if ( period_mod < 0 )
+		{
+			period_mod = period + period_mod;
+		}
+		int step = sequencer.steps * (period_mod / period);
+		return sequencer.sequence[ step ] / 15.0;
 	}
 
 private:
@@ -236,15 +246,27 @@ public:
 
 	uint8_t get_output() override;
 
-	bool at_midpoint() override
-	{
-		return true;
-	}
-
 	bool is_playing() override
 	{
 		return enabled && timer.get_period() > 8 && length > 0;
 	}
+
+	float get_waveform_at_time( float time ) override
+	{
+		if ( !is_playing() ) return 0;
+
+		float period = 1 / (1789773.0 / (16 * (timer.get_period() + 1)));
+		int step = floor( time / period );
+
+		static std::default_random_engine generator( std::random_device{}() );
+		generator.seed( step + waveform_rand );
+		static std::bernoulli_distribution distribution( 0.5 );
+		distribution.reset();
+
+		return envelope.get_volume() * distribution( generator ) / 15.0;
+	}
+
+	uint16_t waveform_rand = 0;
 
 private:
 	static constexpr uint16_t periods[16] = {

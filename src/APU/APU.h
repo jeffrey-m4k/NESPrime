@@ -25,10 +25,14 @@ public:
 
 	bool is_playing( int channel );
 
+	float get_waveform_at_time( float time, int channel );
+
 private:
 	void sample();
 
 	float get_mixer();
+
+	Channel *get_channel( int channel );
 
 public:
 	SDL_AudioDeviceID audio_device;

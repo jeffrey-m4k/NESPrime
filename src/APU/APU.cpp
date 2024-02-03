@@ -44,6 +44,8 @@ void APU::cycle()
 	triangle.tick_timer();
 	sample();
 
+	++noise.waveform_rand;
+
 	if ( frameSeq.interrupt )
 	{
 		get_nes()->get_cpu()->trigger_irq();
@@ -55,10 +57,6 @@ void APU::sample()
 	if ( ++sample_clock >= sample_per )
 	{
 		sample_buffer.push_back( get_mixer() * 50 );
-		nes->get_display()->write_apu_sample( (float)pulse[ 0 ].get_output() / 15.0f, 0, is_playing( 0 ), pulse[ 0 ].at_midpoint() );
-		nes->get_display()->write_apu_sample( (float)pulse[ 1 ].get_output() / 15.0f, 1, is_playing( 1 ), pulse[ 1 ].at_midpoint() );
-		nes->get_display()->write_apu_sample( (float)triangle.get_output() / 15.0f, 2, is_playing( 2 ), triangle.at_midpoint() );
-		nes->get_display()->write_apu_sample( (float)noise.get_output() / 15.0f, 3, is_playing( 3 ), true );
 		sample_clock -= sample_per;
 	}
 	if ( sample_buffer.size() >= 100 )
@@ -157,25 +155,28 @@ uint8_t APU::read_status()
 	return s;
 }
 
-void APU::toggle_debug_mute( int channel )
+Channel *APU::get_channel( int channel )
 {
-	if ( channel > 3 ) return;
+	if ( channel > 3 || channel < 0 )
+	{
+		channel = 0;
+	}
 	switch ( channel )
 	{
-		case 0:
-			pulse[0].toggle_debug_mute();
-			break;
-		case 1:
-			pulse[1].toggle_debug_mute();
-			break;
-		case 2:
-			triangle.toggle_debug_mute();
-			break;
-		case 3:
-		default:
-			noise.toggle_debug_mute();
-			break;
+		case 0: 
+			return &pulse[ 0 ];
+		case 1: 
+			return &pulse[ 1 ];
+		case 2: 
+			return &triangle;
+		case 3: 
+			return &noise;
 	}
+}
+
+void APU::toggle_debug_mute( int channel )
+{
+	get_channel( channel )->toggle_debug_mute();
 
 	bool *disp_arr = nes->get_display()->apu_debug_muted;
 	disp_arr[channel] = !disp_arr[channel];
@@ -183,17 +184,10 @@ void APU::toggle_debug_mute( int channel )
 
 bool APU::is_playing( int channel )
 {
-	switch ( channel )
-	{
-		case 0:
-			return pulse[ 0 ].is_playing();
-		case 1:
-			return pulse[ 1 ].is_playing();
-		case 2:
-			return triangle.is_playing();
-		case 3:
-			return noise.is_playing();
-		default:
-			return false;
-	}
+	return get_channel( channel )->is_playing();
+}
+
+float APU::get_waveform_at_time( float time, int channel )
+{
+	return get_channel( channel )->get_waveform_at_time( time );
 }
