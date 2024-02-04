@@ -5,7 +5,6 @@ void Channel::set_timer_hi( uint8_t hi )
 {
 	timer.set_hi( hi );
 	set_length_counter( hi >> 3 );
-	sequencer.reset();
 }
 
 void Channel::set_length_counter( uint8_t c )
@@ -26,6 +25,12 @@ void Channel::tick_timer()
 	{
 		seq_out = sequencer.next();
 	}
+}
+
+void Pulse::set_timer_hi( uint8_t hi )
+{
+	Channel::set_timer_hi( hi );
+	sequencer.reset();
 }
 
 void Pulse::set_duty( uint8_t duty )

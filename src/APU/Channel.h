@@ -24,7 +24,7 @@ public:
 		}
 	}
 
-	void set_timer_hi( uint8_t hi );
+	virtual void set_timer_hi( uint8_t hi );
 
 	void set_length_counter( uint8_t c );
 
@@ -112,6 +112,8 @@ public:
 		sequencer.steps = 8;
 		sequencer.sequence = seqs[0];
 	};
+
+	void set_timer_hi( uint8_t hi ) override;
 
 	void set_duty( uint8_t duty );
 
