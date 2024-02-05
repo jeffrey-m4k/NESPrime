@@ -260,7 +260,7 @@ public:
 
 	bool is_playing() override
 	{
-		return enabled && timer.get_period() > 8 && length > 0;
+		return enabled && length > 0;
 	}
 
 	float get_waveform_at_time( float time ) override
