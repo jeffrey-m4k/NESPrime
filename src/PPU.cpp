@@ -625,29 +625,43 @@ void PPU::output_nt()
 		{
 			for ( int cx = 0; cx < 32; cx++ )
 			{
-				uint8_t tile_num = read(
-						0x2000 + 0x400 * i + y * 32 + cx );
+				uint8_t tile_num = read( 0x2000 + 0x400 * i + y * 32 + cx );
 				uint16_t pattern_idx = 0x1000 * ((regs[PPUCTRL] >> 4) & 0x1) + ((uint16_t) tile_num << 4);
 				Tile tile;
 				for ( int b = 0; b < 16; b++ )
 				{
 					tile[b % 8][b / 8] = read( pattern_idx + b );
 				}
+
+				uint16_t attr = read( 0x23C0 + 0x400 * i + (y / 4) * 8 + (cx / 4) % 8 );
+				uint8_t attr_bitshift = 0;
+				if ( cx % 4 >= 2 )
+				{
+					attr_bitshift += 2;
+				}
+				if ( y % 4 >= 2 )
+				{
+					attr_bitshift += 4;
+				}
+
 				for ( int fine_y = 0; fine_y < 8; fine_y++ )
 				{
 					for ( int fine_x = 0; fine_x < 8; fine_x++ )
 					{
 						uint8_t col = tile_col_at_pixel( tile, fine_x, fine_y, false, false );
-						uint8_t rgb[3] = {0, 0, 0};
-						if ( fine_x == 0 || fine_y == 0 )
+						uint8_t *rgb = col != 0 ? col_to_rgb( attr >> attr_bitshift, col, false ) : bgr_base_rgb();
+						uint8_t rgb_cpy[ 3 ];
+						memcpy( rgb_cpy, rgb, 3 );
+						
+						if ( (cx == 0 && fine_x == 0 && (i % 2 != 0)) || (y == 0 && fine_y == 0 && (i / 2 != 0)) )
 						{
-							rgb[2] = 64;
+							for ( int i = 0; i < 3; ++i )
+							{
+								rgb_cpy[ i ] = 255 - rgb_cpy[ i ];
+							}
 						}
-						if ( col != 0 )
-						{
-							rgb[col - 1] = 255;
-						}
-						nes->get_display()->write_nt_pixel( y * 32 + cx, fine_x, fine_y, i, rgb );
+
+						nes->get_display()->write_nt_pixel( y * 32 + cx, fine_x, fine_y, i, rgb_cpy );
 					}
 				}
 			}
