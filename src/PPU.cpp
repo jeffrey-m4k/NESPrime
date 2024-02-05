@@ -247,24 +247,33 @@ bool PPU::run()
 						}
 					}
 				}
-				for ( int s = 0; s < inrange_sprites; s++ )
+				for ( int s = 0; s < 8; s++ )
 				{
 					for ( int i = 0; i < 4; i++ )
 					{
-						scanline_sprites[s][i] = oam2[s * 4 + i];
+						scanline_sprites[s][i] = (s < inrange_sprites) ? oam2[s * 4 + i] : 0xFF;
 					}
 				}
 			}
 
-			if ( scan_cycle >= 257 && scan_cycle <= 320 && (scan_cycle + 4) % 8 == 0 )
+			if ( scan_cycle >= 257 && scan_cycle <= 320)
 			{
-				uint16_t pattern_table = (regs[ PPUCTRL ] >> 3) & 0x1 ? 0x1000 : 0x0;
-				Sprite sprite = scanline_sprites[ (scan_cycle - 260) / 8 ]; 
-				if ( tall_sprites )
+				if ( (scan_cycle - 257) % 8 < 4 )
 				{
-					pattern_table = 0x1000 * (sprite[ SPRITE::TILE ] & 0x1);
+					// For first 4 cycles of each sprite fetch, do a garbage nametable fetch
+					set_a12( 0x2000 + 0x1000 * ((regs[ PPUCTRL ] >> 4) & 0x1) );
 				}
-				set_a12( pattern_table + sprite[ SPRITE::TILE ] * 16 );
+				else
+				{
+					// For last 4 cycles, fetch the sprite data
+					uint16_t pattern_table = (regs[ PPUCTRL ] >> 3) & 0x1 ? 0x1000 : 0x0;
+					Sprite sprite = scanline_sprites[ (scan_cycle - 260) / 8 ];
+					if ( tall_sprites )
+					{
+						pattern_table = 0x1000 * (sprite[ SPRITE::TILE ] & 0x1);
+					}
+					set_a12( pattern_table + sprite[ SPRITE::TILE ] * 16 );
+				}
 			}
 		}
 
@@ -298,30 +307,16 @@ bool PPU::run()
 				uint8_t next_tile = read( next_tile_addr );
 				uint8_t next_attr = read( next_attr_addr );
 
-				int quadrant_shift;
+				int quadrant_shift = 0;
 				bool x_high = (v >> 1) & 0x1;
 				bool y_high = (v >> 6) & 0x1;
-				if ( !x_high )
+				if ( x_high )
 				{
-					if ( !y_high )
-					{
-						quadrant_shift = 0;
-					}
-					else
-					{
-						quadrant_shift = 4;
-					}
+					quadrant_shift += 2;
 				}
-				else
+				if ( y_high )
 				{
-					if ( !y_high )
-					{
-						quadrant_shift = 2;
-					}
-					else
-					{
-						quadrant_shift = 6;
-					}
+					quadrant_shift += 4;
 				}
 				attr_latch[0] = (next_attr >> quadrant_shift) & 0x1;
 				attr_latch[1] = (next_attr >> quadrant_shift >> 1) & 0x1;
@@ -395,18 +390,6 @@ bool PPU::run()
 			nes->get_display()->set_pixel_buffer( scan_cycle - 1, scanline, rgb_palette[ read( v ) ] );
 		}
 		set_a12( v );
-	}
-
-	if ( !a12 )
-	{
-		if ( a12_low_cycles >= 8 )
-		{
-			a12_rising_filter = false;
-		}
-		else
-		{
-			++a12_low_cycles;
-		}
 	}
 
 	check_rising_edge();
@@ -697,7 +680,18 @@ bool PPU::write( const uint16_t addr, const uint8_t data )
 
 void PPU::check_rising_edge()
 {
-	if ( a12 )
+	if ( !a12 )
+	{
+		if ( a12_low_cycles >= 8 )
+		{
+			a12_rising_filter = false;
+		}
+		else
+		{
+			++a12_low_cycles;
+		}
+	}
+	else
 	{
 		if ( !a12_rising_filter )
 		{
