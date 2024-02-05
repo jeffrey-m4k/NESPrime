@@ -71,6 +71,14 @@ bool Display::init()
 	return true;
 }
 
+void Display::reset()
+{
+	for ( int i = 0; i < APU_CHANNELS; ++i )
+	{
+		nes->get_apu()->set_debug_mute( apu_debug_muted[ i ], i );
+	}
+}
+
 bool Display::update_pt()
 {
 	int texture_pitch = 0;

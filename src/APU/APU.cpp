@@ -174,6 +174,11 @@ Channel *APU::get_channel( int channel )
 	}
 }
 
+void APU::set_debug_mute( bool mute, int channel )
+{
+	get_channel( channel )->debug_muted = mute;
+}
+
 void APU::toggle_debug_mute( int channel )
 {
 	get_channel( channel )->toggle_debug_mute();

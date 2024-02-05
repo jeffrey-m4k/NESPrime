@@ -72,10 +72,7 @@ bool NES::run( const nfdchar_t *fn )
 	{
 		cart->load();
 		cpu->init();
-		for ( int i = 0; i < 4; ++i )
-		{
-			display->apu_debug_muted[i] = false;
-		}
+		display->reset();
 		ui->set_state( UIState::PAUSE );
 		ui->set_show( false );
 		SDL_Delay( 250 );

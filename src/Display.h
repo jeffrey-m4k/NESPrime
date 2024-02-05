@@ -19,6 +19,8 @@ public:
 	~Display();
 
 	bool init();
+	
+	void reset();
 
 	bool refresh();
 

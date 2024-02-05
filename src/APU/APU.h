@@ -21,6 +21,8 @@ public:
 
 	uint8_t read_status();
 
+	void set_debug_mute( bool mute, int channel );
+
 	void toggle_debug_mute( int channel );
 
 	bool is_playing( int channel );
