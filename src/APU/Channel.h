@@ -100,6 +100,11 @@ protected:
 					0x10, 0x12, 0x14, 0x16, 0x18, 0x1A, 0x1C, 0x1E
 			}
 	};
+
+	virtual float normalize_volume( int vol )
+	{
+		return 0.5 + ((vol - (envelope.get_volume() / 2.0)) / 15.0);
+	}
 };
 
 class Pulse : public Channel
@@ -135,7 +140,7 @@ public:
 
 	float get_waveform_at_time( float time ) override
 	{
-		if ( !is_playing() ) return 0;
+		if ( !is_playing() ) return 0.5;
 
 		// TODO remove magic number (make global const for cycle rates - 1.79MHz is CPU frequency)
 		float period = 1 / (1789773.0 / (16 * (timer.get_period() + 1)));
@@ -145,7 +150,7 @@ public:
 			period_mod = period + period_mod;
 		}
 		int step = sequencer.steps * (period_mod / period);
-		return envelope.get_volume() * sequencer.sequence[ step ] / 15.0;
+		return normalize_volume( envelope.get_volume() * sequencer.sequence[ step ] );
 	}
 
 private:
@@ -201,7 +206,7 @@ public:
 
 	float get_waveform_at_time( float time ) override
 	{
-		if ( !is_playing() ) return 0;
+		if ( !is_playing() ) return 0.5;
 
 		// TODO remove magic number (make global const for cycle rates - 1.79MHz is CPU frequency)
 		float period = 1 / (1789773.0 / (32 * (timer.get_period() + 1)));
@@ -211,7 +216,7 @@ public:
 			period_mod = period + period_mod;
 		}
 		int step = sequencer.steps * (period_mod / period);
-		return sequencer.sequence[ step ] / 15.0;
+		return normalize_volume( sequencer.sequence[ step ] );
 	}
 
 private:
@@ -224,6 +229,11 @@ private:
 	uint8_t counter_reload_val = 0;
 
 	bool flag_linc_reload = false;
+
+	float normalize_volume( int vol ) override
+	{
+		return 0.5 + ((vol - (15.0 / 2.0)) / 15.0);
+	}
 };
 
 class Noise : public Channel
@@ -255,7 +265,7 @@ public:
 
 	float get_waveform_at_time( float time ) override
 	{
-		if ( !is_playing() ) return 0;
+		if ( !is_playing() ) return 0.5;
 
 		float period = 1 / (1789773.0 / (16 * (timer.get_period() + 1)));
 		int step = floor( time / period );
@@ -265,7 +275,7 @@ public:
 		static std::bernoulli_distribution distribution( 0.5 );
 		distribution.reset();
 
-		return envelope.get_volume() * distribution( generator ) / 15.0;
+		return normalize_volume( envelope.get_volume() * distribution( generator ) );
 	}
 
 	uint16_t waveform_rand = 0;
