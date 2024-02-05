@@ -110,6 +110,12 @@ private:
 	static const int APU_CHANNEL_PADDING = APU_CHANNEL_WIDTH / 8;
 	static const int APU_CHANNEL_WAVEFORM_WIDTH = APU_CHANNEL_WIDTH - APU_CHANNEL_PADDING * 2;
 	static constexpr double APU_WAVEFORM_LENGTH_SECONDS = 0.03;
+	static constexpr uint8_t APU_CHANNEL_COLORS[ 4 ][ 3 ] = {
+		{ 255, 127, 127 },
+		{ 255, 127, 127 },
+		{ 127, 255, 127 },
+		{ 127, 127, 255 },
+	};
 
 	uint32_t fps_lasttime;
 	uint32_t fps_current;

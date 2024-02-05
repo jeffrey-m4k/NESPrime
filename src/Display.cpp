@@ -125,11 +125,14 @@ bool Display::update_apu()
 			float time = (s - 320) / 640.0 * APU_WAVEFORM_LENGTH_SECONDS;
 			float sample = nes->get_apu()->get_waveform_at_time( time, c );
 
-			uint8_t rgb[ 3 ] = { 255, 255, 255 };
+			uint8_t rgb[ 3 ];
+			memcpy( rgb, APU_CHANNEL_COLORS[ c ], 3 );
 			if ( apu_debug_muted[ c ] )
 			{
-				rgb[ 1 ] = 0;
-				rgb[ 2 ] = 0;
+				for ( int i = 0; i < 3; ++i )
+				{
+					rgb[ i ] *= 0.5;
+				}
 			}
 
 			int diff = sample * APU_CHANNEL_WAVEFORM_WIDTH 
