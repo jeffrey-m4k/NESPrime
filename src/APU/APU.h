@@ -5,6 +5,7 @@
 #include "Channel.h"
 #include "Units.h"
 #include <vector>
+#include <deque>
 
 class APU : public Component
 {
@@ -34,6 +35,10 @@ private:
 
 	float get_mixer();
 
+	void low_pass();
+
+	void downsample();
+
 	Channel *get_channel( int channel );
 
 public:
@@ -49,8 +54,12 @@ private:
 
 	bool tick_fs = false;
 
+	std::deque< int16_t > sample_buffer_raw;
+	std::deque< int16_t > sample_buffer_filtered;
 	std::vector< int16_t > sample_buffer;
+	int16_t low_pass_last = 0;
 	float sample_clock = 0;
 
-	static constexpr float sample_per = 21477272 / 44100.0 / 12.0;
+	static constexpr float SAMPLE_RATE = 44100.0;
+	static constexpr float sample_per = 21477272 / SAMPLE_RATE / 12.0;
 };
