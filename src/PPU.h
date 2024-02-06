@@ -129,8 +129,6 @@ private:
 
 	uint8_t *col_to_rgb( uint8_t attr, uint8_t col, bool spr );
 
-	void check_rising_edge();
-
 	void set_a12( uint16_t addr )
 	{
 		if ( !a12_set )
@@ -140,10 +138,13 @@ private:
 		}
 	}
 
+	void check_rising_edge();
+
 	bool pt_shown = false;
 
 	bool a12 = 0;
 	bool a12_set = false;
 	short a12_low_cycles = 0;
 	bool a12_rising_filter = false;
+	short m2_counter = 0;
 };

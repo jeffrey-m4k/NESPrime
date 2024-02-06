@@ -255,25 +255,20 @@ bool PPU::run()
 					}
 				}
 			}
+		}
 
-			if ( scan_cycle >= 257 && scan_cycle <= 320)
+		if ( scanline <= 239 && scan_cycle >= 257 && scan_cycle <= 320 )
+		{
+			if ( (scan_cycle - 257) % 8 >= 4 )
 			{
-				if ( (scan_cycle - 257) % 8 < 4 )
+				// For last 4 cycles, fetch the sprite data
+				uint16_t pattern_table = (regs[ PPUCTRL ] >> 3) & 0x1 ? 0x1000 : 0x0;
+				Sprite sprite = scanline_sprites[ (scan_cycle - 260) / 8 ];
+				if ( tall_sprites )
 				{
-					// For first 4 cycles of each sprite fetch, do a garbage nametable fetch
-					set_a12( 0x2000 + 0x1000 * ((regs[ PPUCTRL ] >> 4) & 0x1) );
+					pattern_table = 0x1000 * (sprite[ SPRITE::TILE ] & 0x1);
 				}
-				else
-				{
-					// For last 4 cycles, fetch the sprite data
-					uint16_t pattern_table = (regs[ PPUCTRL ] >> 3) & 0x1 ? 0x1000 : 0x0;
-					Sprite sprite = scanline_sprites[ (scan_cycle - 260) / 8 ];
-					if ( tall_sprites )
-					{
-						pattern_table = 0x1000 * (sprite[ SPRITE::TILE ] & 0x1);
-					}
-					set_a12( pattern_table + sprite[ SPRITE::TILE ] * 16 );
-				}
+				set_a12( pattern_table + sprite[ SPRITE::TILE ] * 16 );
 			}
 		}
 
@@ -680,24 +675,28 @@ bool PPU::write( const uint16_t addr, const uint8_t data )
 
 void PPU::check_rising_edge()
 {
-	if ( !a12 )
+	if ( ++m2_counter == 3 )
 	{
-		if ( a12_low_cycles >= 8 )
+		m2_counter = 0;
+		if ( !a12 )
 		{
-			a12_rising_filter = false;
+			if ( a12_low_cycles >= 2 )
+			{
+				a12_rising_filter = false;
+			}
+			else
+			{
+				++a12_low_cycles;
+			}
 		}
 		else
 		{
-			++a12_low_cycles;
+			if ( !a12_rising_filter )
+			{
+				mapper->handle_ppu_rising_edge();
+			}
+			a12_low_cycles = 0;
+			a12_rising_filter = true;
 		}
-	}
-	else
-	{
-		if ( !a12_rising_filter )
-		{
-			mapper->handle_ppu_rising_edge();
-		}
-		a12_low_cycles = 0;
-		a12_rising_filter = true;
 	}
 }
