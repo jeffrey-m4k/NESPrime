@@ -132,7 +132,6 @@ float Channel::get_output()
 
 	uint8_t dac_in_curr = is_playing() ? get_dac_in() : dac_in_last;
 	
-	uint8_t dac_in_diff = dac_in_curr - dac_in_last;
 	dac_out_last += (dac_in_curr - dac_in_last) / 15.0;
 	dac_out_last *= 0.9999;
 
