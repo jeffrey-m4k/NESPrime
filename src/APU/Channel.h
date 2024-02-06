@@ -74,7 +74,9 @@ public:
 
 	virtual bool is_playing() = 0;
 
-	virtual uint8_t get_output() = 0;
+	virtual uint8_t get_dac_in() = 0;
+
+	float get_output();
 
 public:
 	bool debug_muted = false;
@@ -86,6 +88,9 @@ protected:
 	Sequencer sequencer;
 	Envelope envelope;
 	uint8_t seq_out = 0;
+
+	uint8_t dac_in_last = 0;
+	float dac_out_last = 0.0;
 
 	uint8_t length = 0;
 	bool length_halt = false;
@@ -127,7 +132,7 @@ public:
 		p2 = is_p2;
 	}
 
-	uint8_t get_output() override;
+	uint8_t get_dac_in() override;
 
 	void update_sweep( uint8_t byte );
 
@@ -197,7 +202,7 @@ public:
 
 	void tick_lc();
 
-	uint8_t get_output() override;
+	uint8_t get_dac_in() override;
 
 	bool is_playing() override
 	{
@@ -256,7 +261,7 @@ public:
 
 	void tick_timer();
 
-	uint8_t get_output() override;
+	uint8_t get_dac_in() override;
 
 	bool is_playing() override
 	{

@@ -74,12 +74,6 @@ void Pulse::tick_sweep()
 	}
 }
 
-uint8_t Pulse::get_output()
-{
-	if (debug_muted) return 0;
-	return is_playing() ? seq_out * envelope.get_volume() : 0;
-}
-
 void Triangle::tick_timer()
 {
 	if ( timer.clock() && length > 0 && linear_counter > 0 )
@@ -105,12 +99,6 @@ void Triangle::tick_lc()
 	}
 }
 
-uint8_t Triangle::get_output()
-{
-	if (debug_muted) return 0;
-	return is_playing() ? seq_out : 0;
-}
-
 void Noise::tick_timer()
 {
 	if ( timer.clock() )
@@ -121,8 +109,34 @@ void Noise::tick_timer()
 	}
 }
 
-uint8_t Noise::get_output()
+// === DAC ===
+
+uint8_t Pulse::get_dac_in()
 {
-	if (debug_muted) return 0;
-	return (is_playing() && !(shifter & 0x1)) ? envelope.get_volume() : 0;
+	return seq_out * envelope.get_volume();
+}
+
+uint8_t Triangle::get_dac_in()
+{
+	return seq_out;
+}
+
+uint8_t Noise::get_dac_in()
+{
+	return !(shifter & 0x1) ? envelope.get_volume() : 0;
+}
+
+float Channel::get_output()
+{
+	if ( debug_muted ) return 0;
+
+	uint8_t dac_in_curr = is_playing() ? get_dac_in() : dac_in_last;
+	
+	uint8_t dac_in_diff = dac_in_curr - dac_in_last;
+	dac_out_last += (dac_in_curr - dac_in_last) / 15.0;
+	dac_out_last *= 0.996;
+
+	dac_in_last = dac_in_curr;
+
+	return dac_out_last;
 }

@@ -56,7 +56,7 @@ void APU::sample()
 {
 	if ( ++sample_clock >= sample_per )
 	{
-		sample_buffer.push_back( get_mixer() * 50 );
+		sample_buffer.push_back( get_mixer() * 128000 );
 		sample_clock -= sample_per;
 	}
 	if ( sample_buffer.size() >= 100 )
@@ -69,9 +69,9 @@ void APU::sample()
 float APU::get_mixer()
 {
 	float sample =
-			0.752 * (pulse[0].get_output() + pulse[1].get_output()) +
-			0.851 * triangle.get_output() +
-			0.494 * noise.get_output();
+			0.00752 * (pulse[0].get_output() + pulse[1].get_output()) +
+			0.00851 * triangle.get_output() +
+			0.00494 * noise.get_output();
 
 	return sample;
 }
