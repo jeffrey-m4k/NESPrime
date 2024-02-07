@@ -64,7 +64,7 @@ void Pulse::tick_sweep()
 	muted = curr_period < 8 || target_period > 0x7FF;
 
 	bool zero = sweep_divider.clock();
-	if ( zero && sweep_enable && !muted )
+	if ( zero && sweep_enable && !muted && sweep_shift != 0 )
 	{
 		timer.set_period( target_period );
 	}
