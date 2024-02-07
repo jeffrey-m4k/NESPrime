@@ -212,7 +212,7 @@ uint8_t APU::read_status()
 
 Channel *APU::get_channel( int channel )
 {
-	if ( channel > 3 || channel < 0 )
+	if ( channel > 4 || channel < 0 )
 	{
 		channel = 0;
 	}
@@ -226,6 +226,8 @@ Channel *APU::get_channel( int channel )
 			return &triangle;
 		case 3: 
 			return &noise;
+		case 4:
+			return &dmc;
 	}
 }
 
@@ -250,4 +252,9 @@ bool APU::is_playing( int channel )
 float APU::get_waveform_at_time( float time, int channel )
 {
 	return get_channel( channel )->get_waveform_at_time( time );
+}
+
+void APU::clear_dmc_waveform()
+{
+	dmc.clear_waveform_cache();
 }

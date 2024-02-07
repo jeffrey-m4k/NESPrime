@@ -117,6 +117,7 @@ bool Display::update_apu()
 {
 	uint8_t buf[ APU_WINDOW_WIDTH * 640 * 3 ] = { 0 };
 
+	nes->get_apu()->clear_dmc_waveform();
 	for ( int c = 0; c < APU_CHANNELS; ++c )
 	{
 		float last_sample = nes->get_apu()->get_waveform_at_time( (-321 / 640.0) * APU_WAVEFORM_LENGTH_SECONDS, c );
@@ -143,10 +144,11 @@ bool Display::update_apu()
 
 			for ( int d = 0; d <= abs(diff); ++d )
 			{
-				int buf_idx_a = (s * APU_WINDOW_WIDTH + start_x + d) * 3;
-				int buf_idx_b = (s * APU_WINDOW_WIDTH + start_x + d) * 3;
-				memcpy( &buf[ buf_idx_a ], rgb, 3 );
-				memcpy( &buf[ buf_idx_b ], rgb, 3 );
+				if ( start_x + d < APU_WINDOW_WIDTH )
+				{
+					int buf_idx_a = (s * APU_WINDOW_WIDTH + start_x + d) * 3;
+					memcpy( &buf[ buf_idx_a ], rgb, 3 );
+				}
 			}
 
 			last_sample = sample;

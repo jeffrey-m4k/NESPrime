@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <cstdint>
 #include <cmath>
 #include <random>
@@ -370,13 +371,78 @@ public:
 
 	float get_waveform_at_time( float time ) override
 	{
-		return 0.5;
+		if ( silence ) return 0.5;
+
+		float period = 1 / (1789773.0 / (16 * (timer.get_period() + 1))) / 4.0;
+		int step = floor( time / period );
+		if ( step < 0 ) step = sample_length * 8 + step;
+
+		int byte = step / 8 % sample_length;
+		int bit = step % 8;
+
+		uint8_t out;
+
+		if ( waveform_cache.empty() )
+		{
+			uint64_t sum = 0;
+			uint32_t len = 0;
+			uint8_t last_out = 0;
+			for ( int byte_num = 0; byte_num < sample_length; ++byte_num )
+			{
+				uint8_t sample_byte = *cpu->get_mapper()->map_cpu( sample_addr + byte_num );
+				for ( int bit_num = 0; bit_num < 8; ++bit_num )
+				{
+					bool delta = (sample_byte >> bit_num) & 0x1;
+					if ( delta && last_out <= 125 )
+					{
+						last_out += 2;
+					}
+					else if ( !delta && last_out >= 2 )
+					{
+						last_out -= 2;
+					}
+
+					sum += last_out;
+					++len;
+
+					waveform_cache.insert( std::make_pair( std::make_pair( byte_num, bit_num ), last_out ) );
+				}
+			}
+
+			waveform_avg = (sum / (float)len) / 127.0;
+		}
+		
+		byte += (sample_length - bytes_remaining);
+		if ( byte >= sample_length )
+		{
+			byte -= sample_length;
+		}
+
+		auto it = waveform_cache.find( std::make_pair( byte, bit ) );
+		if ( it != waveform_cache.end() )
+		{
+			return it->second / 127.0 + (0.5 - waveform_avg);
+		}
+		else
+		{
+			return 0.5;
+		}
 	}
+
+	void clear_waveform_cache()
+	{
+		waveform_cache.clear();
+		waveform_avg = 0.0;
+	}
+
 private:
 	static constexpr uint16_t periods[ 16 ] = {
 			428, 380, 340, 320, 286, 254, 226, 214,
 			190, 160, 142, 128, 106, 84, 72, 54
 	};
+
+	std::map< std::pair< int, int >, uint8_t > waveform_cache;
+	float waveform_avg = 0.0;
 
 	CPU *cpu;
 

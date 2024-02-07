@@ -32,6 +32,8 @@ public:
 
 	float get_waveform_at_time( float time, int channel );
 
+	void clear_dmc_waveform();
+
 private:
 	void sample();
 

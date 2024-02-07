@@ -81,7 +81,7 @@ public:
 
 public:
 	uint32_t last_update = 0;
-	bool apu_debug_muted[4] = {false};
+	bool apu_debug_muted[5] = {false};
 
 private:
 	SDL_Window *window_main;
@@ -104,17 +104,18 @@ private:
 	uint8_t nts[256 * 240 * 4 * 3] = {0};
 
 	// 0: Pulse 1, 1 : Pulse 2, 2 : Triangle, 3 : Noise
-	static const int APU_WINDOW_WIDTH = 240;
-	static const int APU_CHANNELS = 4;
+	static const int APU_WINDOW_WIDTH = 300;
+	static const int APU_CHANNELS = 5;
 	static const int APU_CHANNEL_WIDTH = APU_WINDOW_WIDTH / APU_CHANNELS;
 	static const int APU_CHANNEL_PADDING = APU_CHANNEL_WIDTH / 8;
 	static const int APU_CHANNEL_WAVEFORM_WIDTH = APU_CHANNEL_WIDTH - APU_CHANNEL_PADDING * 2;
 	static constexpr double APU_WAVEFORM_LENGTH_SECONDS = 0.03;
-	static constexpr uint8_t APU_CHANNEL_COLORS[ 4 ][ 3 ] = {
+	static constexpr uint8_t APU_CHANNEL_COLORS[ 5 ][ 3 ] = {
 		{ 255, 127, 127 },
 		{ 255, 127, 127 },
 		{ 127, 255, 127 },
 		{ 127, 127, 255 },
+		{ 200, 200, 200 }
 	};
 
 	uint32_t fps_lasttime;
