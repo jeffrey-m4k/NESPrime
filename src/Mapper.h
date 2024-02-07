@@ -103,6 +103,8 @@ private:
 
 	uint8_t bank_chr_2 = 0;
 
+	bool bank_prg_256k = 0;
+
 	long last_write = 0;
 };
 

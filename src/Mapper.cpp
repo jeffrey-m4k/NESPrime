@@ -88,25 +88,25 @@ uint8_t *Mapper1::map_cpu( uint16_t address )
 	{
 		case 0:
 		case 1:
-			return prg_rom + (bank_prg & ~0x1) * 0x8000 + (address - 0x8000);
+			return prg_rom + (bank_prg & ~0x1) * 0x8000 + (address - 0x8000) + bank_prg_256k * 0x40000;
 		case 2:
 			if ( address < 0xC000 )
 			{
-				return prg_rom + (address - 0x8000);
+				return prg_rom + (address - 0x8000) + bank_prg_256k * 0x40000;
 			}
 			else
 			{
-				return prg_rom + bank_prg * 0x4000 + (address - 0xC000);
+				return prg_rom + bank_prg * 0x4000 + (address - 0xC000) + bank_prg_256k * 0x40000;
 			}
 		case 3:
 		default:
 			if ( address >= 0xC000 )
 			{
-				return prg_rom + (prg_size - 0x4000) + (address - 0xC000);
+				return prg_rom + (std::clamp( (int)prg_size, 0, 0x40000 ) - 0x4000) + (address - 0xC000) + bank_prg_256k * 0x40000;
 			}
 			else
 			{
-				return prg_rom + bank_prg * 0x4000 + (address - 0x8000);
+				return prg_rom + bank_prg * 0x4000 + (address - 0x8000) + bank_prg_256k * 0x40000;
 			}
 	}
 }
@@ -170,13 +170,19 @@ void Mapper1::handle_write( uint8_t data, uint16_t addr )
 			}
 			else if ( addr >= 0xC000 )
 			{ // CHR bank-2 switch
-				bank_chr_2 = shifter_out;
-
+				bank_chr_2 = shifter_out % (chr_size / 0x1000);
+				if ( prg_size == 0x80000 )
+				{
+					bank_prg_256k = (shifter_out >> 4) & 0x1;
+				}
 			}
 			else if ( addr >= 0xA000 )
 			{ // CHR bank-1 switch
-				bank_chr = shifter_out;
-
+				bank_chr = shifter_out % (chr_size / 0x1000);
+				if ( prg_size == 0x80000 )
+				{
+					bank_prg_256k = (shifter_out >> 4) & 0x1;
+				}
 			}
 			else
 			{ // control
