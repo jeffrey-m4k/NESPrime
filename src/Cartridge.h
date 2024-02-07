@@ -63,6 +63,8 @@ public:
 		return mapper;
 	}
 
+	void dump_sram();
+
 private:
 	bool read_next( uint32_t bytes = 1 );
 
@@ -73,6 +75,8 @@ private:
 	bool read_header();
 
 	void print_metadata();
+
+	void load_sram();
 
 private:
 	static const int BUFFER_SIZE = 16;
@@ -90,4 +94,6 @@ private:
 	Memory prg_ram;
 	Memory chr_ram;
 	Mapper *mapper = nullptr;
+
+	bool battery_ram = false;
 };

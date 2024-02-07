@@ -114,4 +114,6 @@ private:
 
 	long clock = 0;
 	bool quit = false;
+
+	void dump_ram();
 };

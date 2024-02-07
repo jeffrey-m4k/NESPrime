@@ -1058,9 +1058,16 @@ bool CPU::write( const uint16_t addr, const uint8_t data )
 	}
 	else
 	{
-		if ( addr < 0x8000 && nes->get_cart()->get_prg_ram() != nullptr )
+		if ( addr < 0x8000 )
 		{
-			*mapper->map_cpu( addr ) = data;
+			uint8_t *write_addr = mapper->map_cpu( addr );
+			*write_addr = data;
+
+			if ( addr >= 0x6000 )
+			{
+				uint8_t *ram_addr = nes->get_cart()->get_prg_ram()->get_mem();
+				mapper->ram_highest = std::max( mapper->ram_highest, std::distance( ram_addr, write_addr ) );
+			}
 		}
 	}
 	mapper->handle_write( data, addr );

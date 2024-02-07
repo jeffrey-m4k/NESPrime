@@ -14,6 +14,8 @@ enum MIRRORING
 class Mapper
 {
 public:
+	long long ram_highest = 0;
+
 	explicit Mapper( Cartridge *cart );
 
 	~Mapper() = default;

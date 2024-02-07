@@ -8,6 +8,7 @@
 #include "APU/APU.h"
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include <iostream>
 
 NES::NES()
 {
@@ -48,10 +49,14 @@ void NES::run()
 		}
 		check_refresh();
 	}
+
+	cart->dump_sram();
 }
 
 void NES::reset()
 {
+	cart->dump_sram();
+
 	delete cart;
 	delete cpu;
 	delete ppu;
@@ -68,6 +73,10 @@ void NES::reset()
 bool NES::run( const nfdchar_t *fn )
 {
 	reset();
+	std::string filename_copy = filename;
+	filename = fn;
+	filename = filename.substr( filename.find_last_of( "/\\" ) + 1 );
+	filename = filename.substr( 0, filename.find_last_of( '.' ) );
 	if ( cart->open_file( fn ) )
 	{
 		cart->load();
@@ -79,6 +88,7 @@ bool NES::run( const nfdchar_t *fn )
 		SDL_Delay( 250 );
 		return true;
 	}
+	filename = filename_copy;
 	return false;
 }
 

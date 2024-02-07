@@ -83,6 +83,8 @@ bool Cartridge::read_header()
 			flags[1][i] = (buffer[7] >> i) & 0x1;
 		}
 
+		battery_ram = flags[0][1];
+
 		flush_hex( nes->out, buffer, 16 );
 		return true;
 	}
@@ -97,7 +99,6 @@ void Cartridge::load()
 		print_metadata();
 
 		// If trainer is present, skip past it
-		// TODO add trainer support (low priority)
 		if ( flags[0][2] )
 		{
 			pos += 512;
@@ -107,6 +108,9 @@ void Cartridge::load()
 		read_next( prg_rom, 0, prg_size );
 
 		prg_ram.init( 0x8000 );
+		load_sram();
+
+		nes->out << endl;
 
 		if ( chr_size )
 		{
@@ -197,3 +201,39 @@ void Cartridge::print_metadata()
 }
 
 
+void Cartridge::dump_sram()
+{
+	if ( battery_ram )
+	{
+		std::ofstream save_file( "NESP_Saves/" + nes->filename + ".sav", std::ios::binary);
+		uint8_t *ram = prg_ram.get_mem();
+
+		for ( int i = 0; i < 0x2000; ++i )
+		{
+			save_file << ram[ i ];
+		}
+
+		save_file.close();
+	}
+}
+
+void Cartridge::load_sram()
+{
+	if ( battery_ram )
+	{
+		std::ifstream save_file( "NESP_Saves/" + nes->filename + ".sav", ios::binary );
+		if ( save_file.good() )
+		{
+			save_file.seekg( 0, std::ios::end );
+			size_t length = save_file.tellg();
+			save_file.seekg( 0, std::ios::beg );
+
+			if ( length > 0x8000 )
+			{
+				length = 0x8000;
+			}
+
+			save_file.read( (char *)prg_ram.get_mem(), length );
+		}
+	}
+}
