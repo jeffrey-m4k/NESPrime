@@ -247,3 +247,21 @@ private:
 
 	uint8_t command = 0;
 };
+
+
+class Mapper228 : public Mapper
+{
+public:
+	explicit Mapper228( Cartridge *cart ) : Mapper( cart )
+	{};
+
+	uint8_t *map_cpu( uint16_t address ) override;
+
+	uint8_t *map_ppu( uint16_t address ) override;
+
+	void handle_write( uint8_t data, uint16_t addr ) override;
+
+private:
+	bool prg_bankmode = 0;
+	uint8_t prg_chip = 0;
+};

@@ -535,3 +535,56 @@ void Mapper69::handle_cpu_cycle()
 		}
 	}
 }
+
+// === MAPPER 228 (Active Enterprises) ===
+
+uint8_t *Mapper228::map_cpu( uint16_t address )
+{
+	if ( address < 0x8000 )
+	{
+		return Mapper::map_cpu( address );
+	}
+
+	if ( prg_chip == 2 )
+	{
+		return prg_rom;
+	}
+
+	uint32_t offset = 0x80000 * prg_chip;
+	if ( prg_chip == 3 )
+	{
+		offset -= 0x80000;
+	}
+
+	uint8_t bank = bank_prg;
+	if ( !prg_bankmode )
+	{
+		bank = address >= 0xC000 ? (bank | 0x1) : (bank & ~0x1);
+	}
+
+	return prg_rom + offset + (bank * 0x4000) + (address % 0x4000);
+}
+
+uint8_t *Mapper228::map_ppu( uint16_t address )
+{
+	if ( address >= 0x2000 )
+	{
+		return Mapper::map_ppu( address );
+	}
+
+	return chr_rom + (bank_chr * 0x2000) + address;
+}
+
+void Mapper228::handle_write( uint8_t data, uint16_t addr )
+{
+	if ( addr < 0x8000 )
+	{
+		return;
+	}
+
+	bank_chr = (data & 0x3) | ((addr & 0xF) << 2);
+	bank_prg = (addr >> 6) & 0x1F;
+	prg_bankmode = (addr >> 5) & 0x1;
+	prg_chip = (addr >> 11) & 0x3;
+	set_mirroring( (addr >> 13) & 0x1 ? Horizontal : Vertical );
+}

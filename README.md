@@ -31,6 +31,7 @@ NESPrime is a simple NES emulator written in C++ using the SDL2 library.
   - 7 (AxROM) - *Battletoads, Solstice...*
   - 11 (Color Dreams) - *Spiritual Warfare, Exodus...*
   - 69 (FME-7) - *Batman: Return of the Joker, Gimmick!...*
+  - 228 - *Action 52*
 
 ### Roadmap:
 - More mappers!
