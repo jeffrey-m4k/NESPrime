@@ -245,8 +245,8 @@ private:
 	uint16_t irq_counter = 0;
 	bool irq_counter_enable = false;
 
-	uint8_t prg_banks[ 4 ];
-	uint8_t chr_banks[ 8 ];
+	uint8_t prg_banks[ 4 ] = { 0 };
+	uint8_t chr_banks[ 8 ] = { 0 };
 	bool prg_bank0_ram = false;
 
 	uint8_t command = 0;
