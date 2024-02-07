@@ -80,6 +80,8 @@ public:
 		PIN_IRQ = true;
 	};
 
+	void skip_cycles( int num, CYCLE type );
+
 	uint8_t memory_regs[24];
 
 protected:
@@ -95,8 +97,6 @@ private:
 	bool poll_interrupt();
 
 	void interrupt( INTERRUPT_TYPE type );
-
-	void skip_cycles( int num, CYCLE type );
 
 	void exec( uint8_t opcode );
 

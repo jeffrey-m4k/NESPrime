@@ -26,6 +26,11 @@ APU::~APU()
 	SDL_CloseAudioDevice( audio_device );
 }
 
+void APU::init()
+{
+	dmc.set_cpu( get_nes()->get_cpu() );
+}
+
 void APU::cycle()
 {
 	if ( tick_fs )
@@ -34,6 +39,7 @@ void APU::cycle()
 		pulse[0].tick_timer();
 		pulse[1].tick_timer();
 		noise.tick_timer();
+		dmc.tick_timer();
 		tick_fs = false;
 	}
 	else
@@ -100,9 +106,10 @@ void APU::downsample()
 float APU::get_mixer()
 {
 	float sample =
-			0.00752 * (pulse[0].get_output() + pulse[1].get_output()) +
-			0.00851 * triangle.get_output() +
-			0.00494 * noise.get_output();
+		0.00752 * (pulse[ 0 ].get_output() + pulse[ 1 ].get_output()) +
+		0.00851 * triangle.get_output() +
+		0.00494 * noise.get_output() +
+		0.00335 * dmc.get_output();
 
 	return sample;
 }
@@ -158,11 +165,25 @@ void APU::write_apu_reg( uint8_t reg, uint8_t data )
 		case 0xF:
 			noise.set_length_counter( data >> 3 );
 			break;
+		case 0x10:
+			dmc.set_status( data );
+			break;
+		case 0x11:
+			dmc.set_output( data );
+			break;
+		case 0x12:
+			dmc.set_sample_address( data );
+			break;
+		case 0x13:
+			dmc.set_sample_length( data );
+			break;
 		case 0x15:
 			pulse[0].set_enabled( data & 0x1 );
 			pulse[1].set_enabled( (data >> 1) & 0x1 );
 			triangle.set_enabled( (data >> 2) & 0x1 );
 			noise.set_enabled( (data >> 3) & 0x1 );
+			dmc.set_enabled( (data >> 4) & 0x1 );
+			dmc.clear_interrupt();
 			break;
 		case 0x17:
 			frameSeq.reset( data );
@@ -174,12 +195,15 @@ void APU::write_apu_reg( uint8_t reg, uint8_t data )
 
 uint8_t APU::read_status()
 {
+	// TODO fix this
 	uint8_t s =
-		pulse[0].get_length_halt() |
-		pulse[1].get_length_halt() << 1 |
-		triangle.get_length_halt() << 2 |
-		noise.get_length_halt() << 3 |
-		frameSeq.interrupt << 6;
+		pulse[0].get_length_halt()				|
+		pulse[1].get_length_halt() << 1			|
+		triangle.get_length_halt() << 2			|
+		noise.get_length_halt() << 3			|
+		(dmc.get_bytes_remaining() > 0) << 4	|
+		frameSeq.interrupt << 6					|
+		dmc.get_irq_pending() << 7;
 
 	frameSeq.interrupt = false;
 

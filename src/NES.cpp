@@ -72,6 +72,7 @@ bool NES::run( const nfdchar_t *fn )
 	{
 		cart->load();
 		cpu->init();
+		apu->init();
 		display->reset();
 		ui->set_state( UIState::PAUSE );
 		ui->set_show( false );

@@ -4,6 +4,7 @@
 #include <cmath>
 #include <random>
 #include "Units.h"
+#include "../CPU.h"
 
 class Channel
 {
@@ -14,7 +15,7 @@ public:
 
 	~Channel() = default;
 
-	void set_enabled( bool enable )
+	virtual void set_enabled( bool enable )
 	{
 		enabled = enable;
 		if ( !enable )
@@ -63,7 +64,7 @@ public:
 		envelope.clock();
 	}
 
-	void tick_timer();
+	virtual void tick_timer();
 
 	void toggle_debug_mute()
 	{
@@ -198,7 +199,7 @@ public:
 		flag_linc_reload = true;
 	}
 
-	void tick_timer();
+	void tick_timer() override;
 
 	void tick_lc();
 
@@ -259,7 +260,7 @@ public:
 		timer.set_period( periods[p % 16] );
 	}
 
-	void tick_timer();
+	void tick_timer() override;
 
 	uint8_t get_dac_in() override;
 
@@ -297,4 +298,167 @@ private:
 
 class DMC : public Channel
 {
+public:
+	DMC() : Channel() {}
+
+	void set_cpu( CPU *cpu )
+	{
+		this->cpu = cpu;
+	}
+
+	void tick_timer() override;
+
+	void set_enabled( bool enable ) override
+	{
+		if ( !enable )
+		{
+			bytes_remaining = 0;
+		}
+		else if ( bytes_remaining == 0 )
+		{
+			start_sample();
+		}
+	}
+
+	void set_output( uint8_t output )
+	{
+		this->output = output & 0x7F;
+	}
+
+	void set_sample_address( uint8_t address )
+	{
+		this->sample_addr = 0xC000 | (((uint16_t)address) << 6);
+	}
+
+	void set_sample_length( uint8_t length )
+	{
+		this->sample_length = 0x1 | (((uint16_t)length) << 4);
+	}
+
+	void clear_interrupt()
+	{
+		irq_pending = false;
+	}
+
+	void set_status( uint8_t status )
+	{
+		irq_enabled = (status >> 7) & 0x1;
+		if ( !irq_enabled )
+		{
+			irq_pending = false;
+		}
+		loop = (status >> 6) & 0x1;
+		timer.set_period( periods[status & 0xF] / 2 );
+	}
+
+	uint16_t get_bytes_remaining()
+	{
+		return bytes_remaining;
+	}
+
+	bool get_irq_pending()
+	{
+		return irq_pending;
+	}
+
+	uint8_t get_dac_in() override;
+
+	bool is_playing() override
+	{
+		return !silence;
+	}
+
+	float get_waveform_at_time( float time ) override
+	{
+		return 0.5;
+	}
+private:
+	static constexpr uint16_t periods[ 16 ] = {
+			428, 380, 340, 320, 286, 254, 226, 214,
+			190, 160, 142, 128, 106, 84, 72, 54
+	};
+
+	CPU *cpu;
+
+	bool irq_enabled = false;
+	bool irq_pending = false;
+	bool loop = false;
+
+	uint8_t sample_buffer = 0;
+	bool sample_buffer_empty = true;
+	uint16_t sample_addr = 0;
+	uint16_t sample_length = 0;
+
+	// Memory reader
+	uint16_t addr_counter = 0;
+	uint16_t bytes_remaining = 0;
+
+	// Output unit
+	uint8_t shifter = 0;
+	uint8_t bits_remaining = 0;
+	uint8_t output = 0;
+	bool silence = true;
+
+	void start_sample()
+	{
+		addr_counter = sample_addr;
+		bytes_remaining = sample_length;
+	}
+
+	void read_sample_next()
+	{
+		if ( sample_buffer_empty && bytes_remaining > 0 )
+		{
+			sample_buffer = *cpu->get_mapper()->map_cpu(addr_counter);
+			sample_buffer_empty = false;
+
+			if ( ++addr_counter == 0x0 )
+			{
+				addr_counter = 0x8000;
+			}
+
+			if ( --bytes_remaining == 0 )
+			{
+				if ( loop )
+				{
+					start_sample();
+				}
+				else if ( irq_enabled )
+				{
+					irq_pending = true;
+				}
+			}
+
+			cpu->skip_cycles( 4, READ ); // TODO make more accurate
+		}
+	}
+
+	void tick_sample()
+	{
+		if ( bits_remaining == 0 )
+		{
+			bits_remaining = 8;
+			silence = sample_buffer_empty;
+			if ( !silence )
+			{
+				shifter = sample_buffer;
+				sample_buffer_empty = true;
+			}
+		}
+
+		if ( !silence )
+		{
+			bool bit_0 = shifter & 0x1;
+			if ( bit_0 && output <= 125 )
+			{
+				output += 2;
+			}
+			else if ( !bit_0 && output >= 2 )
+			{
+				output -= 2;
+			}
+		}
+		shifter >>= 1;
+		bits_remaining -= 1;
+	}
 };

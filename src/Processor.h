@@ -30,6 +30,11 @@ public:
 		return &mem;
 	}
 
+	Mapper *get_mapper()
+	{
+		return mapper;
+	}
+
 	void set_mapper( Mapper *mapperIn )
 	{
 		mapper = mapperIn;

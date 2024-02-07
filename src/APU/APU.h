@@ -16,6 +16,8 @@ public:
 
 	~APU();
 
+	void init();
+
 	void cycle();
 
 	void write_apu_reg( uint8_t reg, uint8_t data );
@@ -49,7 +51,7 @@ private:
 	Pulse pulse[2];
 	Triangle triangle;
 	Noise noise;
-//    DMC dmc;
+    DMC dmc;
 	FrameSequencer frameSeq;
 
 	bool tick_fs = false;

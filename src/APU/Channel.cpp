@@ -109,6 +109,20 @@ void Noise::tick_timer()
 	}
 }
 
+void DMC::tick_timer()
+{
+	if ( timer.clock() )
+	{
+		read_sample_next();
+		tick_sample();
+	}
+
+	if ( irq_pending )
+	{
+		cpu->trigger_irq();
+	}
+}
+
 // === DAC ===
 
 uint8_t Pulse::get_dac_in()
@@ -124,6 +138,11 @@ uint8_t Triangle::get_dac_in()
 uint8_t Noise::get_dac_in()
 {
 	return !(shifter & 0x1) ? envelope.get_volume() : 0;
+}
+
+uint8_t DMC::get_dac_in()
+{
+	return output;
 }
 
 float Channel::get_output()
