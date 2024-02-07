@@ -365,7 +365,7 @@ public:
 
 	bool is_playing() override
 	{
-		return !silence;
+		return true;
 	}
 
 	float get_waveform_at_time( float time ) override
