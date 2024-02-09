@@ -126,6 +126,10 @@ bool Display::update_apu()
 			float time = (s - 320) / 640.0 * APU_WAVEFORM_LENGTH_SECONDS;
 			float sample = nes->get_apu()->get_waveform_at_time( time, c );
 
+			uint8_t midline_rgb[ 3 ]{ 50, 50, 50 };
+			int mid_x = (s * APU_WINDOW_WIDTH + c * APU_CHANNEL_WIDTH + APU_CHANNEL_PADDING + 0.5 * APU_CHANNEL_WAVEFORM_WIDTH) * 3;
+			memcpy( &buf[ mid_x ], midline_rgb, 3 );
+
 			uint8_t rgb[ 3 ];
 			memcpy( rgb, APU_CHANNEL_COLORS[ c ], 3 );
 			if ( apu_debug_muted[ c ] )
@@ -144,7 +148,7 @@ bool Display::update_apu()
 
 			for ( int d = 0; d <= abs(diff); ++d )
 			{
-				if ( start_x + d < APU_WINDOW_WIDTH )
+				if ( (start_x + d < APU_WINDOW_WIDTH) && (start_x + d >= 0) )
 				{
 					int buf_idx_a = (s * APU_WINDOW_WIDTH + start_x + d) * 3;
 					memcpy( &buf[ buf_idx_a ], rgb, 3 );

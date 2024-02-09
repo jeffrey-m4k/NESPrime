@@ -157,7 +157,30 @@ public:
 			period_mod = period + period_mod;
 		}
 		int step = sequencer.steps * (period_mod / period);
-		return normalize_volume( envelope.get_volume() * sequencer.sequence[ step ] );
+
+		float waveform_avg;
+		float waveform_coeff;
+		float vol = envelope.get_volume() / 15.0;
+		switch ( duty )
+		{
+		case 0:
+			waveform_coeff = 1 / 8.0;
+			break;
+		case 1:
+			waveform_coeff = 2 / 8.0;
+			break;
+		case 2:
+		default:
+			waveform_coeff = 4 / 8.0;
+			break;
+		case 3:
+			waveform_coeff = 6 / 8.0;
+			break;
+		}
+
+		waveform_avg = waveform_coeff * vol + (1 - vol) * 0.5;
+
+		return normalize_volume( envelope.get_volume() * sequencer.sequence[ step ] ) + (0.5 - waveform_avg);
 	}
 
 private:
