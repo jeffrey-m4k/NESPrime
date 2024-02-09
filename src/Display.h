@@ -3,6 +3,7 @@
 #include <deque>
 #include <vector>
 #include <SDL.h>
+#include "BitUtils.h"
 #include "Component.h"
 
 #define WIDTH 256
@@ -34,11 +35,11 @@ public:
 
 	void black();
 
-	void set_pixel_buffer( uint8_t x, uint8_t y, const uint8_t rgb[3] );
+	void set_pixel_buffer( u8 x, u8 y, const u8 rgb[3] );
 
-	void write_pt_pixel( uint8_t tile, uint8_t x, uint8_t y, bool pt2, const uint8_t rgb[3] );
+	void write_pt_pixel( u8 tile, u8 x, u8 y, bool pt2, const u8 rgb[3] );
 
-	void write_nt_pixel( int tile, uint8_t x, uint8_t y, short nt, const uint8_t rgb[3] );
+	void write_nt_pixel( int tile, u8 x, u8 y, short nt, const u8 rgb[3] );
 
 	int get_apu_channel_from_x( int x )
 	{
@@ -47,7 +48,7 @@ public:
 
 	void push_buffer();
 
-	uint8_t *get_pixels()
+	u8 *get_pixels()
 	{
 		return pixels;
 	}
@@ -80,7 +81,7 @@ public:
 	}
 
 public:
-	uint32_t last_update = 0;
+	u32 last_update = 0;
 	bool apu_debug_muted[5] = {false};
 
 private:
@@ -97,11 +98,11 @@ private:
 	SDL_Texture *texture_nt;
 	SDL_Texture *texture_apu;
 
-	uint8_t pixels[WIDTH * HEIGHT * 3] = {0};
-	uint8_t buffer[WIDTH * HEIGHT * 3] = {0};
+	u8 pixels[WIDTH * HEIGHT * 3] = {0};
+	u8 buffer[WIDTH * HEIGHT * 3] = {0};
 
-	uint8_t pt[256 * 128 * 3] = {0};
-	uint8_t nts[256 * 240 * 4 * 3] = {0};
+	u8 pt[256 * 128 * 3] = {0};
+	u8 nts[256 * 240 * 4 * 3] = {0};
 
 	// 0: Pulse 1, 1 : Pulse 2, 2 : Triangle, 3 : Noise
 	static const int APU_WINDOW_WIDTH = 300;
@@ -110,7 +111,7 @@ private:
 	static const int APU_CHANNEL_PADDING = APU_CHANNEL_WIDTH / 8;
 	static const int APU_CHANNEL_WAVEFORM_WIDTH = APU_CHANNEL_WIDTH - APU_CHANNEL_PADDING * 2;
 	static constexpr double APU_WAVEFORM_LENGTH_SECONDS = 0.03;
-	static constexpr uint8_t APU_CHANNEL_COLORS[ 5 ][ 3 ] = {
+	static constexpr u8 APU_CHANNEL_COLORS[ 5 ][ 3 ] = {
 		{ 255, 127, 127 },
 		{ 255, 127, 127 },
 		{ 127, 255, 127 },
@@ -118,9 +119,9 @@ private:
 		{ 200, 200, 200 }
 	};
 
-	uint32_t fps_lasttime;
-	uint32_t fps_current;
-	uint32_t fps_frames;
+	u32 fps_lasttime;
+	u32 fps_current;
+	u32 fps_frames;
 
 	SDL_Texture *texture_main_base;
 	SDL_Texture *texture_main_ui = nullptr;

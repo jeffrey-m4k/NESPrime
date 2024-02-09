@@ -1,12 +1,12 @@
 #pragma once
 
-#include <cstdint>
+#include "BitUtils.h"
 #include <iostream>
 #include <iomanip>
 
 using std::hex, std::dec, std::uppercase, std::setw, std::cout, std::endl;
 
-inline void print_hex( std::ostream &out, const uint16_t &num, const std::string &append = "" )
+inline void print_hex( std::ostream &out, const u16 &num, const std::string &append = "" )
 {
 	std::ios_base::fmtflags f( cout.flags() );
 	if ( num < 0x10 )
@@ -18,7 +18,7 @@ inline void print_hex( std::ostream &out, const uint16_t &num, const std::string
 	out.fill( ' ' );
 }
 
-inline void flush_hex( std::ostream &out, uint8_t *buffer, const uint16_t &size )
+inline void flush_hex( std::ostream &out, u8 *buffer, const u16 &size )
 {
 	out.fill( '0' );
 	for ( int row = 0; row < size / 16; row++ )

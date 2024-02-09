@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include "Cartridge.h"
 #include "PPU.h"
 #include "CPU.h"
@@ -20,11 +19,11 @@ public:
 
 	~Mapper() = default;
 
-	virtual uint8_t *map_cpu( uint16_t addr );
+	virtual u8 *map_cpu( u16 addr );
 
-	virtual uint8_t *map_ppu( uint16_t addr );
+	virtual u8 *map_ppu( u16 addr );
 
-	virtual void handle_write( uint8_t data, uint16_t addr )
+	virtual void handle_write( u8 data, u16 addr )
 	{}
 
 	virtual void handle_ppu_rising_edge()
@@ -64,17 +63,17 @@ public:
 protected:
 	Cartridge *cartridge;
 	MIRRORING mirroring;
-	uint8_t bank_prg = 0;
-	uint8_t bank_chr = 0;
-	uint32_t prg_size;
-	uint32_t chr_size;
+	u8 bank_prg = 0;
+	u8 bank_chr = 0;
+	u32 prg_size;
+	u32 chr_size;
 
-	uint8_t *cpu_mem;
-	uint8_t *ppu_mem;
-	uint8_t *prg_rom;
-	uint8_t *chr_rom;
-	uint8_t *prg_ram;
-	uint8_t *chr_ram;
+	u8 *cpu_mem;
+	u8 *ppu_mem;
+	u8 *prg_rom;
+	u8 *chr_rom;
+	u8 *prg_ram;
+	u8 *chr_ram;
 
 	bool force_mirroring = false;
 	bool irq_pending = false;
@@ -89,19 +88,19 @@ public:
 	{
 	};
 
-	uint8_t *map_cpu( uint16_t address ) override;
+	u8 *map_cpu( u16 address ) override;
 
-	uint8_t *map_ppu( uint16_t address ) override;
+	u8 *map_ppu( u16 address ) override;
 
-	void handle_write( uint8_t data, uint16_t addr ) override;
+	void handle_write( u8 data, u16 addr ) override;
 
 private:
-	uint8_t shifter = 0x80;
+	u8 shifter = 0x80;
 
-	uint8_t bankmode_prg = 3;
-	uint8_t bankmode_chr = 1;
+	u8 bankmode_prg = 3;
+	u8 bankmode_chr = 1;
 
-	uint8_t bank_chr_2 = 0;
+	u8 bank_chr_2 = 0;
 
 	bool bank_prg_256k = 0;
 
@@ -116,7 +115,7 @@ public:
 	{
 	};
 
-	uint8_t *map_cpu( uint16_t address ) override
+	u8 *map_cpu( u16 address ) override
 	{
 		if ( address < 0x8000 )
 		{
@@ -132,7 +131,7 @@ public:
 		}
 	}
 
-	void handle_write( uint8_t data, uint16_t addr ) override
+	void handle_write( u8 data, u16 addr ) override
 	{
 		if ( addr < 0x8000 )
 		{
@@ -151,7 +150,7 @@ public:
 	{
 	};
 
-	uint8_t *map_ppu( uint16_t address ) override
+	u8 *map_ppu( u16 address ) override
 	{
 		if ( address >= 0x2000 )
 		{
@@ -160,7 +159,7 @@ public:
 		return chr_rom + bank_chr * 0x2000 + address;
 	}
 
-	void handle_write( uint8_t data, uint16_t addr ) override
+	void handle_write( u8 data, u16 addr ) override
 	{
 		if ( addr < 0x8000 )
 		{
@@ -177,11 +176,11 @@ public:
 	explicit Mapper4( Cartridge *cart ) : Mapper( cart )
 	{};
 
-	uint8_t *map_cpu( uint16_t address ) override;
+	u8 *map_cpu( u16 address ) override;
 
-	uint8_t *map_ppu( uint16_t address ) override;
+	u8 *map_ppu( u16 address ) override;
 
-	void handle_write( uint8_t data, uint16_t addr ) override;
+	void handle_write( u8 data, u16 addr ) override;
 
 	void handle_ppu_rising_edge() override;
 
@@ -189,14 +188,14 @@ private:
 	bool bankmode_prg = 0;
 	bool bankmode_chr = 0;
 
-	uint8_t bank_prg_2 = 0;
-	uint8_t bank_chr_2kb[ 2 ] = { 0 };
-	uint8_t bank_chr_1kb[ 4 ] = { 0 };
+	u8 bank_prg_2 = 0;
+	u8 bank_chr_2kb[ 2 ] = { 0 };
+	u8 bank_chr_1kb[ 4 ] = { 0 };
 
-	uint8_t bank_select = 0;
+	u8 bank_select = 0;
 
-	uint8_t irq_counter = 0;
-	uint8_t irq_reload_val = 0;
+	u8 irq_counter = 0;
+	u8 irq_reload_val = 0;
 	bool irq_reload = false;
 };
 
@@ -207,9 +206,9 @@ public:
 	explicit Mapper7( Cartridge *cart ) : Mapper( cart )
 	{};
 
-	uint8_t *map_cpu( uint16_t address ) override;
+	u8 *map_cpu( u16 address ) override;
 
-	void handle_write( uint8_t data, uint16_t addr ) override;
+	void handle_write( u8 data, u16 addr ) override;
 };
 
 
@@ -219,11 +218,11 @@ public:
 	explicit Mapper11( Cartridge *cart ) : Mapper( cart )
 	{};
 
-	uint8_t *map_cpu( uint16_t address ) override;
+	u8 *map_cpu( u16 address ) override;
 
-	uint8_t *map_ppu( uint16_t address ) override;
+	u8 *map_ppu( u16 address ) override;
 
-	void handle_write( uint8_t data, uint16_t addr ) override;
+	void handle_write( u8 data, u16 addr ) override;
 };
 
 
@@ -233,23 +232,23 @@ public:
 	explicit Mapper69( Cartridge *cart ) : Mapper( cart ) 
 	{};
 
-	uint8_t *map_cpu( uint16_t address ) override;
+	u8 *map_cpu( u16 address ) override;
 
-	uint8_t *map_ppu( uint16_t address ) override;
+	u8 *map_ppu( u16 address ) override;
 
-	void handle_write( uint8_t data, uint16_t addr ) override;
+	void handle_write( u8 data, u16 addr ) override;
 
 	void handle_cpu_cycle() override;
 
 private:
-	uint16_t irq_counter = 0;
+	u16 irq_counter = 0;
 	bool irq_counter_enable = false;
 
-	uint8_t prg_banks[ 4 ] = { 0 };
-	uint8_t chr_banks[ 8 ] = { 0 };
+	u8 prg_banks[ 4 ] = { 0 };
+	u8 chr_banks[ 8 ] = { 0 };
 	bool prg_bank0_ram = false;
 
-	uint8_t command = 0;
+	u8 command = 0;
 };
 
 
@@ -259,13 +258,13 @@ public:
 	explicit Mapper228( Cartridge *cart ) : Mapper( cart )
 	{};
 
-	uint8_t *map_cpu( uint16_t address ) override;
+	u8 *map_cpu( u16 address ) override;
 
-	uint8_t *map_ppu( uint16_t address ) override;
+	u8 *map_ppu( u16 address ) override;
 
-	void handle_write( uint8_t data, uint16_t addr ) override;
+	void handle_write( u8 data, u16 addr ) override;
 
 private:
 	bool prg_bankmode = 0;
-	uint8_t prg_chip = 0;
+	u8 prg_chip = 0;
 };

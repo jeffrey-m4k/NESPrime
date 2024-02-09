@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include "BitUtils.h"
 
 class Memory
 {
@@ -10,9 +11,9 @@ public:
 	{
 	};
 
-	Memory( const uint32_t size ) : size( size )
+	Memory( const u32 size ) : size( size )
 	{
-		mem = new uint8_t[size];
+		mem = new u8[size];
 	};
 
 	~Memory()
@@ -21,18 +22,18 @@ public:
 		delete[] mem;
 	};
 
-	void init( uint32_t size );
+	void init( u32 size );
 
-	uint32_t get_size() const
+	u32 get_size() const
 	{
 		return size;
 	};
 
-	uint8_t *get_mem() const
+	u8 *get_mem() const
 	{
 		return mem;
 	};
 private:
-	uint32_t size;
-	uint8_t *mem;
+	u32 size;
+	u8 *mem;
 };

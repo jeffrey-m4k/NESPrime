@@ -20,9 +20,9 @@ public:
 
 	void cycle();
 
-	void write_apu_reg( uint8_t reg, uint8_t data );
+	void write_apu_reg( u8 reg, u8 data );
 
-	uint8_t read_status();
+	u8 read_status();
 
 	void set_debug_mute( bool mute, int channel );
 
@@ -58,10 +58,10 @@ private:
 
 	bool tick_fs = false;
 
-	std::deque< int16_t > sample_buffer_raw;
-	std::deque< int16_t > sample_buffer_filtered;
-	std::vector< int16_t > sample_buffer;
-	int16_t low_pass_last = 0;
+	std::deque< i16 > sample_buffer_raw;
+	std::deque< i16 > sample_buffer_filtered;
+	std::vector< i16 > sample_buffer;
+	i16 low_pass_last = 0;
 	float sample_clock = 0;
 
 	static constexpr float SAMPLE_RATE = 44100.0;

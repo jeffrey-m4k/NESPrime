@@ -12,12 +12,12 @@ Cartridge::~Cartridge()
 	delete mapper;
 }
 
-bool Cartridge::read_next( const uint32_t bytes )
+bool Cartridge::read_next( const u32 bytes )
 {
 	return read_next( buffer, bytes );
 }
 
-bool Cartridge::read_next( uint8_t *into, const uint32_t bytes )
+bool Cartridge::read_next( u8 *into, const u32 bytes )
 {
 	// TODO better EOF checking, for now just assuming ROM is formatted correctly
 	if ( !file.eof() )
@@ -30,7 +30,7 @@ bool Cartridge::read_next( uint8_t *into, const uint32_t bytes )
 	return false;
 }
 
-bool Cartridge::read_next( Memory &into, const uint32_t start, const uint32_t bytes )
+bool Cartridge::read_next( Memory &into, const u32 start, const u32 bytes )
 {
 	if ( !file.eof() )
 	{
@@ -59,14 +59,14 @@ bool Cartridge::read_header()
 	if ( read_next( 16 ) )
 	{
 		// Check for valid NES header
-		if ( buffer[0] != 0x4E || buffer[1] != 0x45 || buffer[2] != 0x53 || buffer[3] != 0x1A )
+		if ( buffer[ 0 ] != 0x4E || buffer[ 1 ] != 0x45 || buffer[ 2 ] != 0x53 || buffer[ 3 ] != 0x1A )
 		{
 			return false;
 		}
 
 		// Check if file is iNES, return false if not
 		// TODO add NES2.0 support (low priority)
-		if ( (buffer[7] & 0xC) != 0x0 )
+		if ( GET_BITS( buffer[ 7 ], 2, 2 ) != 0x0 )
 		{
 			return false;
 		}
@@ -75,15 +75,15 @@ bool Cartridge::read_header()
 		prg_size = buffer[4] * 0x4000;
 		chr_size = buffer[5] * 0x2000;
 
-		mapper_num = (buffer[6] >> 4) | (buffer[7] & 0xF0);
+		mapper_num = GET_BITS( buffer[ 6 ], 4, 4 ) | (GET_BITS( buffer[ 7 ], 4, 4 ) << 4);
 		// TODO support other mappers
 		for ( int i = 0; i < 4; i++ )
 		{
-			flags[0][i] = (buffer[6] >> i) & 0x1;
-			flags[1][i] = (buffer[7] >> i) & 0x1;
+			flags[ 0 ][ i ] = GET_BIT( buffer[ 6 ], i );
+			flags[ 1 ][ i ] = GET_BIT( buffer[ 7 ], i );
 		}
 
-		battery_ram = flags[0][1];
+		battery_ram = flags[ 0 ][ 1 ];
 
 		flush_hex( nes->out, buffer, 16 );
 		return true;
@@ -206,7 +206,7 @@ void Cartridge::dump_sram()
 	if ( battery_ram )
 	{
 		std::ofstream save_file( "NESP_Saves/" + nes->filename + ".sav", std::ios::binary);
-		uint8_t *ram = prg_ram.get_mem();
+		u8 *ram = prg_ram.get_mem();
 
 		for ( int i = 0; i < 0x2000; ++i )
 		{

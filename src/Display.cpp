@@ -115,7 +115,7 @@ bool Display::update_nt()
 
 bool Display::update_apu()
 {
-	uint8_t buf[ APU_WINDOW_WIDTH * 640 * 3 ] = { 0 };
+	u8 buf[ APU_WINDOW_WIDTH * 640 * 3 ] = { 0 };
 
 	nes->get_apu()->clear_dmc_waveform();
 	for ( int c = 0; c < APU_CHANNELS; ++c )
@@ -126,11 +126,11 @@ bool Display::update_apu()
 			float time = (s - 320) / 640.0 * APU_WAVEFORM_LENGTH_SECONDS;
 			float sample = nes->get_apu()->get_waveform_at_time( time, c );
 
-			uint8_t midline_rgb[ 3 ]{ 50, 50, 50 };
+			u8 midline_rgb[ 3 ]{ 50, 50, 50 };
 			int mid_x = (s * APU_WINDOW_WIDTH + c * APU_CHANNEL_WIDTH + APU_CHANNEL_PADDING + 0.5 * APU_CHANNEL_WAVEFORM_WIDTH) * 3;
 			memcpy( &buf[ mid_x ], midline_rgb, 3 );
 
-			uint8_t rgb[ 3 ];
+			u8 rgb[ 3 ];
 			memcpy( rgb, APU_CHANNEL_COLORS[ c ], 3 );
 			if ( apu_debug_muted[ c ] )
 			{
@@ -246,7 +246,7 @@ void Display::close()
 	SDL_Quit();
 }
 
-void Display::set_pixel_buffer( uint8_t x, uint8_t y, const uint8_t rgb[3] )
+void Display::set_pixel_buffer( u8 x, u8 y, const u8 rgb[3] )
 {
 	buffer[(x + (y * WIDTH)) * 3] = rgb[0];
 	buffer[(x + (y * WIDTH)) * 3 + 1] = rgb[1];
@@ -263,7 +263,7 @@ void Display::push_buffer()
 	}
 }
 
-void Display::write_pt_pixel( uint8_t tile, uint8_t x, uint8_t y, bool pt2, const uint8_t rgb[3] )
+void Display::write_pt_pixel( u8 tile, u8 x, u8 y, bool pt2, const u8 rgb[3] )
 {
 	int index = (128 * pt2 + 256 * 8 * (tile / 16) + 8 * (tile % 16) + x + 256 * y) * 3;
 	pt[index] = rgb[0];
@@ -271,7 +271,7 @@ void Display::write_pt_pixel( uint8_t tile, uint8_t x, uint8_t y, bool pt2, cons
 	pt[index + 2] = rgb[2];
 }
 
-void Display::write_nt_pixel( int tile, uint8_t x, uint8_t y, short nt, const uint8_t *rgb )
+void Display::write_nt_pixel( int tile, u8 x, u8 y, short nt, const u8 *rgb )
 {
 	int index = (256 * (nt % 2) + (256 * 240 * 2) * (nt / 2) + 512 * 8 * (tile / 32) + 8 * (tile % 32) + x + 512 * y) * 3;
 	nts[index] = rgb[0];

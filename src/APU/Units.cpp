@@ -21,9 +21,9 @@ void Divider::reload()
 	counter = period;
 }
 
-uint8_t Sequencer::next()
+u8 Sequencer::next()
 {
-	uint8_t val = sequence != nullptr ? sequence[step] : step;
+	u8 val = sequence != nullptr ? sequence[step] : step;
 	if ( step == 0 )
 	{
 		step = steps - 1;
@@ -62,15 +62,15 @@ void Envelope::clock()
 	}
 }
 
-void FrameSequencer::reset( uint8_t byte )
+void FrameSequencer::reset( u8 byte )
 {
-	irq_disable = (byte >> 6) & 0x1;
+	irq_disable = GET_BIT( byte, 6 );
 	if ( irq_disable )
 	{
 		interrupt = false;
 	}
 
-	bool mode = (byte >> 7) & 0x1;
+	bool mode = GET_BIT( byte, 7 );
 	if ( !mode )
 	{
 		sequencer.steps = 4;
@@ -82,7 +82,7 @@ void FrameSequencer::reset( uint8_t byte )
 	}
 }
 
-void FrameSequencer::do_seq( uint8_t seq )
+void FrameSequencer::do_seq( u8 seq )
 {
 	if ( sequencer.steps == 4 )
 	{

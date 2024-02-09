@@ -7,13 +7,13 @@ enum PPU_REG
 	PPUCTRL, PPUMASK, PPUSTATUS, OAMADDR, OAMDATA, PPUSCROLL, PPUADDR, PPUDATA
 };
 
-typedef uint8_t *Sprite;
+typedef u8 *Sprite;
 enum SPRITE
 {
 	Y, TILE, ATTR, X
 };
 
-typedef uint8_t Tile[8][2];
+typedef u8 Tile[8][2];
 
 class PPU : public Processor
 {
@@ -32,13 +32,13 @@ public:
 
 	virtual bool run() override;
 
-	uint8_t read_reg( uint8_t reg_id, int cycle );
+	u8 read_reg( u8 reg_id, int cycle );
 
-	uint8_t read_reg( uint8_t reg_id, int cycle, bool physical_read );
+	u8 read_reg( u8 reg_id, int cycle, bool physical_read );
 
-	bool write_reg( uint8_t reg_id, uint8_t value, int cycle, bool physical_write );
+	bool write_reg( u8 reg_id, u8 value, int cycle, bool physical_write );
 
-	void write_oam( uint8_t byte, uint8_t data );
+	void write_oam( u8 byte, u8 data );
 
 	void set_palette( std::string palFileName );
 
@@ -59,22 +59,22 @@ public:
 		return frame;
 	}
 
-	uint16_t get_v() const
+	u16 get_v() const
 	{
 		return v;
 	}
 
-	uint16_t get_t() const
+	u16 get_t() const
 	{
 		return t;
 	}
 
-	uint8_t get_finex() const
+	u8 get_finex() const
 	{
 		return x;
 	}
 
-	uint16_t get_w() const
+	u16 get_w() const
 	{
 		return w;
 	}
@@ -84,52 +84,52 @@ public:
 	void output_nt();
 
 protected:
-	uint8_t read( int addr ) override;
+	u8 read( int addr ) override;
 
-	bool write( uint16_t addr, uint8_t data ) override;
+	bool write( u16 addr, u8 data ) override;
 
 private:
-	static uint16_t mirror_palette_addr( uint16_t addr );
+	static u16 mirror_palette_addr( u16 addr );
 
-	uint8_t oam[256];
-	uint8_t oam2[32];
-	uint8_t palette[32];
-	uint8_t regs[8];
+	u8 oam[256];
+	u8 oam2[32];
+	u8 palette[32];
+	u8 regs[8];
 
-	uint8_t io_bus;
+	u8 io_bus;
 
 	short scanline = 0;
 	short scan_cycle = 3;
 	long frame = 1;
 
 	int inrange_sprites = 0;
-	uint8_t scanline_sprites[8][4];
+	u8 scanline_sprites[8][4];
 
-	uint8_t rgb_palette[64][3];
+	u8 rgb_palette[64][3];
 
 	//internal registers
-	uint16_t v, t;
-	uint8_t x;
+	u16 v, t;
+	u8 x;
 	bool w; // address latch
 
-	uint16_t tile_shift_regs[2];
-	uint16_t tile_attr_shift_regs[2];
+	u16 tile_shift_regs[2];
+	u16 tile_attr_shift_regs[2];
 	bool attr_latch[2];
 
 	bool nmi_occurred = false;
 	bool nmi_output = false;
 
-	uint8_t vram_read_buffer = 0;
+	u8 vram_read_buffer = 0;
 
-	Sprite sprite( uint8_t index );
+	Sprite sprite( u8 index );
 
-	static uint8_t tile_col_at_pixel( Tile tile, int dx, int dy, bool flip_x, bool flip_y );
+	static u8 tile_col_at_pixel( Tile tile, int dx, int dy, bool flip_x, bool flip_y );
 
-	uint8_t *bgr_base_rgb();
+	u8 *bgr_base_rgb();
 
-	uint8_t *col_to_rgb( uint8_t attr, uint8_t col, bool spr );
+	u8 *col_to_rgb( u8 attr, u8 col, bool spr );
 
-	void set_a12( uint16_t addr )
+	void set_a12( u16 addr )
 	{
 		if ( !a12_set )
 		{

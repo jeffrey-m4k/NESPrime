@@ -222,7 +222,7 @@ void UI::draw_text( const std::string &text, int x, int y, float scale, HAlign h
 	SDL_DestroyTexture( text_texture );
 }
 
-void UI::set_render_draw_color( Color col, uint8_t alpha )
+void UI::set_render_draw_color( Color col, u8 alpha )
 {
 	SDL_SetRenderDrawColor( renderer_ui, colors[(int) col].r, colors[(int) col].g, colors[(int) col].b, alpha );
 }

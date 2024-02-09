@@ -5,14 +5,17 @@ void IO::poll()
 	auto *keystate = const_cast<Uint8 *>(SDL_GetKeyboardState( nullptr ));
 	for ( int k = 0; k < 8; k++ )
 	{
-		joy_status[0] = joy_status[0] & ~(1 << k) | (keystate[bindings[k]] << k);
+		SET_BIT( joy_status[ 0 ], k, keystate[ bindings[ k ] ] );
+		SET_BIT( joy_status[ 1 ], k, 0 );
 	}
 }
 
 bool IO::read_joy()
 {
-	bool val = (joy_status[0] & 0x1);
+	bool val = GET_BIT( joy_status[ 0 ], 0 );
+
 	joy_status[0] >>= 1;
-	joy_status[0] |= 1 << 7;
+	SET_BIT( joy_status[ 0 ], 7 );
+
 	return val;
 }

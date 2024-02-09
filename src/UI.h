@@ -1,5 +1,6 @@
 #pragma once
 
+#include "BitUtils.h"
 #include "Component.h"
 #include "Display.h"
 #include "SDL_ttf.h"
@@ -112,7 +113,7 @@ public:
 	}
 
 private:
-	void set_render_draw_color( Color col, uint8_t alpha );
+	void set_render_draw_color( Color col, u8 alpha );
 
 	void draw_text( const std::string &text, int x, int y, float scale, HAlign h_align, VAlign v_align,
 	                Color col = Color::WHITE, Color bgr_col = Color::NONE );

@@ -41,9 +41,9 @@ public:
 	}
 
 protected:
-	virtual uint8_t read( int addr ) = 0;
+	virtual u8 read( int addr ) = 0;
 
-	virtual bool write( uint16_t addr, uint8_t data ) = 0;
+	virtual bool write( u16 addr, u8 data ) = 0;
 
 protected:
 	int idle_cycles = 0;

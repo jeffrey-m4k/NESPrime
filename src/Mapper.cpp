@@ -15,7 +15,7 @@ Mapper::Mapper( Cartridge *cart ) : cartridge( cart )
 
 // === MAPPER 0 ===
 
-uint8_t *Mapper::map_cpu( uint16_t addr )
+u8 *Mapper::map_cpu( u16 addr )
 {
 	if ( addr < 0x2000 )
 	{
@@ -39,7 +39,7 @@ uint8_t *Mapper::map_cpu( uint16_t addr )
 	}
 }
 
-uint8_t *Mapper::map_ppu( uint16_t addr )
+u8 *Mapper::map_ppu( u16 addr )
 {
 	if ( addr >= 0x3F00 )
 	{
@@ -51,7 +51,7 @@ uint8_t *Mapper::map_ppu( uint16_t addr )
 	}
 	addr &= ~0x1000; // $3000-$3FFF is a mirror of $2000-$2FFF
 	addr -= 0x2000;
-	uint8_t *base = ppu_mem;
+	u8 *base = ppu_mem;
 	switch ( mirroring )
 	{
 		case Horizontal:
@@ -78,7 +78,7 @@ uint8_t *Mapper::map_ppu( uint16_t addr )
 
 // === MAPPER 1 (MMC1) ===
 
-uint8_t *Mapper1::map_cpu( uint16_t address )
+u8 *Mapper1::map_cpu( u16 address )
 {
 	if ( address < 0x8000 )
 	{
@@ -111,14 +111,14 @@ uint8_t *Mapper1::map_cpu( uint16_t address )
 	}
 }
 
-uint8_t *Mapper1::map_ppu( uint16_t address )
+u8 *Mapper1::map_ppu( u16 address )
 {
 	if ( address >= 0x2000 )
 	{
 		return Mapper::map_ppu( address );
 	}
 
-	uint8_t *chr_mem = chr_ram == nullptr ? chr_rom : chr_ram;
+	u8 *chr_mem = chr_ram == nullptr ? chr_rom : chr_ram;
 	if ( bankmode_chr )
 	{
 		if ( address < 0x1000 )
@@ -136,7 +136,7 @@ uint8_t *Mapper1::map_ppu( uint16_t address )
 	}
 }
 
-void Mapper1::handle_write( uint8_t data, uint16_t addr )
+void Mapper1::handle_write( u8 data, u16 addr )
 {
 	long cyc = cartridge->get_nes()->get_cpu()->get_cycle();
 	if ( addr < 0x8000 )
@@ -157,7 +157,7 @@ void Mapper1::handle_write( uint8_t data, uint16_t addr )
 
 		if ( shifter & 0x4 )
 		{ // if bit 2 is 1, the shifter is full and we update the relevant bank
-			uint8_t shifter_out = (shifter & 0xF8) >> 3;
+			u8 shifter_out = (shifter & 0xF8) >> 3;
 
 			if ( addr >= 0xE000 )
 			{ // PRG bank switch
@@ -216,7 +216,7 @@ void Mapper1::handle_write( uint8_t data, uint16_t addr )
 
 // === MAPPER 4 (MMC3) ===
 
-uint8_t *Mapper4::map_cpu( uint16_t address )
+u8 *Mapper4::map_cpu( u16 address )
 {
 	if ( address < 0x8000 )
 	{
@@ -255,14 +255,14 @@ uint8_t *Mapper4::map_cpu( uint16_t address )
 	}
 }
 
-uint8_t *Mapper4::map_ppu( uint16_t address )
+u8 *Mapper4::map_ppu( u16 address )
 {
 	if ( address >= 0x2000 )
 	{
 		return Mapper::map_ppu( address );
 	}
 
-	uint8_t *chr_mem = chr_ram == nullptr ? chr_rom : chr_ram;
+	u8 *chr_mem = chr_ram == nullptr ? chr_rom : chr_ram;
 
 	if ( bankmode_chr )
 	{
@@ -279,7 +279,7 @@ uint8_t *Mapper4::map_ppu( uint16_t address )
 	}
 }
 
-void Mapper4::handle_write( uint8_t data, uint16_t addr )
+void Mapper4::handle_write( u8 data, u16 addr )
 {
 	if ( addr < 0x8000 )
 	{
@@ -380,7 +380,7 @@ void Mapper4::handle_ppu_rising_edge()
 
 // === MAPPER 7 (AxROM) ===
 
-uint8_t *Mapper7::map_cpu( uint16_t address )
+u8 *Mapper7::map_cpu( u16 address )
 {
 	if ( address < 0x8000 )
 	{
@@ -390,7 +390,7 @@ uint8_t *Mapper7::map_cpu( uint16_t address )
 	return prg_rom + (bank_prg * 0x8000) + (address - 0x8000);
 }
 
-void Mapper7::handle_write( uint8_t data, uint16_t addr )
+void Mapper7::handle_write( u8 data, u16 addr )
 {
 	if ( addr < 0x8000 )
 	{
@@ -403,7 +403,7 @@ void Mapper7::handle_write( uint8_t data, uint16_t addr )
 
 // === MAPPER 11 (Color Dreams) ===
 
-uint8_t *Mapper11::map_cpu( uint16_t address )
+u8 *Mapper11::map_cpu( u16 address )
 {
 	if ( address < 0x8000 )
 	{
@@ -413,7 +413,7 @@ uint8_t *Mapper11::map_cpu( uint16_t address )
 	return prg_rom + (bank_prg * 0x8000) + (address - 0x8000);
 }
 
-uint8_t *Mapper11::map_ppu( uint16_t address )
+u8 *Mapper11::map_ppu( u16 address )
 {
 	if ( address >= 0x2000 )
 	{
@@ -423,7 +423,7 @@ uint8_t *Mapper11::map_ppu( uint16_t address )
 	return chr_rom + (bank_chr * 0x2000) + address;
 }
 
-void Mapper11::handle_write( uint8_t data, uint16_t addr )
+void Mapper11::handle_write( u8 data, u16 addr )
 {
 	if ( addr < 0x8000 )
 	{
@@ -436,7 +436,7 @@ void Mapper11::handle_write( uint8_t data, uint16_t addr )
 
 // === MAPPER 69 (FME-7) ===
 
-uint8_t *Mapper69::map_cpu( uint16_t address )
+u8 *Mapper69::map_cpu( u16 address )
 {
 	if ( address < 0x6000 )
 	{
@@ -453,24 +453,24 @@ uint8_t *Mapper69::map_cpu( uint16_t address )
 	}
 	else
 	{
-		uint16_t offset = (prg_banks[ 0 ] * 0x2000) + (address - 0x6000);
+		u16 offset = (prg_banks[ 0 ] * 0x2000) + (address - 0x6000);
 		return prg_bank0_ram ? prg_ram + offset : prg_rom + offset;
 	}
 }
 
-uint8_t *Mapper69::map_ppu( uint16_t address )
+u8 *Mapper69::map_ppu( u16 address )
 {
 	if ( address >= 0x2000 )
 	{
 		return Mapper::map_ppu( address );
 	}
 
-	uint8_t *chr_mem = chr_ram == nullptr ? chr_rom : chr_ram;
+	u8 *chr_mem = chr_ram == nullptr ? chr_rom : chr_ram;
 
 	return chr_mem + (chr_banks[ address / 0x400 ] * 0x400) + (address % 0x400);
 }
 
-void Mapper69::handle_write( uint8_t data, uint16_t addr )
+void Mapper69::handle_write( u8 data, u16 addr )
 {
 	if ( addr < 0x8000 || addr >= 0xC000)
 	{
@@ -526,7 +526,7 @@ void Mapper69::handle_write( uint8_t data, uint16_t addr )
 		}
 		else							// $F: IRQ counter high byte
 		{
-			irq_counter = (irq_counter & 0x00FF) | (((uint16_t)data) << 8);
+			irq_counter = (irq_counter & 0x00FF) | (((u16)data) << 8);
 		}
 	}
 }
@@ -544,7 +544,7 @@ void Mapper69::handle_cpu_cycle()
 
 // === MAPPER 228 (Active Enterprises) ===
 
-uint8_t *Mapper228::map_cpu( uint16_t address )
+u8 *Mapper228::map_cpu( u16 address )
 {
 	if ( address < 0x8000 )
 	{
@@ -556,13 +556,13 @@ uint8_t *Mapper228::map_cpu( uint16_t address )
 		return prg_rom;
 	}
 
-	uint32_t offset = 0x80000 * prg_chip;
+	u32 offset = 0x80000 * prg_chip;
 	if ( prg_chip == 3 )
 	{
 		offset -= 0x80000;
 	}
 
-	uint8_t bank = bank_prg;
+	u8 bank = bank_prg;
 	if ( !prg_bankmode )
 	{
 		bank = address >= 0xC000 ? (bank | 0x1) : (bank & ~0x1);
@@ -571,7 +571,7 @@ uint8_t *Mapper228::map_cpu( uint16_t address )
 	return prg_rom + offset + (bank * 0x4000) + (address % 0x4000);
 }
 
-uint8_t *Mapper228::map_ppu( uint16_t address )
+u8 *Mapper228::map_ppu( u16 address )
 {
 	if ( address >= 0x2000 )
 	{
@@ -581,7 +581,7 @@ uint8_t *Mapper228::map_ppu( uint16_t address )
 	return chr_rom + (bank_chr * 0x2000) + address;
 }
 
-void Mapper228::handle_write( uint8_t data, uint16_t addr )
+void Mapper228::handle_write( u8 data, u16 addr )
 {
 	if ( addr < 0x8000 )
 	{

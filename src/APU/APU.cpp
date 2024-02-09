@@ -85,7 +85,7 @@ void APU::low_pass()
 
 	for ( int i = 0; i < sample_buffer_raw.size(); ++i )
 	{
-		int16_t filtered = alpha * (sample_buffer_raw[i] + low_pass_last);
+		i16 filtered = alpha * (sample_buffer_raw[i] + low_pass_last);
 		low_pass_last = filtered;
 		sample_buffer_raw[ i ] = filtered;
 	}
@@ -93,7 +93,7 @@ void APU::low_pass()
 
 void APU::downsample()
 {
-	int32_t sum = 0;
+	i32 sum = 0;
 	for ( int sample : sample_buffer_raw )
 	{
 		sum += sample;
@@ -114,7 +114,7 @@ float APU::get_mixer()
 	return sample;
 }
 
-void APU::write_apu_reg( uint8_t reg, uint8_t data )
+void APU::write_apu_reg( u8 reg, u8 data )
 {
 	int p2;
 	switch ( reg )
@@ -122,29 +122,29 @@ void APU::write_apu_reg( uint8_t reg, uint8_t data )
 		case 0x0:
 		case 0x4:
 			p2 = reg == 0x4 ? 1 : 0;
-			pulse[p2].set_duty( (data >> 6) & 0x3 );
-			pulse[p2].set_length_halt( (data >> 5) & 0x1 );
-			pulse[p2].set_constant_vol( (data >> 4) & 0x1 );
-			pulse[p2].set_vol( data & 0xF );
+			pulse[ p2 ].set_duty( GET_BITS( data, 6, 2 ) );
+			pulse[ p2 ].set_length_halt( GET_BIT( data, 5 ) );
+			pulse[ p2 ].set_constant_vol( GET_BIT( data, 4 ) );
+			pulse[ p2 ].set_vol( GET_BITS( data, 0, 4 ) );
 			break;
 		case 0x1:
 		case 0x5:
 			p2 = reg == 0x5 ? 1 : 0;
-			pulse[p2].update_sweep( data );
+			pulse[ p2 ].update_sweep( data );
 			break;
 		case 0x2:
 		case 0x6:
 			p2 = reg == 0x6 ? 1 : 0;
-			pulse[p2].set_timer_lo( data );
+			pulse[ p2 ].set_timer_lo( data );
 			break;
 		case 0x3:
 		case 0x7:
 			p2 = reg == 0x7 ? 1 : 0;
-			pulse[p2].set_timer_hi( data );
+			pulse[ p2 ].set_timer_hi( data );
 			break;
 		case 0x8:
-			triangle.set_length_halt( (data >> 7) & 0x1 );
-			triangle.set_counter_reload_val( data & 0x7F );
+			triangle.set_length_halt( GET_BIT(data, 7) );
+			triangle.set_counter_reload_val( GET_BITS(data, 0, 7) );
 			break;
 		case 0xA:
 			triangle.set_timer_lo( data );
@@ -154,16 +154,16 @@ void APU::write_apu_reg( uint8_t reg, uint8_t data )
 			triangle.set_flag_linc_reload();
 			break;
 		case 0xC:
-			noise.set_length_halt( (data >> 5) & 0x1 );
-			noise.set_constant_vol( (data >> 4) & 0x1 );
-			noise.set_vol( data & 0xF );
+			noise.set_length_halt( GET_BIT( data, 5 ) );
+			noise.set_constant_vol( GET_BIT( data, 4 ) );
+			noise.set_vol( GET_BITS( data, 0, 4 ) );
 			break;
 		case 0xE:
-			noise.set_mode( (data >> 7) & 0x1 );
-			noise.set_period( data & 0xF );
+			noise.set_mode( GET_BIT( data, 7 ) );
+			noise.set_period( GET_BITS( data, 0, 4 ) );
 			break;
 		case 0xF:
-			noise.set_length_counter( data >> 3 );
+			noise.set_length_counter( GET_BITS( data, 3, 5 ) );
 			break;
 		case 0x10:
 			dmc.set_status( data );
@@ -178,11 +178,11 @@ void APU::write_apu_reg( uint8_t reg, uint8_t data )
 			dmc.set_sample_length( data );
 			break;
 		case 0x15:
-			pulse[0].set_enabled( data & 0x1 );
-			pulse[1].set_enabled( (data >> 1) & 0x1 );
-			triangle.set_enabled( (data >> 2) & 0x1 );
-			noise.set_enabled( (data >> 3) & 0x1 );
-			dmc.set_enabled( (data >> 4) & 0x1 );
+			pulse[ 0 ].set_enabled( GET_BIT( data, 0 ) );
+			pulse[ 1 ].set_enabled( GET_BIT( data, 1 ) );
+			triangle.set_enabled( GET_BIT( data, 2 ) );
+			noise.set_enabled( GET_BIT( data, 3 ) );
+			dmc.set_enabled( GET_BIT( data, 4 ) );
 			dmc.clear_interrupt();
 			break;
 		case 0x17:
@@ -193,10 +193,10 @@ void APU::write_apu_reg( uint8_t reg, uint8_t data )
 	}
 }
 
-uint8_t APU::read_status()
+u8 APU::read_status()
 {
 	// TODO fix this
-	uint8_t s =
+	u8 s =
 		pulse[0].get_length_halt()				|
 		pulse[1].get_length_halt() << 1			|
 		triangle.get_length_halt() << 2			|

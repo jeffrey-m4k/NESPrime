@@ -1,13 +1,13 @@
 #pragma once
 
-#include <cstdint>
+#include "../BitUtils.h"
 
 class APU;
 
 class Divider
 {
 public:
-	explicit Divider( uint16_t p ) : period( p )
+	explicit Divider( u16 p ) : period( p )
 	{
 	};
 
@@ -20,47 +20,47 @@ public:
 		period = p;
 	}
 
-	uint16_t get_period() const
+	u16 get_period() const
 	{
 		return period;
 	}
 
-	uint16_t get_counter() const
+	u16 get_counter() const
 	{
 		return counter;
 	}
 
-	void set_hi( uint8_t hi )
+	void set_hi( u8 hi )
 	{
 		period = (period & 0x00FF) | ((hi & 0x7) << 8);
 	}//= (period & 0xF) | ((hi & 0x7) << 8); }
-	void set_lo( uint8_t lo )
+	void set_lo( u8 lo )
 	{
 		period = (period & 0x7F00) | lo;
 	}
 
 private:
-	uint16_t period = 0;
-	uint16_t counter = 0;
+	u16 period = 0;
+	u16 counter = 0;
 };
 
 class Sequencer
 {
 public:
-	explicit Sequencer( uint8_t s ) : steps( s ), step( 0 ), sequence( nullptr )
+	explicit Sequencer( u8 s ) : steps( s ), step( 0 ), sequence( nullptr )
 	{
 	};
 
-	uint8_t next();
+	u8 next();
 
 	void reset()
 	{
 		step = 0;
 	}
 
-	uint8_t steps;
-	uint8_t step;
-	const uint8_t *sequence;
+	u8 steps;
+	u8 step;
+	const u8 *sequence;
 };
 
 class Envelope
@@ -72,12 +72,12 @@ public:
 
 	void clock();
 
-	uint8_t get_volume() const
+	u8 get_volume() const
 	{
 		return constant ? param : decay;
 	}
 
-	void set_param( uint8_t p )
+	void set_param( u8 p )
 	{
 		param = p;
 	}
@@ -102,8 +102,8 @@ private:
 	bool start = true;
 	bool loop = false;
 	bool constant = false;
-	uint8_t decay = 0;
-	uint8_t param = 15;
+	u8 decay = 0;
+	u8 param = 15;
 };
 
 class FrameSequencer
@@ -113,9 +113,9 @@ public:
 	{
 	};
 
-	void reset( uint8_t byte );
+	void reset( u8 byte );
 
-	void do_seq( uint8_t seq );
+	void do_seq( u8 seq );
 
 	void tick()
 	{

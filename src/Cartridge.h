@@ -4,7 +4,6 @@
 #include <ios>
 #include <string>
 #include <vector>
-#include <cstdint>
 #include "Memory.h"
 #include "Component.h"
 
@@ -28,12 +27,12 @@ public:
 		return file;
 	}
 
-	uint32_t get_prg_size() const
+	u32 get_prg_size() const
 	{
 		return prg_size;
 	}
 
-	uint32_t get_chr_size() const
+	u32 get_chr_size() const
 	{
 		return chr_size;
 	}
@@ -66,11 +65,11 @@ public:
 	void dump_sram();
 
 private:
-	bool read_next( uint32_t bytes = 1 );
+	bool read_next( u32 bytes = 1 );
 
-	bool read_next( uint8_t *into, uint32_t bytes = 1 );
+	bool read_next( u8 *into, u32 bytes = 1 );
 
-	bool read_next( Memory &into, uint32_t start, uint32_t bytes = 1 );
+	bool read_next( Memory &into, u32 start, u32 bytes = 1 );
 
 	bool read_header();
 
@@ -80,12 +79,12 @@ private:
 
 private:
 	static const int BUFFER_SIZE = 16;
-	uint8_t buffer[BUFFER_SIZE];
+	u8 buffer[BUFFER_SIZE];
 	std::ifstream file;
-	uint32_t pos = 0;
-	uint32_t prg_size;
-	uint32_t chr_size;
-	uint8_t mapper_num;
+	u32 pos = 0;
+	u32 prg_size;
+	u32 chr_size;
+	u8 mapper_num;
 	bool flags[2][4];
 
 	Memory prg_rom;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <sstream>
 #include <functional>
 #include "Processor.h"
@@ -34,13 +33,13 @@ struct opcode_info
 	Op id;
 	func op_func;
 	ADDRESSING_MODE mode;
-	uint8_t cycles;
+	u8 cycles;
 };
 
 struct registers_6502
 {
-	uint8_t acc, x, y, p, s;
-	uint16_t pc;
+	u8 acc, x, y, p, s;
+	u16 pc;
 };
 
 enum STATUS
@@ -82,14 +81,14 @@ public:
 
 	void skip_cycles( int num, CYCLE type );
 
-	uint8_t memory_regs[24];
+	u8 memory_regs[24];
 
 protected:
-	uint8_t read( int addr ) override;
+	u8 read( int addr ) override;
 
-	uint8_t read( int addr, bool physical_read );
+	u8 read( int addr, bool physical_read );
 
-	bool write( uint16_t addr, uint8_t data ) override;
+	bool write( u16 addr, u8 data ) override;
 
 private:
 	void log_state();
@@ -98,45 +97,45 @@ private:
 
 	void interrupt( INTERRUPT_TYPE type );
 
-	void exec( uint8_t opcode );
+	void exec( u8 opcode );
 
 	void set_status( STATUS status, bool value );
 
 	bool get_status( STATUS status ) const;
 
-	void set_value_status( uint8_t val );
+	void set_value_status( u8 val );
 
-	void push_stack( uint8_t byte );
+	void push_stack( u8 byte );
 
-	uint8_t pop_stack();
+	u8 pop_stack();
 
-	uint8_t peek_stack( uint8_t bytes );
+	u8 peek_stack( u8 bytes );
 
 	void branch( STATUS status, bool check_against );
 
-	void compare( uint8_t a, uint8_t b );
+	void compare( u8 a, u8 b );
 
-	void push_address( uint16_t addr );
+	void push_address( u16 addr );
 
-	uint16_t pop_address();
+	u16 pop_address();
 
-	uint16_t read_address( uint16_t addr );
+	u16 read_address( u16 addr );
 
-	static uint16_t create_address( uint8_t lo, uint8_t hi );
+	static u16 create_address( u8 lo, u8 hi );
 
-	static bool same_page( uint16_t addr1, uint16_t addr2 );
+	static bool same_page( u16 addr1, u16 addr2 );
 
-	uint8_t shift_right( uint8_t byte );
+	u8 shift_right( u8 byte );
 
-	uint8_t shift_left( uint8_t byte );
+	u8 shift_left( u8 byte );
 
-	uint8_t rot_right( uint8_t byte );
+	u8 rot_right( u8 byte );
 
-	uint8_t rot_left( uint8_t byte );
+	u8 rot_left( u8 byte );
 
 	void add_with_carry( bool sub = false );
 
-	void dummy_write( uint16_t addr, uint8_t data );
+	void dummy_write( u16 addr, u8 data );
 
 	//Opcode funcs
 	void ADC(), AND(), ASL();
@@ -174,14 +173,14 @@ private:
 
 	//Decode stage variables
 	opcode_info curr_op;
-	uint8_t ops[2];
-	uint16_t addrs[2];
-	int8_t offset;
+	u8 ops[2];
+	u16 addrs[2];
+	i8 offset;
 	bool inc_pc = true;
 
 	bool oper_set = false;
 
-	uint8_t oper();
+	u8 oper();
 
 	bool PIN_NMI = false;
 	bool PIN_IRQ = false;
@@ -192,8 +191,8 @@ private:
 
 	CYCLE state;
 
-	inline constexpr static const uint8_t PAGE_SENSITIVE = 0xF0;
-	inline static const std::unordered_map< uint8_t, opcode_info > OPCODES = {
+	inline constexpr static const u8 PAGE_SENSITIVE = 0xF0;
+	inline static const std::unordered_map< u8, opcode_info > OPCODES = {
 			{0x69, {Op::ADC, &CPU::ADC,  Immediate,        2}},
 			{0x65, {Op::ADC, &CPU::ADC,  ZeroPage,         3}},
 			{0x75, {Op::ADC, &CPU::ADC,  IndexedZeroX,     4}},

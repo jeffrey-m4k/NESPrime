@@ -1,7 +1,6 @@
 #pragma once
 
 #include <map>
-#include <cstdint>
 #include <cmath>
 #include <random>
 #include "Units.h"
@@ -26,11 +25,11 @@ public:
 		}
 	}
 
-	virtual void set_timer_hi( uint8_t hi );
+	virtual void set_timer_hi( u8 hi );
 
-	void set_length_counter( uint8_t c );
+	void set_length_counter( u8 c );
 
-	void set_timer_lo( uint8_t lo )
+	void set_timer_lo( u8 lo )
 	{
 		timer.set_lo( lo );
 	}
@@ -42,7 +41,7 @@ public:
 		envelope.set_constant_vol( cv );
 	}
 
-	void set_vol( uint8_t v )
+	void set_vol( u8 v )
 	{
 		envelope.set_param( v );
 	}
@@ -76,7 +75,7 @@ public:
 
 	virtual bool is_playing() = 0;
 
-	virtual uint8_t get_dac_in() = 0;
+	virtual u8 get_dac_in() = 0;
 
 	float get_output();
 
@@ -89,15 +88,15 @@ protected:
 	Divider timer;
 	Sequencer sequencer;
 	Envelope envelope;
-	uint8_t seq_out = 0;
+	u8 seq_out = 0;
 
-	uint8_t dac_in_last = 0;
+	u8 dac_in_last = 0;
 	float dac_out_last = 0.0;
 
-	uint8_t length = 0;
+	u8 length = 0;
 	bool length_halt = false;
 
-	static constexpr uint8_t length_lookup[2][16]{
+	static constexpr u8 length_lookup[2][16]{
 			{
 					0x0A, 0x14, 0x28, 0x50, 0xA0, 0x3C, 0x0E, 0x1A,
 					0x0C, 0x18, 0x30, 0x60, 0xC0, 0x48, 0x10, 0x20
@@ -125,18 +124,18 @@ public:
 		sequencer.sequence = seqs[0];
 	};
 
-	void set_timer_hi( uint8_t hi ) override;
+	void set_timer_hi( u8 hi ) override;
 
-	void set_duty( uint8_t duty );
+	void set_duty( u8 duty );
 
 	void set_p2( bool is_p2 )
 	{
 		p2 = is_p2;
 	}
 
-	uint8_t get_dac_in() override;
+	u8 get_dac_in() override;
 
-	void update_sweep( uint8_t byte );
+	void update_sweep( u8 byte );
 
 	void tick_sweep();
 
@@ -184,7 +183,7 @@ public:
 	}
 
 private:
-	static constexpr uint8_t seqs[4][8] = {
+	static constexpr u8 seqs[4][8] = {
 			{0, 0, 0, 0, 0, 0, 0, 1},
 			{0, 0, 0, 0, 0, 0, 1, 1},
 			{0, 0, 0, 0, 1, 1, 1, 1},
@@ -197,8 +196,8 @@ private:
 	bool sweep_enable = false;
 	bool sweep_negate = false;
 	bool sweep_reload = false;
-	uint8_t sweep_shift = 0;
-	uint16_t sweep_period = 0;
+	u8 sweep_shift = 0;
+	u16 sweep_period = 0;
 	bool p2;
 
 	bool muted = false;
@@ -213,7 +212,7 @@ public:
 		sequencer.sequence = seq;
 	}
 
-	void set_counter_reload_val( uint8_t val )
+	void set_counter_reload_val( u8 val )
 	{
 		counter_reload_val = val;
 	}
@@ -227,7 +226,7 @@ public:
 
 	void tick_lc();
 
-	uint8_t get_dac_in() override;
+	u8 get_dac_in() override;
 
 	bool is_playing() override
 	{
@@ -250,13 +249,13 @@ public:
 	}
 
 private:
-	static constexpr uint8_t seq[32] = {
+	static constexpr u8 seq[32] = {
 			15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
 			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 	};
 
-	uint8_t linear_counter = 0;
-	uint8_t counter_reload_val = 0;
+	u8 linear_counter = 0;
+	u8 counter_reload_val = 0;
 
 	bool flag_linc_reload = false;
 
@@ -279,14 +278,14 @@ public:
 		mode = m;
 	}
 
-	void set_period( uint8_t p )
+	void set_period( u8 p )
 	{
 		timer.set_period( periods[p % 16] );
 	}
 
 	void tick_timer() override;
 
-	uint8_t get_dac_in() override;
+	u8 get_dac_in() override;
 
 	bool is_playing() override
 	{
@@ -308,16 +307,16 @@ public:
 		return normalize_volume( envelope.get_volume() * distribution( generator ) );
 	}
 
-	uint16_t waveform_rand = 0;
+	u16 waveform_rand = 0;
 
 private:
-	static constexpr uint16_t periods[16] = {
+	static constexpr u16 periods[16] = {
 			4, 8, 16, 32, 64, 96, 128, 160, 202,
 			254, 380, 508, 762, 1016, 2034, 4068
 	};
 
 	bool mode;
-	uint16_t shifter = 1;
+	u16 shifter = 1;
 };
 
 class DMC : public Channel
@@ -344,19 +343,19 @@ public:
 		}
 	}
 
-	void set_output( uint8_t output )
+	void set_output( u8 output )
 	{
-		this->output = output & 0x7F;
+		this->output = GET_BITS(output, 0, 7);
 	}
 
-	void set_sample_address( uint8_t address )
+	void set_sample_address( u8 address )
 	{
-		this->sample_addr = 0xC000 | (((uint16_t)address) << 6);
+		this->sample_addr = 0xC000 | (((u16)address) << 6);
 	}
 
-	void set_sample_length( uint8_t length )
+	void set_sample_length( u8 length )
 	{
-		this->sample_length = 0x1 | (((uint16_t)length) << 4);
+		this->sample_length = 0x1 | (((u16)length) << 4);
 	}
 
 	void clear_interrupt()
@@ -364,18 +363,18 @@ public:
 		irq_pending = false;
 	}
 
-	void set_status( uint8_t status )
+	void set_status( u8 status )
 	{
-		irq_enabled = (status >> 7) & 0x1;
+		irq_enabled = GET_BIT( status, 7 );
 		if ( !irq_enabled )
 		{
 			irq_pending = false;
 		}
-		loop = (status >> 6) & 0x1;
-		timer.set_period( periods[status & 0xF] / 2 );
+		loop = GET_BIT( status, 6 );
+		timer.set_period( periods[ GET_BITS( status, 0, 4 ) ] / 2 );
 	}
 
-	uint16_t get_bytes_remaining()
+	u16 get_bytes_remaining()
 	{
 		return bytes_remaining;
 	}
@@ -385,7 +384,7 @@ public:
 		return irq_pending;
 	}
 
-	uint8_t get_dac_in() override;
+	u8 get_dac_in() override;
 
 	bool is_playing() override
 	{
@@ -403,19 +402,19 @@ public:
 		int byte = step / 8 % sample_length;
 		int bit = step % 8;
 
-		uint8_t out;
+		u8 out;
 
 		if ( waveform_cache.empty() )
 		{
-			uint64_t sum = 0;
-			uint32_t len = 0;
-			uint8_t last_out = 0;
+			u64 sum = 0;
+			u32 len = 0;
+			u8 last_out = 0;
 			for ( int byte_num = 0; byte_num < sample_length; ++byte_num )
 			{
-				uint8_t sample_byte = *cpu->get_mapper()->map_cpu( sample_addr + byte_num );
+				u8 sample_byte = *cpu->get_mapper()->map_cpu( sample_addr + byte_num );
 				for ( int bit_num = 0; bit_num < 8; ++bit_num )
 				{
-					bool delta = (sample_byte >> bit_num) & 0x1;
+					bool delta = GET_BIT( sample_byte, bit_num );
 					if ( delta && last_out <= 125 )
 					{
 						last_out += 2;
@@ -459,12 +458,12 @@ public:
 	}
 
 private:
-	static constexpr uint16_t periods[ 16 ] = {
+	static constexpr u16 periods[ 16 ] = {
 			428, 380, 340, 320, 286, 254, 226, 214,
 			190, 160, 142, 128, 106, 84, 72, 54
 	};
 
-	std::map< std::pair< int, int >, uint8_t > waveform_cache;
+	std::map< std::pair< int, int >, u8 > waveform_cache;
 	float waveform_avg = 0.0;
 
 	CPU *cpu;
@@ -473,19 +472,19 @@ private:
 	bool irq_pending = false;
 	bool loop = false;
 
-	uint8_t sample_buffer = 0;
+	u8 sample_buffer = 0;
 	bool sample_buffer_empty = true;
-	uint16_t sample_addr = 0;
-	uint16_t sample_length = 0;
+	u16 sample_addr = 0;
+	u16 sample_length = 0;
 
 	// Memory reader
-	uint16_t addr_counter = 0;
-	uint16_t bytes_remaining = 0;
+	u16 addr_counter = 0;
+	u16 bytes_remaining = 0;
 
 	// Output unit
-	uint8_t shifter = 0;
-	uint8_t bits_remaining = 0;
-	uint8_t output = 0;
+	u8 shifter = 0;
+	u8 bits_remaining = 0;
+	u8 output = 0;
 	bool silence = true;
 
 	void start_sample()
@@ -537,7 +536,7 @@ private:
 
 		if ( !silence )
 		{
-			bool bit_0 = shifter & 0x1;
+			bool bit_0 = GET_BIT( shifter, 0 );
 			if ( bit_0 && output <= 125 )
 			{
 				output += 2;

@@ -56,8 +56,8 @@ bool PPU::run()
 	{
 		if ( scanline <= 240 )
 		{
-			uint8_t *bgr_rgb = nullptr;
-			uint8_t *spr_rgb = nullptr;
+			u8 *bgr_rgb = nullptr;
+			u8 *spr_rgb = nullptr;
 			bool spr_priority = false;
 			bool bgr_base = true;
 
@@ -77,10 +77,10 @@ bool PPU::run()
 				// Get bgr color
 				if ( render_bgr && (scan_cycle > 8 || render_bgr_l) )
 				{
-					uint8_t col = (((tile_shift_regs[1] >> (15 - x)) & 0x1) << 1) |
+					u8 col = (((tile_shift_regs[1] >> (15 - x)) & 0x1) << 1) |
 					              ((tile_shift_regs[0] >> (15 - x)) & 0x1);
 
-					uint8_t attr = (((tile_attr_shift_regs[1] >> (15 - x)) & 0x1) << 1) |
+					u8 attr = (((tile_attr_shift_regs[1] >> (15 - x)) & 0x1) << 1) |
 					               ((tile_attr_shift_regs[0] >> (15 - x)) & 0x1);
 					if ( col != 0 )
 					{
@@ -93,7 +93,7 @@ bool PPU::run()
 				if ( render_spr && (scan_cycle > 8 || render_spr_l) )
 				{
 					Tile tile;
-					uint16_t pattern_table = (regs[PPUCTRL] >> 3) & 0x1 ? 0x1000 : 0x0;
+					u16 pattern_table = (regs[PPUCTRL] >> 3) & 0x1 ? 0x1000 : 0x0;
 
 					for ( int s = 0; scanline != 0 && s < inrange_sprites; s++ )
 					{
@@ -107,7 +107,7 @@ bool PPU::run()
 
 						if ( dx >= 0 && dx <= 7 && dy >= 0 && dy <= (tall_sprites ? 15 : 7) )
 						{
-							uint8_t tile_num = sprite[SPRITE::TILE];
+							u8 tile_num = sprite[SPRITE::TILE];
 							bool flip_x = (sprite[SPRITE::ATTR] >> 6) & 0x1;
 							bool flip_y = (sprite[SPRITE::ATTR] >> 7) & 0x1;
 
@@ -120,13 +120,13 @@ bool PPU::run()
 								tile_num++;
 							}
 
-							uint16_t tile_addr = pattern_table + tile_num * 16;
+							u16 tile_addr = pattern_table + tile_num * 16;
 
 							for ( int b = 0; b < 16; b++ )
 							{
 								tile[b % 8][b / 8] = read( tile_addr + b );
 							}
-							uint8_t col_at_pos = tile_col_at_pixel( tile, dx, dy % 8, flip_x, flip_y );
+							u8 col_at_pos = tile_col_at_pixel( tile, dx, dy % 8, flip_x, flip_y );
 
 							if ( col_at_pos != 0 )
 							{
@@ -153,7 +153,7 @@ bool PPU::run()
 				}
 
 				// Multiplex bgr and spr color
-				uint8_t *final_rgb;
+				u8 *final_rgb;
 				if ( bgr_rgb != nullptr || spr_rgb != nullptr )
 				{
 					if ( bgr_rgb == nullptr )
@@ -178,7 +178,7 @@ bool PPU::run()
 					final_rgb = bgr_base_rgb();
 				}
 
-				uint8_t rgb_cpy[3];
+				u8 rgb_cpy[3];
 				std::copy(final_rgb, final_rgb + 3, rgb_cpy);
 				if (emphasis_r)
 				{
@@ -216,7 +216,7 @@ bool PPU::run()
 				for ( ; n < 64; n++ )
 				{
 					Sprite spr = sprite( n );
-					uint8_t y = spr[SPRITE::Y];
+					u8 y = spr[SPRITE::Y];
 					if ( y <= scanline && (scanline - y) < (tall_sprites ? 16 : 8) )
 					{
 						for ( int i = 0; i < 4; i++ )
@@ -235,7 +235,7 @@ bool PPU::run()
 				{
 					for ( int m = 0; m < 4; m++ )
 					{
-						uint8_t faux_y = oam[n * 4 + m];
+						u8 faux_y = oam[n * 4 + m];
 						if ( faux_y <= scanline && (scanline - faux_y) < (tall_sprites ? 16 : 8) )
 						{
 							regs[PPUSTATUS] |= 0x20;
@@ -262,7 +262,7 @@ bool PPU::run()
 			if ( (scan_cycle - 257) % 8 >= 4 )
 			{
 				// For last 4 cycles, fetch the sprite data
-				uint16_t pattern_table = (regs[ PPUCTRL ] >> 3) & 0x1 ? 0x1000 : 0x0;
+				u16 pattern_table = (regs[ PPUCTRL ] >> 3) & 0x1 ? 0x1000 : 0x0;
 				Sprite sprite = scanline_sprites[ (scan_cycle - 260) / 8 ];
 				if ( tall_sprites )
 				{
@@ -296,11 +296,11 @@ bool PPU::run()
 					}
 				}
 
-				uint16_t next_tile_addr = 0x2000 | (v & 0x0FFF);
-				uint16_t next_attr_addr = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
+				u16 next_tile_addr = 0x2000 | (v & 0x0FFF);
+				u16 next_attr_addr = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
 
-				uint8_t next_tile = read( next_tile_addr );
-				uint8_t next_attr = read( next_attr_addr );
+				u8 next_tile = read( next_tile_addr );
+				u8 next_attr = read( next_attr_addr );
 
 				int quadrant_shift = 0;
 				bool x_high = (v >> 1) & 0x1;
@@ -325,8 +325,8 @@ bool PPU::run()
 					}
 				}
 
-				uint16_t pattern_addr =
-						0x1000 * ((regs[PPUCTRL] >> 4) & 0x1) + ((uint16_t) next_tile << 4) + ((v & 0x7000) >> 12);
+				u16 pattern_addr =
+						0x1000 * ((regs[PPUCTRL] >> 4) & 0x1) + ((u16) next_tile << 4) + ((v & 0x7000) >> 12);
 				tile_shift_regs[0] = tile_shift_regs[0] & 0xFF00 | (read( pattern_addr ));
 				tile_shift_regs[1] = tile_shift_regs[1] & 0xFF00 | (read( pattern_addr + 8 ));
 
@@ -408,7 +408,7 @@ bool PPU::run()
 	return true;
 }
 
-uint16_t PPU::mirror_palette_addr( uint16_t addr )
+u16 PPU::mirror_palette_addr( u16 addr )
 {
 	if ( (addr & 0x3F00) == 0x3F00 && (((addr >> 4) & 0xF)) % 2 != 0 && (addr & 0xF) % 4 == 0 )
 	{
@@ -417,12 +417,12 @@ uint16_t PPU::mirror_palette_addr( uint16_t addr )
 	return addr % 0x20;
 }
 
-uint8_t PPU::read_reg( uint8_t reg_id, int cycle )
+u8 PPU::read_reg( u8 reg_id, int cycle )
 {
 	return read_reg( reg_id, cycle, true );
 }
 
-uint8_t PPU::read_reg( uint8_t reg_id, int cycle, bool physical_read )
+u8 PPU::read_reg( u8 reg_id, int cycle, bool physical_read )
 {
 	if ( physical_read )
 	{
@@ -450,7 +450,7 @@ uint8_t PPU::read_reg( uint8_t reg_id, int cycle, bool physical_read )
 	}
 }
 
-bool PPU::write_reg( uint8_t reg_id, uint8_t value, int cycle, bool physical_write )
+bool PPU::write_reg( u8 reg_id, u8 value, int cycle, bool physical_write )
 {
 	/*if (cycle < 29658 && (reg_id == PPUCTRL || reg_id == PPUMASK || reg_id == PPUSCROLL || reg_id == PPUADDR))
 		return false;
@@ -498,12 +498,12 @@ bool PPU::write_reg( uint8_t reg_id, uint8_t value, int cycle, bool physical_wri
 	return true;
 }
 
-void PPU::write_oam( uint8_t byte, uint8_t data )
+void PPU::write_oam( u8 byte, u8 data )
 {
 	oam[byte] = data;
 }
 
-Sprite PPU::sprite( uint8_t index )
+Sprite PPU::sprite( u8 index )
 {
 	if ( index < 0 || index > 63 )
 	{
@@ -512,14 +512,14 @@ Sprite PPU::sprite( uint8_t index )
 	return &oam[index * 4];
 }
 
-uint8_t PPU::tile_col_at_pixel( Tile tile, int dx, int dy, bool flip_x, bool flip_y )
+u8 PPU::tile_col_at_pixel( Tile tile, int dx, int dy, bool flip_x, bool flip_y )
 {
-	uint8_t x = flip_x ? (7 - dx) : dx;
-	uint8_t y = flip_y ? (7 - dy) : dy;
+	u8 x = flip_x ? (7 - dx) : dx;
+	u8 y = flip_y ? (7 - dy) : dy;
 
 	bool val1 = tile[y][0] >> (7 - x) & 0x1;
 	bool val2 = tile[y][1] >> (7 - x) & 0x1;
-	uint8_t color = (val2 << 1) | val1;
+	u8 color = (val2 << 1) | val1;
 
 	return color;
 }
@@ -543,25 +543,25 @@ void PPU::set_default_palette()
 	}
 }
 
-uint8_t *PPU::bgr_base_rgb()
+u8 *PPU::bgr_base_rgb()
 {
-	uint8_t col = read( 0x3F00 );
+	u8 col = read( 0x3F00 );
 	if ( (regs[PPUMASK] >> 0) & 0x1 )
 	{
 		col &= 0x30;
 	}
-	uint8_t *rgb = rgb_palette[col];
+	u8 *rgb = rgb_palette[col];
 	return rgb;
 }
 
-uint8_t *PPU::col_to_rgb( uint8_t attr, uint8_t col, bool spr )
+u8 *PPU::col_to_rgb( u8 attr, u8 col, bool spr )
 {
-	uint8_t plt = read( 0x3F01 + (attr & 0x3) * 4 + (col - 1) + spr * 0x10 );
+	u8 plt = read( 0x3F01 + (attr & 0x3) * 4 + (col - 1) + spr * 0x10 );
 	if ( (regs[PPUMASK] >> 0) & 0x1 )
 	{
 		plt &= 0x30;
 	} //grayscale effect
-	uint8_t *rgb = rgb_palette[plt];
+	u8 *rgb = rgb_palette[plt];
 	return rgb;
 }
 
@@ -571,16 +571,16 @@ void PPU::output_pt()
 	{
 		for ( int n = 0; n < 256; n++ )
 		{
-			uint16_t pattern_addr = (i << 12) + (n << 4);
+			u16 pattern_addr = (i << 12) + (n << 4);
 			for ( int y = 0; y < 8; y++ )
 			{
-				uint8_t p1 = read( pattern_addr + y );
-				uint8_t p2 = read( pattern_addr + y + 8 );
+				u8 p1 = read( pattern_addr + y );
+				u8 p2 = read( pattern_addr + y + 8 );
 
 				for ( int cx = 0; cx < 8; cx++ )
 				{
-					uint8_t col = ((p1 >> (7 - cx) & 0x1)) | ((p2 >> (7 - cx) & 0x1) << 1);
-					uint8_t rgb[3] = {0, 0, 0};
+					u8 col = ((p1 >> (7 - cx) & 0x1)) | ((p2 >> (7 - cx) & 0x1) << 1);
+					u8 rgb[3] = {0, 0, 0};
 					if ( col != 0 )
 					{
 						rgb[col - 1] = 255;
@@ -596,23 +596,23 @@ void PPU::output_pt()
 
 void PPU::output_nt()
 {
-	uint8_t *memory = this->mem.get_mem();
+	u8 *memory = this->mem.get_mem();
 	for ( int i = 0; i < 4; i++ )
 	{
 		for ( int y = 0; y < 30; y++ )
 		{
 			for ( int cx = 0; cx < 32; cx++ )
 			{
-				uint8_t tile_num = read( 0x2000 + 0x400 * i + y * 32 + cx );
-				uint16_t pattern_idx = 0x1000 * ((regs[PPUCTRL] >> 4) & 0x1) + ((uint16_t) tile_num << 4);
+				u8 tile_num = read( 0x2000 + 0x400 * i + y * 32 + cx );
+				u16 pattern_idx = 0x1000 * ((regs[PPUCTRL] >> 4) & 0x1) + ((u16) tile_num << 4);
 				Tile tile;
 				for ( int b = 0; b < 16; b++ )
 				{
 					tile[b % 8][b / 8] = read( pattern_idx + b );
 				}
 
-				uint16_t attr = read( 0x23C0 + 0x400 * i + (y / 4) * 8 + (cx / 4) % 8 );
-				uint8_t attr_bitshift = 0;
+				u16 attr = read( 0x23C0 + 0x400 * i + (y / 4) * 8 + (cx / 4) % 8 );
+				u8 attr_bitshift = 0;
 				if ( cx % 4 >= 2 )
 				{
 					attr_bitshift += 2;
@@ -626,9 +626,9 @@ void PPU::output_nt()
 				{
 					for ( int fine_x = 0; fine_x < 8; fine_x++ )
 					{
-						uint8_t col = tile_col_at_pixel( tile, fine_x, fine_y, false, false );
-						uint8_t *rgb = col != 0 ? col_to_rgb( attr >> attr_bitshift, col, false ) : bgr_base_rgb();
-						uint8_t rgb_cpy[ 3 ];
+						u8 col = tile_col_at_pixel( tile, fine_x, fine_y, false, false );
+						u8 *rgb = col != 0 ? col_to_rgb( attr >> attr_bitshift, col, false ) : bgr_base_rgb();
+						u8 rgb_cpy[ 3 ];
 						memcpy( rgb_cpy, rgb, 3 );
 						
 						if ( (cx == 0 && fine_x == 0 && (i % 2 != 0)) || (y == 0 && fine_y == 0 && (i / 2 != 0)) )
@@ -648,7 +648,7 @@ void PPU::output_nt()
 	nes->get_display()->update_nt();
 }
 
-uint8_t PPU::read( int addr )
+u8 PPU::read( int addr )
 {
 	if ( addr >= 0x3F00 )
 	{
@@ -660,7 +660,7 @@ uint8_t PPU::read( int addr )
 	}
 }
 
-bool PPU::write( const uint16_t addr, const uint8_t data )
+bool PPU::write( const u16 addr, const u8 data )
 {
 	if ( addr >= 0x3F00 )
 	{
