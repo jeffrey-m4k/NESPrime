@@ -148,8 +148,6 @@ u8 DMC::get_dac_in()
 
 float Channel::get_output()
 {
-	if ( debug_muted ) return 0;
-
 	u8 dac_in_curr = is_playing() ? get_dac_in() : dac_in_last;
 	
 	dac_out_last += (dac_in_curr - dac_in_last) / 15.0;
@@ -157,5 +155,10 @@ float Channel::get_output()
 
 	dac_in_last = dac_in_curr;
 
+	return debug_muted ? 0 : dac_out_last;
+}
+
+float Channel::peek_output()
+{
 	return dac_out_last;
 }

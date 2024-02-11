@@ -41,9 +41,9 @@ public:
 
 	void write_nt_pixel( int tile, u8 x, u8 y, short nt, const u8 rgb[3] );
 
-	int get_apu_channel_from_x( int x )
+	int get_apu_channel_from_y( int y )
 	{
-		return x / APU_CHANNEL_WIDTH;
+		return y / APU_CHANNEL_HEIGHT;
 	}
 
 	void push_buffer();
@@ -80,6 +80,8 @@ public:
 		texture_main_ui = tex;
 	}
 
+	const void push_apu_samples( std::vector< float > &samples );
+
 public:
 	u32 last_update = 0;
 	bool apu_debug_muted[5] = {false};
@@ -104,20 +106,28 @@ private:
 	u8 pt[256 * 128 * 3] = {0};
 	u8 nts[256 * 240 * 4 * 3] = {0};
 
-	// 0: Pulse 1, 1 : Pulse 2, 2 : Triangle, 3 : Noise
-	static const int APU_WINDOW_WIDTH = 300;
+	// 0: Pulse 1, 1: Pulse 2, 2: Triangle, 3: Noise, 4: DPCM
+	static const int APU_WINDOW_HEIGHT = 360;
 	static const int APU_CHANNELS = 5;
-	static const int APU_CHANNEL_WIDTH = APU_WINDOW_WIDTH / APU_CHANNELS;
-	static const int APU_CHANNEL_PADDING = APU_CHANNEL_WIDTH / 8;
-	static const int APU_CHANNEL_WAVEFORM_WIDTH = APU_CHANNEL_WIDTH - APU_CHANNEL_PADDING * 2;
-	static constexpr double APU_WAVEFORM_LENGTH_SECONDS = 0.03;
-	static constexpr u8 APU_CHANNEL_COLORS[ 5 ][ 3 ] = {
+	static const int APU_CHANNEL_HEIGHT = APU_WINDOW_HEIGHT / APU_CHANNELS;
+	static const int APU_CHANNEL_PADDING = APU_CHANNEL_HEIGHT / 4;
+	static const int APU_CHANNEL_WAVEFORM_HEIGHT = APU_CHANNEL_HEIGHT - APU_CHANNEL_PADDING * 2;
+	static constexpr u8 APU_CHANNEL_COLORS[ APU_CHANNELS ][ 3 ] = {
 		{ 255, 127, 127 },
 		{ 255, 127, 127 },
 		{ 127, 255, 127 },
 		{ 127, 127, 255 },
 		{ 200, 200, 200 }
 	};
+
+	static const int APU_BUFFER_SIZE = 4000;
+	static const int APU_TRIGGER_WINDOW = APU_BUFFER_SIZE - 680;
+	static const int APU_TRIGGER_WINDOW_START = (APU_BUFFER_SIZE - APU_TRIGGER_WINDOW) / 2;
+	std::deque< float > waveform_buffers[ APU_CHANNELS ];
+
+	void enqueue_sample( int channel, float sample );
+
+	int get_waveform_trigger( int channel );
 
 	u32 fps_lasttime;
 	u32 fps_current;

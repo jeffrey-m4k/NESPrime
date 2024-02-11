@@ -50,8 +50,6 @@ void APU::cycle()
 	triangle.tick_timer();
 	sample();
 
-	++noise.waveform_rand;
-
 	if ( frameSeq.interrupt )
 	{
 		get_nes()->get_cpu()->trigger_irq();
@@ -67,6 +65,15 @@ void APU::sample()
 		low_pass();
 		downsample();
 		sample_clock -= sample_per;
+
+		nes->get_display()->push_apu_samples( std::vector<float>
+		{
+			pulse[ 0 ].peek_output(),
+			pulse[ 1 ].peek_output(),
+			triangle.peek_output(),
+			noise.peek_output(),
+			dmc.peek_output()
+		} );
 	}
 	
 	if ( sample_buffer.size() >= 100 )
@@ -247,14 +254,4 @@ void APU::toggle_debug_mute( int channel )
 bool APU::is_playing( int channel )
 {
 	return get_channel( channel )->is_playing();
-}
-
-float APU::get_waveform_at_time( float time, int channel )
-{
-	return get_channel( channel )->get_waveform_at_time( time );
-}
-
-void APU::clear_dmc_waveform()
-{
-	dmc.clear_waveform_cache();
 }

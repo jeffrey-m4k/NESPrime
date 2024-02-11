@@ -71,13 +71,13 @@ public:
 		debug_muted = !debug_muted;
 	}
 
-	virtual float get_waveform_at_time( float time ) = 0;
-
 	virtual bool is_playing() = 0;
 
 	virtual u8 get_dac_in() = 0;
 
 	float get_output();
+
+	float peek_output();
 
 public:
 	bool debug_muted = false;
@@ -106,11 +106,6 @@ protected:
 					0x10, 0x12, 0x14, 0x16, 0x18, 0x1A, 0x1C, 0x1E
 			}
 	};
-
-	virtual float normalize_volume( int vol )
-	{
-		return 0.5 + ((vol - (envelope.get_volume() / 2.0)) / 15.0);
-	}
 };
 
 class Pulse : public Channel
@@ -142,44 +137,6 @@ public:
 	bool is_playing() override
 	{
 		return enabled && timer.get_period() > 8 && !muted && length > 0;
-	}
-
-	float get_waveform_at_time( float time ) override
-	{
-		if ( !is_playing() ) return 0.5;
-
-		// TODO remove magic number (make global const for cycle rates - 1.79MHz is CPU frequency)
-		float period = 1 / (1789773.0 / (16 * (timer.get_period() + 1)));
-		double period_mod = fmod( time, period );
-		if ( period_mod < 0 )
-		{
-			period_mod = period + period_mod;
-		}
-		int step = sequencer.steps * (period_mod / period);
-
-		float waveform_avg;
-		float waveform_coeff;
-		float vol = envelope.get_volume() / 15.0;
-		switch ( duty )
-		{
-		case 0:
-			waveform_coeff = 1 / 8.0;
-			break;
-		case 1:
-			waveform_coeff = 2 / 8.0;
-			break;
-		case 2:
-		default:
-			waveform_coeff = 4 / 8.0;
-			break;
-		case 3:
-			waveform_coeff = 6 / 8.0;
-			break;
-		}
-
-		waveform_avg = waveform_coeff * vol + (1 - vol) * 0.5;
-
-		return normalize_volume( envelope.get_volume() * sequencer.sequence[ step ] ) + (0.5 - waveform_avg);
 	}
 
 private:
@@ -233,21 +190,6 @@ public:
 		return enabled && timer.get_period() >= 2 && (length > 0 && linear_counter > 0);
 	}
 
-	float get_waveform_at_time( float time ) override
-	{
-		if ( !is_playing() ) return 0.5;
-
-		// TODO remove magic number (make global const for cycle rates - 1.79MHz is CPU frequency)
-		float period = 1 / (1789773.0 / (32 * (timer.get_period() + 1)));
-		double period_mod = fmod( time, period );
-		if ( period_mod < 0 )
-		{
-			period_mod = period + period_mod;
-		}
-		int step = sequencer.steps * (period_mod / period);
-		return normalize_volume( sequencer.sequence[ step ] );
-	}
-
 private:
 	static constexpr u8 seq[32] = {
 			15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
@@ -258,11 +200,6 @@ private:
 	u8 counter_reload_val = 0;
 
 	bool flag_linc_reload = false;
-
-	float normalize_volume( int vol ) override
-	{
-		return 0.5 + ((vol - (15.0 / 2.0)) / 15.0);
-	}
 };
 
 class Noise : public Channel
@@ -291,23 +228,6 @@ public:
 	{
 		return enabled && length > 0;
 	}
-
-	float get_waveform_at_time( float time ) override
-	{
-		if ( !is_playing() ) return 0.5;
-
-		float period = 1 / (1789773.0 / (16 * (timer.get_period() + 1)));
-		int step = floor( time / period );
-
-		static std::default_random_engine generator( std::random_device{}() );
-		generator.seed( step + waveform_rand );
-		static std::bernoulli_distribution distribution( 0.5 );
-		distribution.reset();
-
-		return normalize_volume( envelope.get_volume() * distribution( generator ) );
-	}
-
-	u16 waveform_rand = 0;
 
 private:
 	static constexpr u16 periods[16] = {
@@ -391,80 +311,11 @@ public:
 		return true;
 	}
 
-	float get_waveform_at_time( float time ) override
-	{
-		if ( silence ) return 0.5;
-
-		float period = 1 / (1789773.0 / (16 * (timer.get_period() + 1))) / 4.0;
-		int step = floor( time / period );
-		if ( step < 0 ) step = sample_length * 8 + step;
-
-		int byte = step / 8 % sample_length;
-		int bit = step % 8;
-
-		u8 out;
-
-		if ( waveform_cache.empty() )
-		{
-			u64 sum = 0;
-			u32 len = 0;
-			u8 last_out = 0;
-			for ( int byte_num = 0; byte_num < sample_length; ++byte_num )
-			{
-				u8 sample_byte = *cpu->get_mapper()->map_cpu( sample_addr + byte_num );
-				for ( int bit_num = 0; bit_num < 8; ++bit_num )
-				{
-					bool delta = GET_BIT( sample_byte, bit_num );
-					if ( delta && last_out <= 125 )
-					{
-						last_out += 2;
-					}
-					else if ( !delta && last_out >= 2 )
-					{
-						last_out -= 2;
-					}
-
-					sum += last_out;
-					++len;
-
-					waveform_cache.insert( std::make_pair( std::make_pair( byte_num, bit_num ), last_out ) );
-				}
-			}
-
-			waveform_avg = (sum / (float)len) / 127.0;
-		}
-		
-		byte += (sample_length - bytes_remaining);
-		if ( byte >= sample_length )
-		{
-			byte -= sample_length;
-		}
-
-		auto it = waveform_cache.find( std::make_pair( byte, bit ) );
-		if ( it != waveform_cache.end() )
-		{
-			return it->second / 127.0 + (0.5 - waveform_avg);
-		}
-		else
-		{
-			return 0.5;
-		}
-	}
-
-	void clear_waveform_cache()
-	{
-		waveform_cache.clear();
-		waveform_avg = 0.0;
-	}
-
 private:
 	static constexpr u16 periods[ 16 ] = {
 			428, 380, 340, 320, 286, 254, 226, 214,
 			190, 160, 142, 128, 106, 84, 72, 54
 	};
-
-	std::map< std::pair< int, int >, u8 > waveform_cache;
-	float waveform_avg = 0.0;
 
 	CPU *cpu;
 

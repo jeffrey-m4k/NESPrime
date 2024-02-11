@@ -30,10 +30,6 @@ public:
 
 	bool is_playing( int channel );
 
-	float get_waveform_at_time( float time, int channel );
-
-	void clear_dmc_waveform();
-
 private:
 	void sample();
 
@@ -59,7 +55,6 @@ private:
 	bool tick_fs = false;
 
 	std::deque< i16 > sample_buffer_raw;
-	std::deque< i16 > sample_buffer_filtered;
 	std::vector< i16 > sample_buffer;
 	i16 low_pass_last = 0;
 	float sample_clock = 0;

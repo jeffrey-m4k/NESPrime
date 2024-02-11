@@ -121,7 +121,7 @@ void NES::check_refresh()
 				SDL_Window* window = SDL_GetWindowFromID( event.button.windowID );
 				if ( SDL_GetWindowID(window) == 3 )
 				{
-					int channel = display->get_apu_channel_from_x( event.button.x );
+					int channel = display->get_apu_channel_from_y( event.button.y );
 					apu->toggle_debug_mute( channel );
 				}
 			}
