@@ -7,7 +7,7 @@ APU::APU()
 	SDL_setenv( "SDL_AUDIODRIVER", "directsound", 1 );
 	SDL_zero( audio_spec );
 	audio_spec.freq = SAMPLE_RATE * nes->get_emu_speed();
-	audio_spec.format = AUDIO_S16SYS;
+	audio_spec.format = AUDIO_F32SYS;
 	audio_spec.channels = 1;
 	audio_spec.samples = 1024;
 	audio_spec.callback = nullptr;
@@ -58,7 +58,7 @@ void APU::cycle()
 
 void APU::sample()
 {
-	sample_buffer_raw.push_back( get_mixer() * 32000 );
+	sample_buffer_raw.push_back( get_mixer() * 50 );
 
 	if ( ++sample_clock >= sample_per )
 	{
@@ -78,7 +78,7 @@ void APU::sample()
 	
 	if ( sample_buffer.size() >= 100 )
 	{
-		SDL_QueueAudio( audio_device, sample_buffer.data(), sample_buffer.size() * 2 );
+		SDL_QueueAudio( audio_device, sample_buffer.data(), sample_buffer.size() * 4 );
 		sample_buffer.clear();
 	}
 }
@@ -92,7 +92,7 @@ void APU::low_pass()
 
 	for ( int i = 0; i < sample_buffer_raw.size(); ++i )
 	{
-		i16 filtered = alpha * (sample_buffer_raw[i] + low_pass_last);
+		float filtered = alpha * (sample_buffer_raw[i] + low_pass_last);
 		low_pass_last = filtered;
 		sample_buffer_raw[ i ] = filtered;
 	}
@@ -100,13 +100,7 @@ void APU::low_pass()
 
 void APU::downsample()
 {
-	i32 sum = 0;
-	for ( int sample : sample_buffer_raw )
-	{
-		sum += sample;
-	}
-
-	sample_buffer.push_back( (float)sum / sample_buffer_raw.size() );
+	sample_buffer.push_back( sample_buffer_raw[0]);
 	sample_buffer_raw.clear();
 }
 

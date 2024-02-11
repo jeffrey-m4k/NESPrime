@@ -54,9 +54,9 @@ private:
 
 	bool tick_fs = false;
 
-	std::deque< i16 > sample_buffer_raw;
-	std::vector< i16 > sample_buffer;
-	i16 low_pass_last = 0;
+	std::deque< float > sample_buffer_raw;
+	std::vector< float > sample_buffer;
+	float low_pass_last = 0;
 	float sample_clock = 0;
 
 	static constexpr float SAMPLE_RATE = 44100.0;
