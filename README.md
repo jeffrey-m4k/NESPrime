@@ -22,6 +22,7 @@ NESPrime is a simple NES emulator written in C++ using the SDL2 library.
 - Emulator:
   - Pause: ESC
   - Fullscreen: F11
+  - Fast-Forward: `
  
 ### Supported Mappers:
   - 0 (NROM) - *Donkey Kong, Super Mario Bros, Ice Climber...*

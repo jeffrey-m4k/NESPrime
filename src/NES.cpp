@@ -10,6 +10,8 @@
 #include <SDL_ttf.h>
 #include <iostream>
 
+#define CPF (CPS / FPS * EMU_SPEED)
+
 NES::NES()
 {
 	if ( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_AUDIO ) != 0 || TTF_Init() != 0 )
@@ -17,6 +19,8 @@ NES::NES()
 		SDL_Log( "Unable to initialize SDL: %s", SDL_GetError() );
 		exit( EXIT_FAILURE );
 	}
+
+	EMU_SPEED = 1.0;
 
 	set_cpu( new CPU() );
 	set_ppu( new PPU() );
@@ -97,6 +101,9 @@ void NES::check_refresh()
 	Uint32 t = SDL_GetTicks();
 	if ( t - display->last_update >= 1000 / FPS && SDL_GetQueuedAudioSize( apu->audio_device ) < 8192 )
 	{
+		auto *keystate = const_cast<Uint8 *>(SDL_GetKeyboardState( nullptr ));
+		EMU_SPEED = keystate[ SDL_SCANCODE_GRAVE ] ? 2.0 : 1.0;
+
 		SDL_Event event;
 		while ( SDL_PollEvent( &event ) )
 		{

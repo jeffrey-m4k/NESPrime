@@ -107,8 +107,7 @@ private:
 
 	static constexpr int CPS = 21477272;
 	static constexpr int FPS = 60;
-	static constexpr float EMU_SPEED = 1.0;
-	static constexpr float CPF = CPS / FPS * EMU_SPEED;
+	float EMU_SPEED;
 
 	float cycles_delta = 0;
 

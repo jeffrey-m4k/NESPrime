@@ -6,7 +6,7 @@ APU::APU()
 {
 	SDL_setenv( "SDL_AUDIODRIVER", "directsound", 1 );
 	SDL_zero( audio_spec );
-	audio_spec.freq = SAMPLE_RATE * nes->get_emu_speed();
+	audio_spec.freq = SAMPLE_RATE * 1;
 	audio_spec.format = AUDIO_F32SYS;
 	audio_spec.channels = 1;
 	audio_spec.samples = 1024;
@@ -60,11 +60,11 @@ void APU::sample()
 {
 	sample_buffer_raw.push_back( get_mixer() * 50 );
 
-	if ( ++sample_clock >= sample_per )
+	if ( ++sample_clock >= sample_per * nes->get_emu_speed() )
 	{
 		low_pass();
 		downsample();
-		sample_clock -= sample_per;
+		sample_clock -= sample_per * nes->get_emu_speed();
 
 		nes->get_display()->push_apu_samples( std::vector<float>
 		{
@@ -87,7 +87,7 @@ void APU::low_pass()
 {
 	float cutoff_freq = 18000.0;
 
-	float omega_c = 2 * M_PI * cutoff_freq / (sample_per * SAMPLE_RATE);
+	float omega_c = 2 * M_PI * cutoff_freq / (sample_per * SAMPLE_RATE * nes->get_emu_speed());
 	float alpha = 1 / (1 + omega_c);
 
 	for ( int i = 0; i < sample_buffer_raw.size(); ++i )
