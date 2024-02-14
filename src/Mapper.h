@@ -9,6 +9,13 @@ enum MIRRORING
 	Horizontal, Vertical, OneScreen_LB, OneScreen_HB, FourScreen
 };
 
+enum class ECType
+{
+	NONE,
+	SUNSOFT_5B
+};
+
+class ExpansionChip;
 
 class Mapper
 {
@@ -60,6 +67,16 @@ public:
 		return irq_pending && !irq_disable;
 	}
 
+	void set_sound_chip( ExpansionChip *chip )
+	{
+		sound_chip = chip;
+	}
+
+	virtual const ECType get_sound_chip_type()
+	{
+		return ECType::NONE;
+	}
+
 protected:
 	Cartridge *cartridge;
 	MIRRORING mirroring;
@@ -78,6 +95,8 @@ protected:
 	bool force_mirroring = false;
 	bool irq_pending = false;
 	bool irq_disable = false;
+
+	ExpansionChip *sound_chip = nullptr;
 };
 
 
@@ -229,7 +248,7 @@ public:
 class Mapper69 : public Mapper
 {
 public:
-	explicit Mapper69( Cartridge *cart ) : Mapper( cart ) 
+	explicit Mapper69( Cartridge *cart ) : Mapper( cart )
 	{};
 
 	u8 *map_cpu( u16 address ) override;
@@ -240,6 +259,11 @@ public:
 
 	void handle_cpu_cycle() override;
 
+	const ECType get_sound_chip_type() override
+	{
+		return ECType::SUNSOFT_5B;
+	}
+
 private:
 	u16 irq_counter = 0;
 	bool irq_counter_enable = false;
@@ -249,6 +273,9 @@ private:
 	bool prg_bank0_ram = false;
 
 	u8 command = 0;
+
+	u8 sound_chip_reg = 0x0;
+	bool sound_chip_write_enable = true;
 };
 
 

@@ -29,6 +29,8 @@ APU::~APU()
 void APU::init()
 {
 	dmc.set_cpu( get_nes()->get_cpu() );
+	Mapper *mapper = nes->get_cpu()->get_mapper();
+	mapper->set_sound_chip( get_chip( mapper->get_sound_chip_type() ) );
 }
 
 void APU::cycle()
@@ -47,6 +49,7 @@ void APU::cycle()
 		tick_fs = true;
 	}
 
+	ec_5b.clock();
 	triangle.tick_timer();
 	sample();
 
@@ -110,7 +113,8 @@ float APU::get_mixer()
 		0.00752 * (pulse[ 0 ].get_output() + pulse[ 1 ].get_output()) +
 		0.00851 * triangle.get_output() +
 		0.00494 * noise.get_output() +
-		0.00335 * dmc.get_output();
+		0.00335 * dmc.get_output() +
+		0.0045 * ec_5b.get_output();
 
 	return sample;
 }
@@ -248,4 +252,15 @@ void APU::toggle_debug_mute( int channel )
 bool APU::is_playing( int channel )
 {
 	return get_channel( channel )->is_playing();
+}
+
+ExpansionChip *APU::get_chip( ECType type )
+{
+	switch ( type )
+	{
+		case ECType::SUNSOFT_5B:
+			return &ec_5b;
+		default:
+			return nullptr;
+	}
 }

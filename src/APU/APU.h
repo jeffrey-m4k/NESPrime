@@ -7,6 +7,8 @@
 #include <vector>
 #include <deque>
 
+#include "EC_5B.h"
+
 class APU : public Component
 {
 public:
@@ -29,6 +31,8 @@ public:
 	void toggle_debug_mute( int channel );
 
 	bool is_playing( int channel );
+
+	ExpansionChip *get_chip( ECType type );
 
 private:
 	void sample();
@@ -61,4 +65,7 @@ private:
 
 	static constexpr float SAMPLE_RATE = 44100.0;
 	static constexpr float sample_per = 21477272 / SAMPLE_RATE / 12.0;
+
+	// === EXPANSION CHIPS ===
+	EC_5B ec_5b;
 };

@@ -1,4 +1,5 @@
 #include "Mapper.h"
+#include "APU/ExpansionChip.h"
 
 Mapper::Mapper( Cartridge *cart ) : cartridge( cart )
 {
@@ -472,7 +473,7 @@ u8 *Mapper69::map_ppu( u16 address )
 
 void Mapper69::handle_write( u8 data, u16 addr )
 {
-	if ( addr < 0x8000 || addr >= 0xC000)
+	if ( addr < 0x8000 )
 	{
 		return;
 	}
@@ -481,7 +482,7 @@ void Mapper69::handle_write( u8 data, u16 addr )
 	{
 		command = data & 0xF;
 	}
-	else							// $A000-$BFFF: parameter register
+	else if (addr < 0xC000)			// $A000-$BFFF: parameter register
 	{
 		if ( command <= 0x7 )			// $0-$7: CHR bank select
 		{
@@ -528,6 +529,19 @@ void Mapper69::handle_write( u8 data, u16 addr )
 		{
 			irq_counter = (irq_counter & 0x00FF) | (((u16)data) << 8);
 		}
+	}
+	else if ( addr < 0xE000 )
+	{
+		sound_chip_reg = GET_BITS( data, 0, 4 );
+		sound_chip_write_enable = GET_BITS( data, 4, 4 ) != 0;
+	}
+	else
+	{
+		if ( sound_chip == nullptr )
+		{
+			return;
+		}
+		sound_chip->write_reg( sound_chip_reg, data );
 	}
 }
 

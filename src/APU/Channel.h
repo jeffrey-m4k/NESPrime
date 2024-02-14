@@ -29,7 +29,7 @@ public:
 
 	void set_length_counter( u8 c );
 
-	void set_timer_lo( u8 lo )
+	virtual void set_timer_lo( u8 lo )
 	{
 		timer.set_lo( lo );
 	}
@@ -235,7 +235,7 @@ private:
 			254, 380, 508, 762, 1016, 2034, 4068
 	};
 
-	bool mode;
+	bool mode = false;
 	u16 shifter = 1;
 };
 
