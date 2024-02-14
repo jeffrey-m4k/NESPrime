@@ -217,7 +217,7 @@ public:
 
 	void set_period( u8 p )
 	{
-		timer.set_period( periods[p % 16] );
+		timer.set_period( periods[p % 16] / 2 );
 	}
 
 	void tick_timer() override;
