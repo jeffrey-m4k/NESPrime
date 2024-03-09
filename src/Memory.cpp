@@ -5,6 +5,7 @@ void Memory::init( const u32 size )
 	delete[] this->mem;
 	this->size = size;
 	this->mem = new u8[size];
+	std::fill(mem, mem + size, 0);
 }
 
 
