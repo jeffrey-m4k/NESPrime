@@ -69,14 +69,20 @@ void APU::sample()
 		downsample();
 		sample_clock -= sample_per * nes->get_emu_speed();
 
-		nes->get_display()->push_apu_samples( std::vector<float>
+		if ( nes->DEBUG_APU )
 		{
-			pulse[ 0 ].peek_output(),
-			pulse[ 1 ].peek_output(),
-			triangle.peek_output(),
-			noise.peek_output(),
-			dmc.peek_output()
-		} );
+			nes->get_display()->push_apu_samples( std::vector<float>
+			{
+				pulse[ 0 ].peek_output(),
+				pulse[ 1 ].peek_output(),
+				triangle.peek_output(),
+				noise.peek_output(),
+				dmc.peek_output(),
+				ec_5b.peek_output( 0 ),
+				ec_5b.peek_output( 1 ),
+				ec_5b.peek_output( 2 )
+			} );
+		}
 	}
 	
 	if ( sample_buffer.size() >= 100 )
@@ -217,7 +223,7 @@ u8 APU::read_status()
 
 Channel *APU::get_channel( int channel )
 {
-	if ( channel > 4 || channel < 0 )
+	if ( channel > 7 || channel < 0 )
 	{
 		channel = 0;
 	}
@@ -233,20 +239,26 @@ Channel *APU::get_channel( int channel )
 			return &noise;
 		case 4:
 			return &dmc;
+		case 5:
+			return ec_5b.get_channel( 0 );
+		case 6:
+			return ec_5b.get_channel( 1 );
+		case 7:
+			return ec_5b.get_channel( 2 );
 	}
 }
 
 void APU::set_debug_mute( bool mute, int channel )
 {
 	get_channel( channel )->debug_muted = mute;
+
+	bool *disp_arr = nes->get_display()->apu_debug_muted;
+	disp_arr[ channel ] = mute;
 }
 
 void APU::toggle_debug_mute( int channel )
 {
-	get_channel( channel )->toggle_debug_mute();
-
-	bool *disp_arr = nes->get_display()->apu_debug_muted;
-	disp_arr[channel] = !disp_arr[channel];
+	set_debug_mute( !get_channel( channel )->debug_muted, channel );
 }
 
 bool APU::is_playing( int channel )

@@ -55,9 +55,36 @@ public:
 
 	void set_show_sys_texture( bool show );
 
+	void set_show_window( SDL_Window *window, bool show )
+	{
+		if ( show )
+		{
+			SDL_ShowWindow( window );
+		}
+		else
+		{
+			SDL_HideWindow( window );
+		}
+	}
+
 	SDL_Window *get_main_window()
 	{
 		return window_main;
+	}
+
+	SDL_Window* get_nt_window()
+	{
+		return window_nt;
+	}
+
+	SDL_Window* get_pt_window()
+	{
+		return window_pt;
+	}
+
+	SDL_Window* get_apu_window()
+	{
+		return window_apu;
 	}
 
 	SDL_Renderer *get_main_renderer()
@@ -82,6 +109,13 @@ public:
 
 	const void push_apu_samples( std::vector< float > &samples );
 
+	static const int get_apu_channels()
+	{
+		return APU_CHANNELS;
+	}
+
+	void apu_debug_solo( int channel );
+
 public:
 	u32 last_update = 0;
 	bool apu_debug_muted[5] = {false};
@@ -100,15 +134,9 @@ private:
 	SDL_Texture *texture_nt;
 	SDL_Texture *texture_apu;
 
-	u8 pixels[WIDTH * HEIGHT * 3] = {0};
-	u8 buffer[WIDTH * HEIGHT * 3] = {0};
-
-	u8 pt[256 * 128 * 3] = {0};
-	u8 nts[256 * 240 * 4 * 3] = {0};
-
 	// 0: Pulse 1, 1: Pulse 2, 2: Triangle, 3: Noise, 4: DPCM
-	static const int APU_WINDOW_HEIGHT = 360;
-	static const int APU_CHANNELS = 5;
+	static const int APU_WINDOW_HEIGHT = 640;
+	static const int APU_CHANNELS = 8;
 	static const int APU_CHANNEL_HEIGHT = APU_WINDOW_HEIGHT / APU_CHANNELS;
 	static const int APU_CHANNEL_PADDING = APU_CHANNEL_HEIGHT / 4;
 	static const int APU_CHANNEL_WAVEFORM_HEIGHT = APU_CHANNEL_HEIGHT - APU_CHANNEL_PADDING * 2;
@@ -117,7 +145,10 @@ private:
 		{ 255, 127, 127 },
 		{ 127, 255, 127 },
 		{ 127, 127, 255 },
-		{ 200, 200, 200 }
+		{ 200, 200, 200 },
+		{ 200, 200, 0 },
+		{ 200, 200, 0 },
+		{ 200, 200, 0 }
 	};
 
 	static const int APU_BUFFER_SIZE = 4000;
@@ -125,9 +156,19 @@ private:
 	static const int APU_TRIGGER_WINDOW_START = (APU_BUFFER_SIZE - APU_TRIGGER_WINDOW) / 2;
 	std::deque< float > waveform_buffers[ APU_CHANNELS ];
 
+	int apu_last_solo = -1;
+
 	void enqueue_sample( int channel, float sample );
 
 	int get_waveform_trigger( int channel );
+
+	u8 pixels[WIDTH * HEIGHT * 3] = { 0 };
+	u8 buffer[WIDTH * HEIGHT * 3] = { 0 };
+
+	u8 pt[256 * 128 * 3] = { 0 };
+	u8 nts[256 * 240 * 4 * 3] = { 0 };
+
+	u8 apu_pixels[640 * APU_WINDOW_HEIGHT * 3] = { 0 };
 
 	u32 fps_lasttime;
 	u32 fps_current;

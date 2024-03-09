@@ -1,3 +1,4 @@
+#include <format>
 #include "Display.h"
 #include "APU/APU.h"
 #include "PPU.h"
@@ -14,7 +15,7 @@ bool Display::init()
 	window_nt = SDL_CreateWindow( "Nametables", 0, 312, 512, 480, SDL_WINDOW_RESIZABLE );
 	window_apu = SDL_CreateWindow( "APU Channels", mode.w - 640, 28, 640, APU_WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE );
 	window_main = SDL_CreateWindow( "NESPrime",
-	                                512,
+	                                SDL_WINDOWPOS_CENTERED,
 	                                SDL_WINDOWPOS_CENTERED,
 	                                WIDTH * 3,
 	                                HEIGHT * 3,
@@ -25,8 +26,9 @@ bool Display::init()
 		SDL_Log( "Unable to create window: %s", SDL_GetError() );
 		return false;
 	}
-//    SDL_HideWindow(window_pt);
-//    SDL_HideWindow(window_nt);
+    SDL_HideWindow(window_pt);
+    SDL_HideWindow(window_nt);
+	SDL_HideWindow( window_apu );
 
 	renderer_main = SDL_CreateRenderer( window_main, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE );
 	renderer_pt = SDL_CreateRenderer( window_pt, -1, SDL_RENDERER_ACCELERATED );
@@ -120,7 +122,7 @@ bool Display::update_nt()
 
 bool Display::update_apu()
 {
-	u8 buf[ 640 * APU_WINDOW_HEIGHT * 3 ] = { 0 };
+	std::fill(apu_pixels, apu_pixels + 640 * APU_WINDOW_HEIGHT * 3, 0);
 
 	for ( int c = 0; c < APU_CHANNELS; ++c )
 	{
@@ -137,7 +139,7 @@ bool Display::update_apu()
 
 			u8 midline_rgb[ 3 ]{ 50, 50, 50 };
 			int mid_x = (s + c * 640 * APU_CHANNEL_HEIGHT + APU_CHANNEL_PADDING * 640 + 0.5 * 640 * APU_CHANNEL_WAVEFORM_HEIGHT) * 3;
-			memcpy( &buf[ mid_x ], midline_rgb, 3 );
+			memcpy( &apu_pixels[ mid_x ], midline_rgb, 3 );
 
 			u8 rgb[ 3 ];
 			memcpy( rgb, APU_CHANNEL_COLORS[ c ], 3 );
@@ -160,7 +162,7 @@ bool Display::update_apu()
 				if ( (start_y + d < APU_WINDOW_HEIGHT) && (start_y + d >= 0) )
 				{
 					int buf_idx_a = (s + 640 * (start_y + d)) * 3;
-					memcpy( &buf[ buf_idx_a ], rgb, 3 );
+					memcpy( &apu_pixels[ buf_idx_a ], rgb, 3 );
 				}
 			}
 
@@ -172,7 +174,7 @@ bool Display::update_apu()
 	void* texture_pixels = nullptr;
 	if ( SDL_LockTexture( texture_apu, nullptr, &texture_pixels, &texture_pitch ) == 0 )
 	{
-		memcpy( texture_pixels, buf, texture_pitch * APU_WINDOW_HEIGHT );
+		memcpy( texture_pixels, apu_pixels, texture_pitch * APU_WINDOW_HEIGHT );
 	}
 	SDL_UnlockTexture( texture_apu );
 
@@ -210,15 +212,17 @@ bool Display::refresh()
 	SDL_RenderCopy( renderer_main, texture_main_base, nullptr, nullptr );
 	SDL_RenderPresent( renderer_main );
 
-	fps_frames++;
-	Uint32 t = SDL_GetTicks();
-	if ( fps_lasttime < t - 1000 )
-	{
-		fps_lasttime = t;
-		fps_current = fps_frames;
-		fps_frames = 0;
-	}
-	SDL_SetWindowTitle( window_main, ("[" + nes->filename + "] FPS:" + std::to_string( fps_current )).c_str() );
+	//fps_frames++;
+	//Uint32 t = SDL_GetTicks();
+	//if ( fps_lasttime < t - 1000 )
+	//{
+	//	fps_lasttime = t;
+	//	fps_current = fps_frames;
+	//	fps_frames = 0;
+	//}
+	std::stringstream stream;
+	stream << std::fixed << std::setprecision( 2 ) << nes->get_emu_speed();
+	SDL_SetWindowTitle( window_main, ("[" + nes->filename + "] Speed: " + stream.str() + "x").c_str());
 
 	//last_update = SDL_GetTicks();
 
@@ -358,4 +362,24 @@ int Display::get_waveform_trigger( int channel )
 	}
 
 	return greatest_crossing;
+}
+
+void Display::apu_debug_solo( int channel )
+{
+	if ( apu_last_solo == channel )
+	{
+		apu_last_solo = -1;
+		for ( int c = 0; c < APU_CHANNELS; ++c )
+		{
+			nes->get_apu()->set_debug_mute( false, c );
+		}
+	}
+	else
+	{
+		apu_last_solo = channel;
+		for ( int c = 0; c < APU_CHANNELS; ++c )
+		{
+			nes->get_apu()->set_debug_mute( c != channel, c );
+		}
+	}
 }

@@ -410,11 +410,9 @@ bool PPU::run()
 
 u16 PPU::mirror_palette_addr( u16 addr )
 {
-	if ( (addr & 0x3F00) == 0x3F00 && (((addr >> 4) & 0xF)) % 2 != 0 && (addr & 0xF) % 4 == 0 )
-	{
-		addr -= 0x10;
-	}
-	return addr % 0x20;
+	addr %= 0x20;
+	if ((addr & 0x10) && !(addr % 0x4)) addr -= 0x10;
+	return addr;
 }
 
 u8 PPU::read_reg( u8 reg_id, int cycle )

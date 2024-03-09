@@ -102,7 +102,7 @@ void NES::check_refresh()
 	if ( t - display->last_update >= 1000 / FPS && SDL_GetQueuedAudioSize( apu->audio_device ) < 8192 )
 	{
 		auto *keystate = const_cast<Uint8 *>(SDL_GetKeyboardState( nullptr ));
-		EMU_SPEED = keystate[ SDL_SCANCODE_GRAVE ] ? 2.0 : 1.0;
+		//EMU_SPEED = keystate[ SDL_SCANCODE_GRAVE ] ? 2.0 : 1.0;
 
 		SDL_Event event;
 		while ( SDL_PollEvent( &event ) )
@@ -123,13 +123,21 @@ void NES::check_refresh()
 					SDL_HideWindow( window );
 				}
 			}
-			else if ( event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT )
+			else if ( event.type == SDL_MOUSEBUTTONDOWN )
 			{
-				SDL_Window* window = SDL_GetWindowFromID( event.button.windowID );
-				if ( SDL_GetWindowID(window) == 3 )
+				SDL_Window *window = SDL_GetWindowFromID( event.button.windowID );
+				if ( SDL_GetWindowID( window ) == 3 )
 				{
-					int channel = display->get_apu_channel_from_y( event.button.y );
-					apu->toggle_debug_mute( channel );
+					if ( event.button.button == SDL_BUTTON_LEFT )
+					{
+						int channel = display->get_apu_channel_from_y( event.button.y );
+						apu->toggle_debug_mute( channel );
+					}
+					else if ( event.button.button == SDL_BUTTON_RIGHT )
+					{
+						int channel = display->get_apu_channel_from_y( event.button.y );
+						display->apu_debug_solo( channel );
+					}
 				}
 			}
 			else if ( event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_ESCAPE )
@@ -147,10 +155,12 @@ void NES::check_refresh()
 
 		if ( !ui->get_show() )
 		{
-			ppu->output_pt();
-			ppu->output_nt();
 			display->refresh();
-			display->update_apu();
+
+			if ( DEBUG_PATTERNTABLE ) ppu->output_pt();
+			if ( DEBUG_NAMETABLE ) ppu->output_nt();
+			if ( DEBUG_APU ) display->update_apu();
+
 			cycles_delta -= CPF;
 		}
 		else

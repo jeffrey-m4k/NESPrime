@@ -128,6 +128,35 @@ void UI::handle_global( SDL_Event &e )
 			SDL_ShowCursor( SDL_DISABLE );
 		}
 	}
+	else if ( SDL_GetModState() & KMOD_CTRL )
+	{
+		switch ( e.key.keysym.scancode )
+		{
+			case SDL_SCANCODE_1:
+				nes->mod_emu_speed( 0.05 );
+				break;
+			case SDL_SCANCODE_2:
+				nes->mod_emu_speed( -0.05 );
+				break;
+			case SDL_SCANCODE_3:
+				nes->set_emu_speed( 1.0 );
+				break;
+			case SDL_SCANCODE_4:
+				nes->DEBUG_PATTERNTABLE = !nes->DEBUG_PATTERNTABLE;
+				nes->get_display()->set_show_window( nes->get_display()->get_pt_window(), nes->DEBUG_PATTERNTABLE );
+				break;
+			case SDL_SCANCODE_5:
+				nes->DEBUG_NAMETABLE = !nes->DEBUG_NAMETABLE;
+				nes->get_display()->set_show_window( nes->get_display()->get_nt_window(), nes->DEBUG_NAMETABLE );
+				break;
+			case SDL_SCANCODE_6:
+				nes->DEBUG_APU = !nes->DEBUG_APU;
+				nes->get_display()->set_show_window( nes->get_display()->get_apu_window(), nes->DEBUG_APU );
+				break;
+			default:
+				break;
+		}
+	}
 }
 
 void UI::show_rom_dialog()

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <string>
 #include <fstream>
 #include <nfd.h>
@@ -38,6 +39,16 @@ public:
 	void kill()
 	{
 		quit = true;
+	}
+
+	void set_emu_speed(float val) 
+	{
+		EMU_SPEED = std::clamp( (double)val, 0.0, 3.0 );
+	}
+
+	void mod_emu_speed(float mod) 
+	{
+		EMU_SPEED = std::clamp( (double)EMU_SPEED + mod, 0.0, 3.0 );
 	}
 
 	float get_emu_speed()
@@ -93,6 +104,10 @@ public:
 	void set_apu( APU *apu );
 
 	void set_ui( UI *ui );
+
+	bool DEBUG_PATTERNTABLE = false;
+	bool DEBUG_NAMETABLE = false;
+	bool DEBUG_APU = false;
 
 	std::ofstream out;
 	std::string filename;
