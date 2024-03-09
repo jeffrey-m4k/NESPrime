@@ -6,6 +6,11 @@
 class Square_5B : public Pulse
 {
 public:
+	Square_5B() : Pulse()
+	{
+		init_lookup();
+	}
+
 	void set_timer_hi( u8 hi ) override
 	{
 		period = GET_BITS( period, 0, 8 ) | (GET_BITS( hi, 0, 4 ) << 8);
@@ -39,6 +44,18 @@ public:
 		return seq_out * env_volume;
 	}
 
+	float get_output() override
+	{
+		u8 dac_in_curr = is_playing() ? get_dac_in() : dac_in_last;
+
+		dac_out_last += (DAC_LOOKUP[ dac_in_curr ] - DAC_LOOKUP[ dac_in_last ]) / 32.0;
+		dac_out_last *= 0.9999;
+
+		dac_in_last = dac_in_curr;
+
+		return debug_muted ? 0 : dac_out_last;
+	}
+
 	bool is_playing() override
 	{
 		return enabled;
@@ -49,6 +66,18 @@ private:
 	u16 period = 0;
 	u16 timer = 0;
 	u8 env_volume;
+
+	static constexpr int DAC_STEPS = 32;
+	float DAC_LOOKUP[ DAC_STEPS ];
+
+	void init_lookup()
+	{
+		for ( int i = 0; i < DAC_STEPS; ++i )
+		{
+			float dB = 1.5 * pow(i, 1.3);
+			DAC_LOOKUP[ i ] = pow( 10, dB / 20 );
+		}
+	}
 };
 
 class EC_5B : public ExpansionChip

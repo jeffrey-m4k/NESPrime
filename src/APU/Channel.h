@@ -75,7 +75,7 @@ public:
 
 	virtual u8 get_dac_in() = 0;
 
-	float get_output();
+	virtual float get_output();
 
 	float peek_output();
 
