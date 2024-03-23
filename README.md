@@ -8,32 +8,48 @@ NESPrime is a simple NES emulator written in C++ using the SDL2 library.
 
 ### Features
 - Mostly cycle-accurate CPU, PPU, and APU emulation
+- Expansion audio chip support (currently only Sunsoft 5B)
 - Save file support for cartridges with battery-backed RAM
 - Debug display for nametables, pattern tables, and APU channel waveforms
 - Supports the most popular mappers, with more on the way
 
 ### Keybinds
-- Console:
-  - A: Z
-  - B: X
-  - Select: TAB
-  - Start: ENTER
-  - D-Pad: Arrow Keys
-- Emulator:
-  - Pause: ESC
-  - Fullscreen: F11
-  - Fast-Forward: `
+- **Console:**
+
+| Keybind | Action |
+| --- | --- |
+| Z | A |
+| X | B |
+| TAB | Select|
+| ENTER | Start|
+| Arrow Keys | D-Pad |
+
+- **Emulation:**
+
+| Keybind | Action |
+| --- | --- |
+| ESC | Pause |
+| F11 | Toggle Fullscreen |
+| CTRL+1 | +5% Emulation Speed |
+| CTRL+2 | -5% Emulation Speed |
+| CTRL+3 | Reset Emulation Speed |
+| CTRL+4 | Pattern Table Viewer |
+| CTRL+5 | Nametable Viewer |
+| CTRL+6 | APU Channel Viewer |
  
 ### Supported Mappers:
-  - 0 (NROM) - *Donkey Kong, Super Mario Bros, Ice Climber...*
-  - 1 (MMC1) - *Metroid, Mega Man 2, Legend of Zelda...*
-  - 2 (UNROM) - *Mega Man, Castlevania, DuckTales...*
-  - 3 (CNROM) - *Back to the Future, Ghostbusters, Friday the 13th...*
-  - 4 (MMC3) - *Mega Man 3-6, Super Mario Bros 2+3, Kirby's Adventure...*
-  - 7 (AxROM) - *Battletoads, Solstice...*
-  - 11 (Color Dreams) - *Spiritual Warfare, Exodus...*
-  - 69 (FME-7) - *Batman: Return of the Joker, Gimmick!...*
-  - 228 - *Action 52*
+
+| Mapper | Example Games |
+| --- | --- |
+| 0 (NROM) | *Donkey Kong, Super Mario Bros, Ice Climber* |
+| 1 (MMC1) | *Metroid, Mega Man 2, Legend of Zelda* |
+| 2 (UNROM) | *Mega Man, Castlevania, DuckTales* |
+| 3 (CNROM) | *Back to the Future, Ghostbusters, Friday the 13th* |
+| 4 (MMC3) | *Mega Man 3-6, Super Mario Bros 2+3, Kirby's Adventure* |
+| 7 (AxROM) | *Battletoads, Solstice* |
+| 11 (Color Dreams) | *Spiritual Warfare, Exodus...* |
+| 69 (Sunsoft FME-7) | *Batman: Return of the Joker, Gimmick!* |
+| 228 (Active Ent.) | *Action 52* |
 
 ### Roadmap:
 - More mappers!
