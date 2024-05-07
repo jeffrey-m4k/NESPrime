@@ -66,6 +66,11 @@ public:
 
 	virtual void tick_timer();
 
+	void set_debug_mute( bool mute )
+	{
+		debug_muted = mute;
+	}
+
 	void toggle_debug_mute()
 	{
 		debug_muted = !debug_muted;

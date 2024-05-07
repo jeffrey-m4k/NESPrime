@@ -132,6 +132,43 @@ public:
 	{
 		return (square[ 0 ].get_output() + square[ 1 ].get_output() + square[ 2 ].get_output());
 	}
+
+	int get_channel_count() override
+	{
+		return 3;
+	}
+
+	std::string get_name() override
+	{
+		return "Sunsoft 5B";
+	}
+
+	std::string get_channel_name( int channel ) override
+	{
+		if ( channel >= 0 && channel <= 2 )
+		{
+			return "Square " + std::to_string(channel + 1);
+		}
+		else
+		{
+			return "";
+		}
+	}
+
+	std::array<u8, 3> get_debug_base_color() override
+	{
+		return { 0, 127, 255 };
+	}
+
+	std::array<u8, 3> get_debug_waveform_color() override
+	{
+		return { 0, 127, 255 };
+	}
+
+	float get_debug_damping( int channel ) override
+	{
+		return 2.0;
+	}
 private:
 	Square_5B square[ 3 ];
 };

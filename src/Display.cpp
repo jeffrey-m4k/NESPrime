@@ -1,4 +1,5 @@
 #include <format>
+#include <algorithm>
 #include "Display.h"
 #include "APU/APU.h"
 #include "PPU.h"
@@ -11,9 +12,9 @@ bool Display::init()
 	SDL_DisplayMode mode;
 	SDL_GetCurrentDisplayMode(0, &mode);
 
-	window_pt = SDL_CreateWindow( "Pattern Tables", 0, 28, 512, 256, SDL_WINDOW_RESIZABLE );
-	window_nt = SDL_CreateWindow( "Nametables", 0, 312, 512, 480, SDL_WINDOW_RESIZABLE );
-	window_apu = SDL_CreateWindow( "APU Channels", mode.w - 640, 28, 640, APU_WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE );
+	window_pt = SDL_CreateWindow( "Pattern Tables", 0, 28, 512, 256, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN );
+	window_nt = SDL_CreateWindow( "Nametables", 0, 312, 512, 480, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN );
+	window_apu = SDL_CreateWindow( "APU Channels", mode.w - 640, 28, 640, get_apu_window_height(), SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
 	window_main = SDL_CreateWindow( "NESPrime",
 	                                SDL_WINDOWPOS_CENTERED,
 	                                SDL_WINDOWPOS_CENTERED,
@@ -26,14 +27,11 @@ bool Display::init()
 		SDL_Log( "Unable to create window: %s", SDL_GetError() );
 		return false;
 	}
-    SDL_HideWindow(window_pt);
-    SDL_HideWindow(window_nt);
-	SDL_HideWindow( window_apu );
 
 	renderer_main = SDL_CreateRenderer( window_main, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE );
 	renderer_pt = SDL_CreateRenderer( window_pt, -1, SDL_RENDERER_ACCELERATED );
 	renderer_nt = SDL_CreateRenderer( window_nt, -1, SDL_RENDERER_ACCELERATED );
-	renderer_apu = SDL_CreateRenderer( window_apu, -1, SDL_RENDERER_ACCELERATED );
+	renderer_apu = SDL_CreateRenderer( window_apu, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE );
 
 	if ( renderer_main == nullptr || renderer_pt == nullptr || renderer_nt == nullptr || renderer_apu == nullptr )
 	{
@@ -44,27 +42,29 @@ bool Display::init()
 	SDL_RenderSetLogicalSize( renderer_main, WIDTH * 4, HEIGHT * 4 );
 	SDL_RenderSetLogicalSize( renderer_pt, 256, 128 );
 	SDL_RenderSetLogicalSize( renderer_nt, 512, 480 );
-	SDL_RenderSetLogicalSize( renderer_apu, 640, APU_WINDOW_HEIGHT );
+	SDL_RenderSetLogicalSize( renderer_apu, 640, get_apu_window_height() );
 
-	texture_game = SDL_CreateTexture( renderer_main, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, WIDTH,
-	                                  HEIGHT );
+	texture_game = SDL_CreateTexture( renderer_main, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, WIDTH, HEIGHT );
 	texture_pt = SDL_CreateTexture( renderer_pt, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, 256, 128 );
 	texture_nt = SDL_CreateTexture( renderer_nt, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, 512, 480 );
-	texture_apu = SDL_CreateTexture( renderer_apu, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, 640, APU_WINDOW_HEIGHT );
+	texture_apu = SDL_CreateTexture( renderer_apu, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, 640, get_apu_window_height() );
 	if ( texture_game == nullptr || texture_pt == nullptr || texture_nt == nullptr || texture_apu == nullptr )
 	{
 		SDL_Log( "Unable to create texture: %s", SDL_GetError() );
 		return false;
 	}
 
-
-	texture_main_base = SDL_CreateTexture( renderer_main, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, WIDTH * 4,
-	                                       HEIGHT * 4 );
-	texture_main_ui = SDL_CreateTexture( renderer_main, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, WIDTH * 4,
-	                                     HEIGHT * 4 );
+	texture_main_base = SDL_CreateTexture( renderer_main, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, WIDTH * 4, HEIGHT * 4 );
+	texture_main_ui = SDL_CreateTexture( renderer_main, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, WIDTH * 4, HEIGHT * 4 );
 	SDL_SetTextureBlendMode( texture_game, SDL_BLENDMODE_BLEND );
 	SDL_SetTextureBlendMode( texture_main_ui, SDL_BLENDMODE_BLEND );
 	SDL_SetRenderDrawBlendMode( renderer_main, SDL_BLENDMODE_BLEND );
+
+	texture_apu_base = SDL_CreateTexture( renderer_apu, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, 640, get_apu_window_height() );
+	texture_apu_overlay = SDL_CreateTexture( renderer_apu, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, 640, get_apu_window_height() );
+	SDL_SetTextureBlendMode( texture_apu, SDL_BLENDMODE_BLEND );
+	SDL_SetTextureBlendMode( texture_apu_overlay, SDL_BLENDMODE_BLEND );
+	SDL_SetRenderDrawBlendMode( renderer_apu, SDL_BLENDMODE_BLEND );
 
 	fps_lasttime = SDL_GetTicks();
 	fps_current = 0;
@@ -75,7 +75,7 @@ bool Display::init()
 
 void Display::reset()
 {
-	for ( int i = 0; i < APU_CHANNELS; ++i )
+	for ( int i = 0; i < apu_channels; ++i )
 	{
 		nes->get_apu()->set_debug_mute( apu_debug_muted[ i ], i );
 
@@ -120,11 +120,178 @@ bool Display::update_nt()
 	return true;
 }
 
+void Display::init_apu_display()
+{
+	std::vector<std::string> old_chip_names = apu_chip_names;
+
+	apu_channels = 5;
+	apu_chip_colors = {
+		{ 255, 255, 255 }
+	};
+	apu_channel_colors = {
+		{ 255, 127, 127 },
+		{ 255, 127, 127 },
+		{ 127, 255, 127 },
+		{ 127, 127, 255 },
+		{ 200, 200, 200 }
+	};
+	apu_chip_names = {
+		"Ricoh 2A03"
+	};
+	apu_channel_names = {
+		"Pulse 1",
+		"Pulse 2",
+		"Triangle",
+		"Noise",
+		"DPCM"
+	};
+	apu_ecs = {};
+
+	// TODO account for .nsf which may have multiple ECs at once
+	ExpansionChip *ec = this->get_nes()->get_cart()->get_mapper()->get_sound_chip();
+	if ( ec != nullptr )
+	{
+		apu_ecs.push_back( ec );
+	}
+
+	for ( ExpansionChip *ec : apu_ecs )
+	{
+		apu_channels += ec->get_channel_count();
+		apu_chip_names.push_back( ec->get_name() );
+		apu_chip_colors.push_back( ec->get_debug_base_color() );
+
+		for ( int c = 0; c < ec->get_channel_count(); ++c )
+		{
+			apu_channel_names.push_back( ec->get_channel_name( c ) );
+			apu_channel_colors.push_back( ec->get_debug_waveform_color() );
+		}
+	}
+
+	if ( old_chip_names != apu_chip_names )
+	{
+		int apu_window_height = get_apu_window_height();
+		SDL_SetWindowSize( window_apu, 640, apu_window_height );
+		SDL_RenderSetLogicalSize( renderer_apu, 640, apu_window_height );
+
+		SDL_DestroyTexture( texture_apu );
+		SDL_DestroyTexture( texture_apu_base );
+		SDL_DestroyTexture( texture_apu_overlay );
+		texture_apu = SDL_CreateTexture( renderer_apu, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, 640, apu_window_height );
+		texture_apu_base = SDL_CreateTexture( renderer_apu, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, 640, apu_window_height );
+		texture_apu_overlay = SDL_CreateTexture( renderer_apu, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, 640, apu_window_height );
+		SDL_SetTextureBlendMode( texture_apu, SDL_BLENDMODE_BLEND );
+		SDL_SetTextureBlendMode( texture_apu_overlay, SDL_BLENDMODE_BLEND );
+		SDL_SetRenderDrawBlendMode( renderer_apu, SDL_BLENDMODE_BLEND );
+
+		apu_texture_size = 640 * apu_window_height * 3;
+		delete[] apu_pixels;
+		delete[] apu_base_pixels;
+		apu_pixels = new u8[ apu_texture_size ]{ 0 };
+		apu_base_pixels = new u8[ apu_texture_size ]{ 0 };
+
+		create_apu_base_texture();
+
+		delete[] apu_debug_muted;
+		apu_debug_muted = new bool[apu_channels] { false };
+		for ( int i = 0; i < apu_channels; ++i )
+		{
+			if ( i < 5 )
+			{
+				apu_debug_muted[ i ] = nes->get_apu()->get_channel( i )->debug_muted;
+			}
+			else
+			{
+				apu_debug_muted[ i ] = apu_ecs[ get_chip_number( i ) - 1 ]->get_channel( get_channel_number( i ) )->debug_muted;
+			}
+		}
+	}
+}
+
+int Display::get_chip_number( int channel )
+{
+	if ( channel < 5 ) return 0;
+	else
+	{
+		int chip = 0;
+		int c = channel - 5;
+		do
+		{
+			ExpansionChip *ec = apu_ecs[ chip++ ];
+			c -= ec->get_channel_count();
+		}
+		while ( c >= 0 );
+
+		return chip;
+	}
+}
+
+int Display::get_channel_number( int channel )
+{
+	int chip = get_chip_number( channel );
+	if ( chip == 0 ) return channel;
+	else
+	{
+		channel -= 5;
+		for ( int i = 0; i < chip && channel >= apu_ecs[ i ]->get_channel_count(); ++i )
+		{
+			channel -= apu_ecs[ i ]->get_channel_count();
+		}
+
+		return channel;
+	}
+}
+
+void Display::draw_apu_text( const std::string &text, int x, int y, float scale, float opacity )
+{
+	int text_w, text_h;
+
+	TTF_Font *font_ui = nes->get_ui()->get_font();
+	SDL_Surface *text_surf = TTF_RenderText_Solid( nes->get_ui()->get_font(), text.c_str(), { 255, 255, 255 } );
+	SDL_SetSurfaceAlphaMod( text_surf, opacity * 255.0 );
+	SDL_Texture *text_texture = SDL_CreateTextureFromSurface( renderer_apu, text_surf );
+	TTF_SizeText( font_ui, text.c_str(), &text_w, &text_h );
+	SDL_Rect text_rect{ x, y - 4 * scale, text_w * scale, text_h * scale };
+	SDL_RenderCopy( renderer_apu, text_texture, nullptr, &text_rect );
+	SDL_FreeSurface( text_surf );
+	SDL_DestroyTexture( text_texture );
+}
+
+void Display::create_apu_base_texture()
+{
+	std::fill( apu_base_pixels, apu_base_pixels + apu_texture_size, 40 );
+
+	bool odd = true;
+
+	SDL_SetRenderTarget( renderer_apu, texture_apu_overlay );
+	SDL_RenderClear( renderer_apu );
+
+	for ( int c = 0; c < apu_channels; ++c )
+	{
+		draw_apu_text( apu_channel_names[ c ], 0, get_channel_top_y( c ), 0.5, 0.6 );
+		if ( get_channel_number( c ) == 0 )
+		{
+			odd = true;
+			draw_apu_text( apu_chip_names[ get_chip_number( c ) ], 0, get_channel_top_y( c ) - APU_CHANNEL_HEADER_HEIGHT, 1.0, 1.0 );
+		}
+
+		int top_left_idx = get_channel_top_y( c ) * 640 * 3;
+
+		int z = 0;
+		int h = 0;
+		std::generate( apu_base_pixels + top_left_idx, apu_base_pixels + top_left_idx + (640 * APU_CHANNEL_HEIGHT * 3), [&] { 
+			return apu_chip_colors[ get_chip_number( c ) ][ (z++ % 3) ] * (odd ? 0.06 : 0.03) * (1 - 0.3 * (h++ / (640 * 3) / (float)APU_CHANNEL_HEIGHT)); 
+		} );
+		odd = !odd;
+	}
+
+	SDL_SetRenderTarget( renderer_apu, nullptr );
+}
+
 bool Display::update_apu()
 {
-	std::fill(apu_pixels, apu_pixels + 640 * APU_WINDOW_HEIGHT * 3, 0);
+	std::copy( apu_base_pixels, apu_base_pixels + apu_texture_size, apu_pixels );
 
-	for ( int c = 0; c < APU_CHANNELS; ++c )
+	for ( int c = 0; c < apu_channels; ++c )
 	{
 		int trigger = get_waveform_trigger( c );
 		if ( trigger == -1 )
@@ -137,32 +304,31 @@ bool Display::update_apu()
 		{
 			float sample = -waveform_buffers[ c ][ trigger + s - 320 ] / 2.0 + 0.5;
 
-			u8 midline_rgb[ 3 ]{ 50, 50, 50 };
-			int mid_x = (s + c * 640 * APU_CHANNEL_HEIGHT + APU_CHANNEL_PADDING * 640 + 0.5 * 640 * APU_CHANNEL_WAVEFORM_HEIGHT) * 3;
-			memcpy( &apu_pixels[ mid_x ], midline_rgb, 3 );
+			std::array<u8, 3> midline_rgb = { 50, 50, 50 };
+			int mid_y = (s + get_channel_top_y( c ) * 640 + APU_CHANNEL_PADDING * 640 + 0.5 * 640 * APU_CHANNEL_WAVEFORM_HEIGHT) * 3;
+			std::copy( midline_rgb.begin(), midline_rgb.end(), apu_pixels + mid_y );
 
-			u8 rgb[ 3 ];
-			memcpy( rgb, APU_CHANNEL_COLORS[ c ], 3 );
+			std::array<u8, 3> rgb = apu_channel_colors[ c ];
 			if ( apu_debug_muted[ c ] )
 			{
 				for ( int i = 0; i < 3; ++i )
 				{
-					rgb[ i ] *= 0.5;
+					rgb[ i ] *= 0.25;
 				}
 			}
 
 			int diff = sample * APU_CHANNEL_WAVEFORM_HEIGHT
 				- last_sample * APU_CHANNEL_WAVEFORM_HEIGHT;
 
-			int start_y = c * APU_CHANNEL_HEIGHT + APU_CHANNEL_PADDING 
+			int start_y = get_channel_top_y( c ) + APU_CHANNEL_PADDING
 				+ (diff > 0 ? last_sample : sample) * APU_CHANNEL_WAVEFORM_HEIGHT;
 
 			for ( int d = 0; d <= abs(diff); ++d )
 			{
-				if ( (start_y + d < APU_WINDOW_HEIGHT) && (start_y + d >= 0) )
+				if ( (start_y + d < (get_apu_window_height())) && (start_y + d >= 0) )
 				{
 					int buf_idx_a = (s + 640 * (start_y + d)) * 3;
-					memcpy( &apu_pixels[ buf_idx_a ], rgb, 3 );
+					std::copy( rgb.begin(), rgb.end(), apu_pixels + buf_idx_a );
 				}
 			}
 
@@ -174,12 +340,18 @@ bool Display::update_apu()
 	void* texture_pixels = nullptr;
 	if ( SDL_LockTexture( texture_apu, nullptr, &texture_pixels, &texture_pitch ) == 0 )
 	{
-		memcpy( texture_pixels, apu_pixels, texture_pitch * APU_WINDOW_HEIGHT );
+		memcpy( texture_pixels, apu_pixels, texture_pitch * get_apu_window_height() );
 	}
 	SDL_UnlockTexture( texture_apu );
 
 	SDL_RenderClear( renderer_apu );
+
+	SDL_SetRenderTarget( renderer_apu, texture_apu_base );
 	SDL_RenderCopy( renderer_apu, texture_apu, nullptr, nullptr );
+	SDL_RenderCopy( renderer_apu, texture_apu_overlay, nullptr, nullptr );
+
+	SDL_SetRenderTarget( renderer_apu, nullptr );
+	SDL_RenderCopy( renderer_apu, texture_apu_base, nullptr, nullptr );
 	SDL_RenderPresent( renderer_apu );
 
 	return true;
@@ -295,7 +467,7 @@ void Display::write_nt_pixel( int tile, u8 x, u8 y, short nt, const u8 *rgb )
 const void Display::push_apu_samples( std::vector< float > &samples )
 {
 	samples[ 4 ] /= 8.0;
-	for ( int i = 0; i < samples.size() && i < APU_CHANNELS; ++i )
+	for ( int i = 0; i < samples.size() && i < 20; ++i )
 	{
 		enqueue_sample( i, samples[ i ] * 2.0 );
 	}
@@ -366,10 +538,11 @@ int Display::get_waveform_trigger( int channel )
 
 void Display::apu_debug_solo( int channel )
 {
+	if ( nes->get_apu()->get_channel( channel ) == nullptr ) return;
 	if ( apu_last_solo == channel )
 	{
 		apu_last_solo = -1;
-		for ( int c = 0; c < APU_CHANNELS; ++c )
+		for ( int c = 0; c < apu_channels; ++c )
 		{
 			nes->get_apu()->set_debug_mute( false, c );
 		}
@@ -377,9 +550,94 @@ void Display::apu_debug_solo( int channel )
 	else
 	{
 		apu_last_solo = channel;
-		for ( int c = 0; c < APU_CHANNELS; ++c )
+		for ( int c = 0; c < apu_channels; ++c )
 		{
 			nes->get_apu()->set_debug_mute( c != channel, c );
 		}
+	}
+}
+
+int Display::get_apu_channel_from_y( int y )
+{
+	for ( int i = 0; i < apu_channels; ++i )
+	{
+		int dist = y - get_channel_top_y( i );
+		if ( dist < APU_CHANNEL_HEIGHT && dist > 0 )
+			return i;
+	}
+	return -1;
+}
+
+int Display::get_apu_chip_from_y( int y )
+{
+	if ( y < APU_CHANNEL_HEADER_HEIGHT )
+	{
+		return 0;
+	}
+	else
+	{
+		int c = 5;
+		for ( int i = 0; i < apu_ecs.size(); ++i )
+		{
+			int start_y = (i + 1) * APU_CHANNEL_HEADER_HEIGHT + c * APU_CHANNEL_HEIGHT;
+			if ( y >= start_y && y < start_y + APU_CHANNEL_HEADER_HEIGHT )
+				return i + 1;
+			c += apu_ecs[ i ]->get_channel_count();
+		}
+	}
+	return -1;
+}
+
+void Display::on_left_clicked( int y )
+{
+	int c;
+	if ( (c = get_apu_channel_from_y( y )) != -1 )
+	{
+		nes->get_apu()->toggle_debug_mute( c );
+	}
+	else if ( (c = get_apu_chip_from_y( y )) != -1 )
+	{
+		bool is_any_on = false;
+		if ( c == 0 )
+		{
+			for ( int i = 0; i < 5; ++i )
+			{
+				if ( !nes->get_apu()->get_channel( i )->debug_muted )
+				{
+					is_any_on = true;
+					break;
+				}
+			}
+			for ( int i = 0; i < 5; ++i )
+			{
+				nes->get_apu()->set_debug_mute( is_any_on, i );
+				apu_debug_muted[ i ] = is_any_on;
+			}
+		}
+		else
+		{
+			for ( int i = 0; i < apu_ecs[ c - 1 ]->get_channel_count(); ++i )
+			{
+				if ( !apu_ecs[ c - 1 ]->get_channel( i )->debug_muted )
+				{
+					is_any_on = true;
+					break;
+				}
+			}
+			for ( int i = 0; i < apu_ecs[ c - 1 ]->get_channel_count(); ++i )
+			{
+				apu_ecs[ c - 1 ]->get_channel( i )->set_debug_mute( is_any_on );
+				apu_debug_muted[ 5 + i ] = is_any_on;
+			}
+		}
+	}
+}
+
+void Display::on_right_clicked( int y )
+{
+	int c;
+	if ( (c = get_apu_channel_from_y( y )) != -1 )
+	{
+		apu_debug_solo( c );
 	}
 }

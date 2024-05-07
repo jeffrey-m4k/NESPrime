@@ -67,6 +67,11 @@ public:
 		return irq_pending && !irq_disable;
 	}
 
+	ExpansionChip *get_sound_chip()
+	{
+		return sound_chip;
+	}
+
 	void set_sound_chip( ExpansionChip *chip )
 	{
 		sound_chip = chip;

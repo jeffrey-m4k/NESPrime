@@ -31,6 +31,7 @@ void APU::init()
 	dmc.set_cpu( get_nes()->get_cpu() );
 	Mapper *mapper = nes->get_cpu()->get_mapper();
 	mapper->set_sound_chip( get_chip( mapper->get_sound_chip_type() ) );
+	nes->get_display()->init_apu_display();
 }
 
 void APU::cycle()
@@ -71,17 +72,23 @@ void APU::sample()
 
 		if ( nes->DEBUG_APU )
 		{
-			nes->get_display()->push_apu_samples( std::vector<float>
-			{
+			std::vector<float> debug_waveforms = {
 				pulse[ 0 ].peek_output(),
 				pulse[ 1 ].peek_output(),
 				triangle.peek_output(),
 				noise.peek_output(),
-				dmc.peek_output(),
-				ec_5b.peek_output( 0 ),
-				ec_5b.peek_output( 1 ),
-				ec_5b.peek_output( 2 )
-			} );
+				dmc.peek_output()
+			};
+
+			for ( ExpansionChip *ec : nes->get_display()->get_ecs() )
+			{
+				for ( int c = 0; c < ec->get_channel_count(); ++c )
+				{
+					debug_waveforms.push_back( ec->peek_output( c ) / ec->get_debug_damping( c ) );
+				}
+			}
+
+			nes->get_display()->push_apu_samples(debug_waveforms);
 		}
 	}
 	
@@ -119,7 +126,7 @@ float APU::get_mixer()
 		0.00752 * (pulse[ 0 ].get_output() + pulse[ 1 ].get_output()) +
 		0.00851 * triangle.get_output() +
 		0.00494 * noise.get_output() +
-		0.00335 * dmc.get_output() +
+		0.00285 * dmc.get_output() +
 		0.0045 * ec_5b.get_output();
 
 	return sample;
@@ -225,7 +232,7 @@ Channel *APU::get_channel( int channel )
 {
 	if ( channel > 7 || channel < 0 )
 	{
-		channel = 0;
+		return nullptr;
 	}
 	switch ( channel )
 	{
@@ -250,6 +257,7 @@ Channel *APU::get_channel( int channel )
 
 void APU::set_debug_mute( bool mute, int channel )
 {
+	if ( get_channel( channel ) == nullptr ) return;
 	get_channel( channel )->debug_muted = mute;
 
 	bool *disp_arr = nes->get_display()->apu_debug_muted;
@@ -258,11 +266,13 @@ void APU::set_debug_mute( bool mute, int channel )
 
 void APU::toggle_debug_mute( int channel )
 {
+	if ( get_channel( channel ) == nullptr ) return;
 	set_debug_mute( !get_channel( channel )->debug_muted, channel );
 }
 
 bool APU::is_playing( int channel )
 {
+	if ( get_channel( channel ) == nullptr ) return false;
 	return get_channel( channel )->is_playing();
 }
 

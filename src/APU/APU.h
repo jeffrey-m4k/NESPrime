@@ -32,6 +32,8 @@ public:
 
 	bool is_playing( int channel );
 
+	Channel *get_channel( int channel );
+
 	ExpansionChip *get_chip( ECType type );
 
 private:
@@ -42,8 +44,6 @@ private:
 	void low_pass();
 
 	void downsample();
-
-	Channel *get_channel( int channel );
 
 public:
 	SDL_AudioDeviceID audio_device;

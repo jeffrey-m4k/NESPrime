@@ -112,6 +112,11 @@ public:
 		return state;
 	}
 
+	TTF_Font *get_font() const
+	{
+		return font_ui;
+	}
+
 private:
 	void set_render_draw_color( Color col, u8 alpha );
 

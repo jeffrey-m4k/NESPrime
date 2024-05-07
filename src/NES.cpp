@@ -130,13 +130,11 @@ void NES::check_refresh()
 				{
 					if ( event.button.button == SDL_BUTTON_LEFT )
 					{
-						int channel = display->get_apu_channel_from_y( event.button.y );
-						apu->toggle_debug_mute( channel );
+						display->on_left_clicked( event.button.y );
 					}
 					else if ( event.button.button == SDL_BUTTON_RIGHT )
 					{
-						int channel = display->get_apu_channel_from_y( event.button.y );
-						display->apu_debug_solo( channel );
+						display->on_right_clicked( event.button.y );
 					}
 				}
 			}
