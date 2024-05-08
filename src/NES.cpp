@@ -111,16 +111,26 @@ void NES::check_refresh()
 			{
 				quit = true;
 			}
-			else if ( event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE )
+			else if ( event.type == SDL_WINDOWEVENT )
 			{
-				SDL_Window *window = SDL_GetWindowFromID( event.window.windowID );
-				if ( SDL_GetWindowID( window ) == 4 )
+				if ( event.window.event == SDL_WINDOWEVENT_CLOSE )
 				{
-					quit = true;
+					SDL_Window *window = SDL_GetWindowFromID( event.window.windowID );
+					if ( SDL_GetWindowID( window ) == 4 )
+					{
+						quit = true;
+					}
+					else
+					{
+						SDL_HideWindow( window );
+					}
 				}
-				else
+				else if ( event.window.event == SDL_WINDOWEVENT_RESIZED )
 				{
-					SDL_HideWindow( window );
+					if ( SDL_GetWindowID( SDL_GetWindowFromID( event.window.windowID ) ) == 3 && ui->get_state() != UIState::MAIN )
+					{
+						display->on_apu_window_resized();
+					}
 				}
 			}
 			else if ( event.type == SDL_MOUSEBUTTONDOWN )

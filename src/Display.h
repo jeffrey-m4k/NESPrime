@@ -124,6 +124,8 @@ public:
 		return apu_ecs;
 	}
 
+	void on_apu_window_resized();
+
 public:
 	u32 last_update = 0;
 	bool *apu_debug_muted = new bool[5] { false };
@@ -142,9 +144,6 @@ private:
 	SDL_Texture *texture_nt;
 	SDL_Texture *texture_apu;
 
-	static const int APU_CHANNEL_HEIGHT = 80;
-	static const int APU_CHANNEL_PADDING = APU_CHANNEL_HEIGHT / 4;
-	static const int APU_CHANNEL_WAVEFORM_HEIGHT = APU_CHANNEL_HEIGHT - APU_CHANNEL_PADDING * 2;
 	static const int APU_CHANNEL_HEADER_HEIGHT = 20;
 
 	int apu_channels = 5;
@@ -155,9 +154,17 @@ private:
 	std::vector<ExpansionChip *> apu_ecs;
 
 	static const int APU_BUFFER_SIZE = 4000;
-	static const int APU_TRIGGER_WINDOW = APU_BUFFER_SIZE - 680;
-	static const int APU_TRIGGER_WINDOW_START = (APU_BUFFER_SIZE - APU_TRIGGER_WINDOW) / 2;
 	std::deque< float > waveform_buffers[ 20 ];
+
+	int get_apu_trigger_window()
+	{
+		return APU_BUFFER_SIZE - apu_window_width - 40;
+	}
+
+	int get_apu_trigger_window_start()
+	{
+		return (APU_BUFFER_SIZE - get_apu_trigger_window()) / 2;
+	}
 
 	int apu_last_solo = -1;
 
@@ -171,17 +178,44 @@ private:
 	
 	int get_channel_number( int channel );
 
-	int get_apu_window_height()
+	void update_apu_window_size()
 	{
-		return APU_CHANNEL_HEIGHT *apu_channels + APU_CHANNEL_HEADER_HEIGHT * (apu_ecs.size() + 1);
+		int x, y;
+		SDL_GetWindowPosition( window_apu, &x, &y );
+		SDL_GetRendererOutputSize( renderer_apu, &apu_window_width, &apu_window_height );
+		int snapped_width = std::ceil(apu_window_width / 4.0) * 4; // make width play nicely with SDL's 4-byte pitch alignment
+		SDL_SetWindowPosition( window_apu, x - (snapped_width - apu_window_width), y );
+		apu_window_width = snapped_width;
+	}
+
+	int get_apu_window_height_min()
+	{
+		return 40.0 * apu_channels + 20 * (apu_ecs.size() + 1);
 	}
 
 	int get_channel_top_y( int channel )
 	{
-		return channel * APU_CHANNEL_HEIGHT + (get_chip_number( channel ) + 1) * APU_CHANNEL_HEADER_HEIGHT;
+		return channel * get_apu_channel_height() + (get_chip_number(channel) + 1) * APU_CHANNEL_HEADER_HEIGHT;
+	}
+
+	int get_apu_channel_height()
+	{
+		return (apu_window_height - ((apu_ecs.size() + 1) * 20)) / (float)apu_channels;
+	}
+
+	int get_apu_channel_padding()
+	{
+		return get_apu_channel_height() / 4.0;
+	}
+
+	int get_apu_channel_waveform_height()
+	{
+		return get_apu_channel_height() - get_apu_channel_padding() * 2.0;
 	}
 
 	void draw_apu_text( const std::string &text, int x, int y, float scale, float opacity );
+
+	void reinit_apu_window();
 
 	u8 pixels[WIDTH * HEIGHT * 3] = { 0 };
 	u8 buffer[WIDTH * HEIGHT * 3] = { 0 };
@@ -192,6 +226,9 @@ private:
 	int apu_texture_size;
 	u8 *apu_pixels = new u8[ 1 ];
 	u8 *apu_base_pixels = new u8[ 1 ];
+
+	int apu_window_width = 640;
+	int apu_window_height = 320;
 
 	u32 fps_lasttime;
 	u32 fps_current;
