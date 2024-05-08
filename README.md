@@ -12,6 +12,7 @@ NESPrime is a simple NES emulator written in C++ using the SDL2 library.
 - Real-time oscilloscope viewer for APU and expansion chip channels
 - Supports the most popular mappers, with more on the way
 
+### Screenshots
 ![Screenshot with debug windows](https://github.com/jeffrey-m4k/NESPrime/assets/52832383/a5d32a30-514d-4e68-b788-9dd24b2be5d6)
 ![Oscilloscope view](https://github.com/jeffrey-m4k/NESPrime/assets/52832383/c1fd3185-e3e3-40ff-a661-071bc7fef32b)
 
