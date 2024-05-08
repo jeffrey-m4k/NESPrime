@@ -4,14 +4,16 @@
 # Overview
 NESPrime is a simple NES emulator written in C++ using the SDL2 library.
 
-![demo](https://github.com/jeffrey-m4k/NESPrime/assets/52832383/590795cf-dc30-4b3d-aed6-664979539a91)
-
 ### Features
 - Mostly cycle-accurate CPU, PPU, and APU emulation
 - Expansion audio chip support (currently only Sunsoft 5B)
 - Save file support for cartridges with battery-backed RAM
-- Debug display for nametables, pattern tables, and APU channel waveforms
+- Debug display for nametables and pattern tables
+- Real-time oscilloscope viewer for APU and expansion chip channels
 - Supports the most popular mappers, with more on the way
+
+![Screenshot with debug windows](https://github.com/jeffrey-m4k/NESPrime/assets/52832383/a5d32a30-514d-4e68-b788-9dd24b2be5d6)
+![Oscilloscope view](https://github.com/jeffrey-m4k/NESPrime/assets/52832383/c1fd3185-e3e3-40ff-a661-071bc7fef32b)
 
 ### Keybinds
 - **Console:**
