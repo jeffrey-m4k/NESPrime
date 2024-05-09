@@ -286,7 +286,16 @@ void Display::create_apu_base_texture()
 		int z = 0;
 		int h = 0;
 		std::generate( apu_base_pixels + top_left_idx, apu_base_pixels + top_left_idx + (apu_window_width * get_apu_channel_height() * 3), [&] {
-			return apu_chip_colors[ get_chip_number( c ) ][ (z++ % 3) ] * (odd ? 0.06 : 0.03) * (1 - 0.3 * (h++ / (apu_window_width * 3) / (float)get_apu_channel_height()));
+			double out;
+			if ( h / (apu_window_width * 3) == (get_apu_channel_height() / 2) )
+				out = 50.0;
+			else if ( h / 3 % apu_window_width == (apu_window_width / 2) ) 
+				out = 20.0;
+			else 
+				out = apu_chip_colors[ get_chip_number( c ) ][ (z % 3) ] * (odd ? 0.06 : 0.03) * (1 - 0.3 * (h / (apu_window_width * 3) / (float)get_apu_channel_height()));
+			h++;
+			z++;
+			return out;
 		} );
 		odd = !odd;
 	}
@@ -305,9 +314,6 @@ bool Display::update_apu()
 		{
 			continue;
 		}
-
-		int mid_y = (get_channel_top_y( c ) + get_apu_channel_height() / 2) * apu_window_width * 3;
-		std::fill( apu_pixels + mid_y, apu_pixels + mid_y + apu_window_width * 3, 50 );
 
 		float last_sample = -waveform_buffers[ c ][ trigger - (apu_window_width / 2 - 1) ] / 2.0 + 0.5;
 		for ( int s = 0; s < apu_window_width; ++s )

@@ -181,10 +181,8 @@ private:
 	void update_apu_window_size()
 	{
 		int x, y;
-		SDL_GetWindowPosition( window_apu, &x, &y );
 		SDL_GetRendererOutputSize( renderer_apu, &apu_window_width, &apu_window_height );
 		int snapped_width = std::ceil(apu_window_width / 4.0) * 4; // make width play nicely with SDL's 4-byte pitch alignment
-		SDL_SetWindowPosition( window_apu, x - (snapped_width - apu_window_width), y );
 		apu_window_width = snapped_width;
 	}
 

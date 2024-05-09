@@ -116,16 +116,20 @@ void UI::handle_global( SDL_Event &e )
 {
 	if ( e.key.keysym.scancode == SDL_SCANCODE_F11 )
 	{
-		SDL_Window *win = nes->get_display()->get_main_window();
-		if ( SDL_GetWindowFlags( win ) & SDL_WINDOW_FULLSCREEN_DESKTOP )
+		Uint32 window_id;
+		if ( (window_id = e.key.windowID) != 0 )
 		{
-			SDL_SetWindowFullscreen( win, 0 );
-			SDL_ShowCursor( SDL_ENABLE );
-		}
-		else
-		{
-			SDL_SetWindowFullscreen( win, SDL_WINDOW_FULLSCREEN_DESKTOP );
-			SDL_ShowCursor( SDL_DISABLE );
+			SDL_Window *win = SDL_GetWindowFromID( window_id );
+			if ( SDL_GetWindowFlags( win ) & SDL_WINDOW_FULLSCREEN_DESKTOP )
+			{
+				SDL_SetWindowFullscreen( win, 0 );
+				//SDL_ShowCursor( SDL_ENABLE );
+			}
+			else
+			{
+				SDL_SetWindowFullscreen( win, SDL_WINDOW_FULLSCREEN_DESKTOP );
+				//SDL_ShowCursor( SDL_DISABLE );
+			}
 		}
 	}
 	else if ( SDL_GetModState() & KMOD_CTRL )
