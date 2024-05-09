@@ -7,13 +7,12 @@
 #include <vector>
 #include <deque>
 
-#include "EC_5B.h"
+#include "SC_2A03.h"
+#include "SC_5B.h"
 
 class APU : public Component
 {
 public:
-	friend class FrameSequencer;
-
 	APU();
 
 	~APU();
@@ -26,15 +25,7 @@ public:
 
 	u8 read_status();
 
-	void set_debug_mute( bool mute, int channel );
-
-	void toggle_debug_mute( int channel );
-
-	bool is_playing( int channel );
-
-	Channel *get_channel( int channel );
-
-	ExpansionChip *get_chip( ECType type );
+	SoundChip *get_chip( SCType type );
 
 private:
 	void sample();
@@ -50,14 +41,6 @@ public:
 private:
 	SDL_AudioSpec audio_spec;
 
-	Pulse pulse[2];
-	Triangle triangle;
-	Noise noise;
-    DMC dmc;
-	FrameSequencer frameSeq;
-
-	bool tick_fs = false;
-
 	std::deque< float > sample_buffer_raw;
 	std::vector< float > sample_buffer;
 	float low_pass_last = 0;
@@ -66,6 +49,7 @@ private:
 	static constexpr float SAMPLE_RATE = 44100.0;
 	static constexpr float sample_per = 21477272 / SAMPLE_RATE / 12.0;
 
-	// === EXPANSION CHIPS ===
-	EC_5B ec_5b;
+	// === SOUND CHIPS ===
+	SC_2A03 sc_2a03;
+	SC_5B sc_5b;
 };

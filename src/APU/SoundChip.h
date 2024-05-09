@@ -4,7 +4,7 @@
 #include "Channel.h"
 #include "../BitUtils.h"
 
-class ExpansionChip
+class SoundChip
 {
 public:
 	virtual Channel* get_channel( int channel ) = 0;
@@ -26,9 +26,9 @@ public:
 
 	virtual std::string get_channel_name( int channel ) = 0;
 
-	virtual std::array<u8, 3> get_debug_base_color() = 0;
+	virtual std::array<u8, 3> get_debug_base_color( int channel ) = 0;
 
-	virtual std::array<u8, 3> get_debug_waveform_color() = 0;
+	virtual std::array<u8, 3> get_debug_waveform_color( int channel ) = 0;
 
 	virtual float get_debug_damping( int channel ) = 0;
 };

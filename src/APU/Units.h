@@ -2,7 +2,7 @@
 
 #include "../BitUtils.h"
 
-class APU;
+class SC_2A03;
 
 class Divider
 {
@@ -125,9 +125,9 @@ public:
 		}
 	};
 
-	void set_apu( APU *a )
+	void set_chip( SC_2A03 *sc_2a03 )
 	{
-		apu = a;
+		sc = sc_2a03;
 	};
 private:
 	void set_interrupt();
@@ -145,5 +145,5 @@ private:
 
 	bool irq_disable = false;
 
-	APU *apu;
+	SC_2A03 *sc;
 };

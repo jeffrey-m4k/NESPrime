@@ -9,13 +9,14 @@ enum MIRRORING
 	Horizontal, Vertical, OneScreen_LB, OneScreen_HB, FourScreen
 };
 
-enum class ECType
+enum class SCType
 {
 	NONE,
+	RICOH_2A03,
 	SUNSOFT_5B
 };
 
-class ExpansionChip;
+class SoundChip;
 
 class Mapper
 {
@@ -67,19 +68,19 @@ public:
 		return irq_pending && !irq_disable;
 	}
 
-	ExpansionChip *get_sound_chip()
+	SoundChip *get_sound_chip()
 	{
 		return sound_chip;
 	}
 
-	void set_sound_chip( ExpansionChip *chip )
+	void set_sound_chip( SoundChip *chip )
 	{
 		sound_chip = chip;
 	}
 
-	virtual const ECType get_sound_chip_type()
+	virtual const SCType get_sound_chip_type()
 	{
-		return ECType::NONE;
+		return SCType::NONE;
 	}
 
 protected:
@@ -101,7 +102,7 @@ protected:
 	bool irq_pending = false;
 	bool irq_disable = false;
 
-	ExpansionChip *sound_chip = nullptr;
+	SoundChip *sound_chip = nullptr;
 };
 
 
@@ -264,9 +265,9 @@ public:
 
 	void handle_cpu_cycle() override;
 
-	const ECType get_sound_chip_type() override
+	const SCType get_sound_chip_type() override
 	{
-		return ECType::SUNSOFT_5B;
+		return SCType::SUNSOFT_5B;
 	}
 
 private:

@@ -126,18 +126,18 @@ void FrameSequencer::set_interrupt()
 
 void FrameSequencer::do_length_clock()
 {
-	apu->pulse[0].clock_length();
-	apu->pulse[1].clock_length();
-	apu->pulse[0].tick_sweep();
-	apu->pulse[1].tick_sweep();
-	apu->triangle.clock_length();
-	apu->noise.clock_length();
+	sc->pulse[0].clock_length();
+	sc->pulse[1].clock_length();
+	sc->pulse[0].tick_sweep();
+	sc->pulse[1].tick_sweep();
+	sc->triangle.clock_length();
+	sc->noise.clock_length();
 }
 
 void FrameSequencer::do_env_clock()
 {
-	apu->pulse[0].clock_env();
-	apu->pulse[1].clock_env();
-	apu->triangle.tick_lc();
-	apu->noise.clock_env();
+	sc->pulse[0].clock_env();
+	sc->pulse[1].clock_env();
+	sc->triangle.tick_lc();
+	sc->noise.clock_env();
 }

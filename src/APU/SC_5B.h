@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../NES.h"
-#include "ExpansionChip.h"
+#include "SoundChip.h"
 
 class Square_5B : public Pulse
 {
@@ -80,7 +80,7 @@ private:
 	}
 };
 
-class EC_5B : public ExpansionChip
+class SC_5B : public SoundChip
 {
 public:
 	Channel *get_channel( int channel ) override
@@ -130,7 +130,7 @@ public:
 
 	float get_output() override
 	{
-		return (square[ 0 ].get_output() + square[ 1 ].get_output() + square[ 2 ].get_output());
+		return 0.0045 * (square[ 0 ].get_output() + square[ 1 ].get_output() + square[ 2 ].get_output());
 	}
 
 	int get_channel_count() override
@@ -155,12 +155,12 @@ public:
 		}
 	}
 
-	std::array<u8, 3> get_debug_base_color() override
+	std::array<u8, 3> get_debug_base_color( int channel ) override
 	{
 		return { 0, 127, 255 };
 	}
 
-	std::array<u8, 3> get_debug_waveform_color() override
+	std::array<u8, 3> get_debug_waveform_color( int channel ) override
 	{
 		return { 0, 127, 255 };
 	}

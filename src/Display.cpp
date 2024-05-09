@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "Display.h"
 #include "APU/APU.h"
+#include "APU/SoundChip.h"
 #include "PPU.h"
 #include "UI.h"
 #include <SDL.h>
@@ -77,7 +78,7 @@ void Display::reset()
 {
 	for ( int i = 0; i < apu_channels; ++i )
 	{
-		nes->get_apu()->set_debug_mute( apu_debug_muted[ i ], i );
+		apu_debug_mute_set( i, apu_debug_muted[ i ] );
 
 		for ( int i = 0; i < APU_BUFFER_SIZE; ++i )
 		{
@@ -124,46 +125,32 @@ void Display::init_apu_display()
 {
 	std::vector<std::string> old_chip_names = apu_chip_names;
 
-	apu_channels = 5;
-	apu_chip_colors = {
-		{ 255, 255, 255 }
-	};
-	apu_channel_colors = {
-		{ 255, 127, 127 },
-		{ 255, 127, 127 },
-		{ 127, 255, 127 },
-		{ 127, 127, 255 },
-		{ 200, 200, 200 }
-	};
-	apu_chip_names = {
-		"Ricoh 2A03"
-	};
-	apu_channel_names = {
-		"Pulse 1",
-		"Pulse 2",
-		"Triangle",
-		"Noise",
-		"DPCM"
-	};
-	apu_ecs = {};
+	apu_channels = 0;
+	apu_chip_colors = {};
+	apu_channel_colors = {};
+	apu_chip_names = {};
+	apu_channel_names = {};
+	apu_chips = {};
+
+	apu_chips.push_back( this->get_nes()->get_apu()->get_chip( SCType::RICOH_2A03 ) );
 
 	// TODO account for .nsf which may have multiple ECs at once
-	ExpansionChip *ec = this->get_nes()->get_cart()->get_mapper()->get_sound_chip();
-	if ( ec != nullptr )
+	SoundChip *sc = this->get_nes()->get_cart()->get_mapper()->get_sound_chip();
+	if ( sc != nullptr )
 	{
-		apu_ecs.push_back( ec );
+		apu_chips.push_back( sc );
 	}
 
-	for ( ExpansionChip *ec : apu_ecs )
+	for ( SoundChip *sc : apu_chips )
 	{
-		apu_channels += ec->get_channel_count();
-		apu_chip_names.push_back( ec->get_name() );
-		apu_chip_colors.push_back( ec->get_debug_base_color() );
+		apu_channels += sc->get_channel_count();
+		apu_chip_names.push_back( sc->get_name() );
+		apu_chip_colors.push_back( sc->get_debug_base_color( 0 ) );
 
-		for ( int c = 0; c < ec->get_channel_count(); ++c )
+		for ( int c = 0; c < sc->get_channel_count(); ++c )
 		{
-			apu_channel_names.push_back( ec->get_channel_name( c ) );
-			apu_channel_colors.push_back( ec->get_debug_waveform_color() );
+			apu_channel_names.push_back( sc->get_channel_name( c ) );
+			apu_channel_colors.push_back( sc->get_debug_waveform_color( c ) );
 		}
 	}
 
@@ -178,14 +165,7 @@ void Display::init_apu_display()
 		apu_debug_muted = new bool[apu_channels] { false };
 		for ( int i = 0; i < apu_channels; ++i )
 		{
-			if ( i < 5 )
-			{
-				apu_debug_muted[ i ] = nes->get_apu()->get_channel( i )->debug_muted;
-			}
-			else
-			{
-				apu_debug_muted[ i ] = apu_ecs[ get_chip_number( i ) - 1 ]->get_channel( get_channel_number( i ) )->debug_muted;
-			}
+			apu_debug_muted[ i ] = apu_chips[ get_chip_number( i ) ]->get_channel( get_channel_number( i ) )->debug_muted;
 		}
 	}
 }
@@ -216,36 +196,20 @@ void Display::reinit_apu_window()
 
 int Display::get_chip_number( int channel )
 {
-	if ( channel < 5 ) return 0;
-	else
+	int chip = 0;
+	do
 	{
-		int chip = 0;
-		int c = channel - 5;
-		do
-		{
-			ExpansionChip *ec = apu_ecs[ chip++ ];
-			c -= ec->get_channel_count();
-		}
-		while ( c >= 0 );
-
-		return chip;
+		SoundChip *sc = apu_chips[ chip++ ];
+		channel -= sc->get_channel_count();
 	}
+	while ( channel >= 0 );
+
+	return chip - 1;
 }
 
 int Display::get_channel_number( int channel )
 {
-	int chip = get_chip_number( channel );
-	if ( chip == 0 ) return channel;
-	else
-	{
-		channel -= 5;
-		for ( int i = 0; i < chip && channel >= apu_ecs[ i ]->get_channel_count(); ++i )
-		{
-			channel -= apu_ecs[ i ]->get_channel_count();
-		}
-
-		return channel;
-	}
+	return channel - get_first_channel( get_chip_number( channel ) );
 }
 
 void Display::draw_apu_text( const std::string &text, int x, int y, float scale, float opacity )
@@ -548,25 +512,20 @@ int Display::get_waveform_trigger( int channel )
 	return greatest_crossing;
 }
 
+void Display::apu_debug_mute_set( int channel, bool mute )
+{
+	apu_chips[ get_chip_number( channel ) ]->get_channel( get_channel_number( channel ) )->debug_muted = mute;
+	apu_debug_muted[ channel ] = mute;
+}
+
 void Display::apu_debug_solo( int channel )
 {
-	if ( nes->get_apu()->get_channel( channel ) == nullptr ) return;
-	if ( apu_last_solo == channel )
+	if ( get_chip_number( channel ) == -1 ) return;
+	for ( int c = 0; c < apu_channels; ++c )
 	{
-		apu_last_solo = -1;
-		for ( int c = 0; c < apu_channels; ++c )
-		{
-			nes->get_apu()->set_debug_mute( false, c );
-		}
+		apu_debug_mute_set( c, apu_last_solo == channel ? false : (c != channel) );
 	}
-	else
-	{
-		apu_last_solo = channel;
-		for ( int c = 0; c < apu_channels; ++c )
-		{
-			nes->get_apu()->set_debug_mute( c != channel, c );
-		}
-	}
+	apu_last_solo = apu_last_solo == channel ? -1 : channel;
 }
 
 int Display::get_apu_channel_from_y( int y )
@@ -582,20 +541,13 @@ int Display::get_apu_channel_from_y( int y )
 
 int Display::get_apu_chip_from_y( int y )
 {
-	if ( y < APU_CHANNEL_HEADER_HEIGHT )
+	int c = 0;
+	for ( int i = 0; i < apu_chips.size(); ++i )
 	{
-		return 0;
-	}
-	else
-	{
-		int c = 5;
-		for ( int i = 0; i < apu_ecs.size(); ++i )
-		{
-			int start_y = (i + 1) * APU_CHANNEL_HEADER_HEIGHT + c * get_apu_channel_height();
-			if ( y >= start_y && y < start_y + APU_CHANNEL_HEADER_HEIGHT )
-				return i + 1;
-			c += apu_ecs[ i ]->get_channel_count();
-		}
+		int start_y = i * APU_CHANNEL_HEADER_HEIGHT + c * get_apu_channel_height();
+		if ( y >= start_y && y < start_y + APU_CHANNEL_HEADER_HEIGHT )
+			return i;
+		c += apu_chips[ i ]->get_channel_count();
 	}
 	return -1;
 }
@@ -605,42 +557,23 @@ void Display::on_left_clicked( int y )
 	int c;
 	if ( (c = get_apu_channel_from_y( y )) != -1 )
 	{
-		nes->get_apu()->toggle_debug_mute( c );
+		apu_debug_mute_set( c, !(apu_chips[ get_chip_number( c ) ]->get_channel( get_channel_number( c ) )->debug_muted) );
 	}
 	else if ( (c = get_apu_chip_from_y( y )) != -1 )
 	{
 		bool is_any_on = false;
-		if ( c == 0 )
+		for ( int i = 0; i < apu_chips[ c ]->get_channel_count(); ++i )
 		{
-			for ( int i = 0; i < 5; ++i )
+			if ( !apu_chips[ c ]->get_channel( i )->debug_muted )
 			{
-				if ( !nes->get_apu()->get_channel( i )->debug_muted )
-				{
-					is_any_on = true;
-					break;
-				}
-			}
-			for ( int i = 0; i < 5; ++i )
-			{
-				nes->get_apu()->set_debug_mute( is_any_on, i );
-				apu_debug_muted[ i ] = is_any_on;
+				is_any_on = true;
+				break;
 			}
 		}
-		else
+		for ( int i = 0; i < apu_chips[ c ]->get_channel_count(); ++i )
 		{
-			for ( int i = 0; i < apu_ecs[ c - 1 ]->get_channel_count(); ++i )
-			{
-				if ( !apu_ecs[ c - 1 ]->get_channel( i )->debug_muted )
-				{
-					is_any_on = true;
-					break;
-				}
-			}
-			for ( int i = 0; i < apu_ecs[ c - 1 ]->get_channel_count(); ++i )
-			{
-				apu_ecs[ c - 1 ]->get_channel( i )->set_debug_mute( is_any_on );
-				apu_debug_muted[ 5 + i ] = is_any_on;
-			}
+			apu_chips[ c ]->get_channel( i )->set_debug_mute( is_any_on );
+			apu_debug_muted[ get_first_channel( c ) + i ] = is_any_on;
 		}
 	}
 }
@@ -658,4 +591,14 @@ void Display::on_apu_window_resized()
 {
 	update_apu_window_size();
 	reinit_apu_window();
+}
+
+int Display::get_first_channel( int chip )
+{
+	int c = 0;
+	for ( int i = 0; i < chip; ++i )
+	{
+		c += apu_chips[ i ]->get_channel_count();
+	}
+	return c;
 }

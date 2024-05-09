@@ -10,7 +10,7 @@
 #define WIDTH 256
 #define HEIGHT 240
 
-class ExpansionChip;
+class SoundChip;
 
 class Display : public Component
 {
@@ -117,11 +117,13 @@ public:
 
 	void init_apu_display();
 
+	void apu_debug_mute_set( int channel, bool mute );
+
 	void apu_debug_solo( int channel );
 
-	std::vector<ExpansionChip *> get_ecs()
+	std::vector<SoundChip *> get_apu_chips()
 	{
-		return apu_ecs;
+		return apu_chips;
 	}
 
 	void on_apu_window_resized();
@@ -151,7 +153,7 @@ private:
 	std::vector<std::array<u8, 3>> apu_channel_colors;
 	std::vector<std::string> apu_chip_names;
 	std::vector<std::string> apu_channel_names;
-	std::vector<ExpansionChip *> apu_ecs;
+	std::vector<SoundChip *> apu_chips;
 
 	static const int APU_BUFFER_SIZE = 4000;
 	std::deque< float > waveform_buffers[ 20 ];
@@ -178,6 +180,8 @@ private:
 	
 	int get_channel_number( int channel );
 
+	int get_first_channel( int chip );
+
 	void update_apu_window_size()
 	{
 		int x, y;
@@ -188,7 +192,7 @@ private:
 
 	int get_apu_window_height_min()
 	{
-		return 40.0 * apu_channels + 20 * (apu_ecs.size() + 1);
+		return 40.0 * apu_channels + 20 * (apu_chips.size());
 	}
 
 	int get_channel_top_y( int channel )
@@ -198,7 +202,7 @@ private:
 
 	int get_apu_channel_height()
 	{
-		return (apu_window_height - ((apu_ecs.size() + 1) * 20)) / (float)apu_channels;
+		return (apu_window_height - (apu_chips.size() * 20)) / (float)apu_channels;
 	}
 
 	int get_apu_channel_padding()

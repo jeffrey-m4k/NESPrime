@@ -1,5 +1,5 @@
 #include "Mapper.h"
-#include "APU/ExpansionChip.h"
+#include "APU/SoundChip.h"
 
 Mapper::Mapper( Cartridge *cart ) : cartridge( cart )
 {
