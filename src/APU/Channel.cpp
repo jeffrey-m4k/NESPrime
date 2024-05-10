@@ -76,7 +76,7 @@ void Pulse::tick_sweep()
 
 void Triangle::tick_timer()
 {
-	if ( timer.clock() && length > 0 && linear_counter > 0 )
+	if ( timer.clock() && is_playing() )
 	{
 		seq_out = sequencer.next();
 	}
