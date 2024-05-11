@@ -650,7 +650,7 @@ u8 PPU::read( int addr )
 {
 	if ( addr >= 0x3F00 )
 	{
-		return palette[mirror_palette_addr( addr )];
+		return palette[mirror_palette_addr( addr )] & 0x3F;
 	}
 	else
 	{
