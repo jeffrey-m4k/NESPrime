@@ -133,7 +133,7 @@ u8 *Mapper1::map_ppu( u16 address )
 	}
 	else
 	{
-		return chr_mem + (bank_chr & ~0x1) * 0x2000 + address;
+		return chr_mem + (bank_chr & ~0x1) * 0x1000 + address;
 	}
 }
 
@@ -163,11 +163,6 @@ void Mapper1::handle_write( u8 data, u16 addr )
 			if ( addr >= 0xE000 )
 			{ // PRG bank switch
 				bank_prg = shifter_out & 0xF;
-				if ( !(bankmode_prg & 0x2) )
-				{
-					bank_prg &= ~0x1;
-				} // if 32KB prg banking, ignore low bit
-
 			}
 			else if ( addr >= 0xC000 )
 			{ // CHR bank-2 switch
