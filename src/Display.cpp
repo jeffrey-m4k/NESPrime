@@ -131,6 +131,7 @@ void Display::init_apu_display()
 	apu_chip_names = {};
 	apu_channel_names = {};
 	apu_chips = {};
+	apu_channel_complex = {};
 
 	apu_chips.push_back( this->get_nes()->get_apu()->get_chip( SCType::RICOH_2A03 ) );
 
@@ -151,8 +152,15 @@ void Display::init_apu_display()
 		{
 			apu_channel_names.push_back( sc->get_channel_name( c ) );
 			apu_channel_colors.push_back( sc->get_debug_waveform_color( c ) );
+			apu_channel_complex.push_back( sc->is_waveform_complex( c ) );
 		}
 	}
+
+	apu_chip_names.push_back( "Output" );
+	apu_chip_colors.push_back( { 0, 0, 0 } );
+	apu_channel_names.push_back( "" );
+	apu_channel_colors.push_back( { 0, 255, 0 } );
+	apu_channel_complex.push_back( true );
 
 	if ( old_chip_names != apu_chip_names )
 	{
@@ -196,6 +204,9 @@ void Display::reinit_apu_window()
 
 int Display::get_chip_number( int channel )
 {
+	if ( channel == apu_channels )
+		return apu_chips.size();
+
 	int chip = 0;
 	do
 	{
@@ -209,6 +220,9 @@ int Display::get_chip_number( int channel )
 
 int Display::get_channel_number( int channel )
 {
+	if ( channel == apu_channels )
+		return 0;
+
 	return channel - get_first_channel( get_chip_number( channel ) );
 }
 
@@ -236,7 +250,7 @@ void Display::create_apu_base_texture()
 	SDL_SetRenderTarget( renderer_apu, texture_apu_overlay );
 	SDL_RenderClear( renderer_apu );
 
-	for ( int c = 0; c < apu_channels; ++c )
+	for ( int c = 0; c < apu_channels + 1; ++c )
 	{
 		draw_apu_text( apu_channel_names[ c ], 0, get_channel_top_y( c ), 0.5, 0.6 );
 		if ( get_channel_number( c ) == 0 )
@@ -271,7 +285,7 @@ bool Display::update_apu()
 {
 	std::copy( apu_base_pixels, apu_base_pixels + apu_texture_size, apu_pixels );
 
-	for ( int c = 0; c < apu_channels; ++c )
+	for ( int c = 0; c < apu_channels + 1; ++c )
 	{
 		int trigger = get_waveform_trigger( c );
 		if ( trigger == -1 )
@@ -285,7 +299,7 @@ bool Display::update_apu()
 			float sample = -waveform_buffers[ c ][ trigger + s - (apu_window_width / 2) ] / 2.0 + 0.5;
 
 			std::array<u8, 3> rgb = apu_channel_colors[ c ];
-			if ( apu_debug_muted[ c ] )
+			if ( c != apu_channels && apu_debug_muted[ c ] )
 			{
 				for ( int i = 0; i < 3; ++i )
 				{
@@ -301,7 +315,8 @@ bool Display::update_apu()
 
 			for ( int d = 0; d <= abs(diff); ++d )
 			{
-				if ( (start_y + d < (apu_window_height)) && (start_y + d >= 0) )
+				int y = start_y + d;
+				if ( (y < (apu_window_height)) && (y >= 0) && y >= get_channel_top_y( c ) && y < (get_channel_top_y( c ) + get_apu_channel_height()) )
 				{
 					int buf_idx_a = (s + apu_window_width * (start_y + d)) * 3;
 					std::copy( rgb.begin(), rgb.end(), apu_pixels + buf_idx_a );
@@ -473,9 +488,11 @@ int Display::get_waveform_trigger( int channel )
 	float greatest_rise = 0;
 	int greatest_crossing = get_apu_trigger_window_start();
 
-	float last = waveform_buffers[ channel ][ get_apu_trigger_window_start()];
+	float start = get_apu_trigger_window_start();
+	float end = start + get_apu_trigger_window();
+	float last = waveform_buffers[ channel ][ start ];
 
-	for ( int i = get_apu_trigger_window_start() + 1; i < get_apu_trigger_window_start() + get_apu_trigger_window(); ++i )
+	for ( int i = start + 1; i < end; ++i )
 	{
 		float sample = waveform_buffers[ channel ][ i ];
 		if ( sample >= last )
@@ -487,11 +504,11 @@ int Display::get_waveform_trigger( int channel )
 			{
 				zero_crossed = true;
 				crossed_at = i;
-				if ( channel != 4 )
+				if ( !apu_channel_complex[ channel ] )
 				{
 					return crossed_at;
-				}
 			}
+		}
 		}
 		else
 		{
@@ -502,7 +519,7 @@ int Display::get_waveform_trigger( int channel )
 					greatest_rise = rise;
 					greatest_crossing = crossed_at;
 				}
-				rise = 0;
+			rise = 0;
 				zero_crossed = false;
 			}
 		}

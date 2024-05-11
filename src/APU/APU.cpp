@@ -67,8 +67,11 @@ void APU::sample()
 				}
 			}
 
+			debug_waveforms.push_back( sample_buffer_raw[0] );
+
 			nes->get_display()->push_apu_samples(debug_waveforms);
 		}
+		sample_buffer_raw.clear();
 	}
 	
 	if ( sample_buffer.size() >= 100 )
@@ -89,14 +92,13 @@ void APU::low_pass()
 	{
 		float filtered = alpha * (sample_buffer_raw[i] + low_pass_last);
 		low_pass_last = filtered;
-		sample_buffer_raw[ i ] = filtered;
+		sample_buffer_raw[ i ] = filtered * (1 - alpha);
 	}
 }
 
 void APU::downsample()
 {
 	sample_buffer.push_back( sample_buffer_raw[0]);
-	sample_buffer_raw.clear();
 }
 
 float APU::get_mixer()

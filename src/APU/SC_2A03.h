@@ -68,6 +68,11 @@ public:
 		}
 	}
 
+	bool is_waveform_complex( int channel ) override
+	{
+		return channel == 4;
+	}
+
 	float get_debug_damping( int channel ) override
 	{
 		return 1.0;

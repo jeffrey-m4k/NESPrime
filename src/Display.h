@@ -154,6 +154,7 @@ private:
 	std::vector<std::string> apu_chip_names;
 	std::vector<std::string> apu_channel_names;
 	std::vector<SoundChip *> apu_chips;
+	std::vector<bool> apu_channel_complex;
 
 	static const int APU_BUFFER_SIZE = 4000;
 	std::deque< float > waveform_buffers[ 20 ];
@@ -192,7 +193,7 @@ private:
 
 	int get_apu_window_height_min()
 	{
-		return 40.0 * apu_channels + 20 * (apu_chips.size());
+		return 40.0 * (apu_channels + 1) + 20 * (apu_chips.size() + 1);
 	}
 
 	int get_channel_top_y( int channel )
@@ -202,7 +203,7 @@ private:
 
 	int get_apu_channel_height()
 	{
-		return (apu_window_height - (apu_chips.size() * 20)) / (float)apu_channels;
+		return (apu_window_height - ((apu_chips.size() + 1) * 20)) / ((float)apu_channels + 1);
 	}
 
 	int get_apu_channel_padding()

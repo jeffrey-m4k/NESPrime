@@ -30,5 +30,7 @@ public:
 
 	virtual std::array<u8, 3> get_debug_waveform_color( int channel ) = 0;
 
+	virtual bool is_waveform_complex( int channel ) = 0;
+
 	virtual float get_debug_damping( int channel ) = 0;
 };
