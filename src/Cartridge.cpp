@@ -51,7 +51,15 @@ bool Cartridge::open_file( const nfdchar_t *filename )
 	pos = 0;
 	nes->out << "===== " << filename << " =====\n\n";
 	file.open( filename, ios::in | ios::binary );
-	return file.is_open();
+	if ( file.is_open() )
+	{
+		return true;
+	}
+	else
+	{
+		err = CartError::FILE_OPEN;
+		return false;
+	}
 }
 
 bool Cartridge::read_header()
@@ -61,26 +69,77 @@ bool Cartridge::read_header()
 		// Check for valid NES header
 		if ( buffer[ 0 ] != 0x4E || buffer[ 1 ] != 0x45 || buffer[ 2 ] != 0x53 || buffer[ 3 ] != 0x1A )
 		{
-			return false;
-		}
-
-		// Check if file is iNES, return false if not
-		// TODO add NES2.0 support (low priority)
-		if ( GET_BITS( buffer[ 7 ], 2, 2 ) != 0x0 )
-		{
+			err = CartError::FILE_HEADER;
 			return false;
 		}
 
 		// Read PRG and CHR ROM sizes in bytes
 		prg_size = buffer[4] * 0x4000;
+		prg_ram_size = buffer[8] == 0 ? 0x2000 : buffer[8] * 0x2000;
 		chr_size = buffer[5] * 0x2000;
+		chr_ram_size = chr_size ? 0 : 0x2000;
 
 		mapper_num = GET_BITS( buffer[ 6 ], 4, 4 ) | (GET_BITS( buffer[ 7 ], 4, 4 ) << 4);
-		// TODO support other mappers
+
 		for ( int i = 0; i < 4; i++ )
 		{
 			flags[ 0 ][ i ] = GET_BIT( buffer[ 6 ], i );
 			flags[ 1 ][ i ] = GET_BIT( buffer[ 7 ], i );
+		}
+
+		// NES2.0 format
+		if ( GET_BITS( buffer[ 7 ], 2, 2 ) != 0x0 )
+		{
+			nes2 = true;
+			mapper_num |= (GET_BITS( buffer[ 8 ], 0, 4 ) << 8);
+			submapper_num = GET_BITS( buffer[ 8 ], 4, 4 );
+
+			// PRG ROM MSB
+			if ( GET_BITS( buffer[ 9 ], 0, 4 ) != 0xF )
+			{
+				prg_size = (buffer[ 4 ] | (GET_BITS( buffer[ 9 ], 0, 4 ) << 8)) * 0x4000;
+			}
+			else
+			{
+				prg_size = std::pow( 2, GET_BITS( buffer[ 4 ], 2, 6 ) ) * (GET_BITS( buffer[ 4 ], 0, 2 ) * 2 + 1);
+			}
+
+			// CHR ROM MSB
+			if ( GET_BITS( buffer[ 9 ], 4, 4 ) != 0xF )
+			{
+				chr_size = (buffer[ 5 ] | (GET_BITS( buffer[ 9 ], 4, 4 ) << 8)) * 0x2000;
+			}
+			else
+			{
+				chr_size = std::pow( 2, GET_BITS( buffer[ 5 ], 2, 6 ) ) * (GET_BITS( buffer[ 5 ], 0, 2 ) * 2 + 1);
+			}
+
+			if ( GET_BITS( buffer[ 10 ], 0, 4 ) != 0x0 )
+			{
+				prg_ram_size = 64 << GET_BITS( buffer[ 10 ], 0, 4 );
+			}
+			else if( GET_BITS( buffer[ 10 ], 4, 4 ) != 0x0 )
+			{
+				// TODO make this less hacky - separate volatile from non-volatile RAM if needed
+				prg_ram_size = 64 << GET_BITS( buffer[ 10 ], 4, 4 );
+			}
+			else
+			{
+				prg_ram_size = 0;
+			}
+
+			if ( GET_BITS( buffer[ 11 ], 0, 4 ) != 0x0 )
+			{
+				chr_ram_size = 64 << GET_BITS( buffer[ 11 ], 0, 4 );
+			}
+			else if ( GET_BITS( buffer[ 11 ], 4, 4 ) != 0x0 )
+			{
+				chr_ram_size = 64 << GET_BITS( buffer[ 11 ], 4, 4 );
+			}
+			else
+			{
+				chr_ram_size = 0;
+			}
 		}
 
 		battery_ram = flags[ 0 ][ 1 ];
@@ -88,10 +147,11 @@ bool Cartridge::read_header()
 		flush_hex( nes->out, buffer, 16 );
 		return true;
 	}
+	err = CartError::FILE_READ;
 	return false;
 }
 
-void Cartridge::load()
+bool Cartridge::load()
 {
 	pos = 0;
 	if ( read_header() )
@@ -104,13 +164,13 @@ void Cartridge::load()
 			pos += 512;
 		}
 
+		nes->out << endl;
+
 		prg_rom.init( prg_size );
 		read_next( prg_rom, 0, prg_size );
 
-		prg_ram.init( 0x8000 );
+		prg_ram.init( prg_ram_size );
 		load_sram();
-
-		nes->out << endl;
 
 		if ( chr_size )
 		{
@@ -119,9 +179,10 @@ void Cartridge::load()
 		}
 		else
 		{
-			chr_size = 0x2000;
-			chr_ram.init( chr_size );
+			chr_ram.init( chr_ram_size );
 		}
+
+		nt_ram.init( 0x800 );
 
 		CPU *cpu = nes->get_cpu();
 		PPU *ppu = nes->get_ppu();
@@ -156,7 +217,8 @@ void Cartridge::load()
 				mapper = new Mapper228( this );
 				break;
 			default:
-				exit( EXIT_FAILURE );
+				err = CartError::MAPPER;
+				return false;
 		}
 
 		if ( flags[0][3] )
@@ -174,11 +236,10 @@ void Cartridge::load()
 
 
 		// TODO add PlayChoice-10 support (low priority)
+
+		return true;
 	}
-	else
-	{
-		nes->out << "Invalid NES file\n";
-	}
+	return false;
 }
 
 void Cartridge::print_metadata()
@@ -235,5 +296,23 @@ void Cartridge::load_sram()
 
 			save_file.read( (char *)prg_ram.get_mem(), length );
 		}
+	}
+}
+
+std::string Cartridge::get_error()
+{
+	switch ( err )
+	{
+		case CartError::FILE_OPEN:
+			return "Failed to open file";
+		case CartError::FILE_READ:
+			return "Failed to read file";
+		case CartError::FILE_HEADER:
+			return "Invalid file header";
+		case CartError::MAPPER:
+			return "Unsupported mapper: " + std::to_string( mapper_num );
+		case CartError::NONE:
+		default:
+			return "";
 	}
 }

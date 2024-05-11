@@ -147,6 +147,7 @@ private:
 	nfdchar_t *outPath = nullptr;
 	Uint32 start_tick;
 	bool show_splash = true;
+	bool cart_error = false;
 
 	// === STATE: PAUSE
 	std::vector< Button * > pause_buttons;

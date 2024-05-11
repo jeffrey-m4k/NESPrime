@@ -44,7 +44,7 @@ private:
 	u8 clock_counter = 0;
 	u16 period = 0;
 	u16 timer = 0;
-	u8 env_volume;
+	u8 env_volume = 0;
 
 	static constexpr int DAC_STEPS = 32;
 	float DAC_LOOKUP[ DAC_STEPS ];

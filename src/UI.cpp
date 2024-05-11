@@ -1,4 +1,5 @@
 #include "UI.h"
+#include "Cartridge.h"
 #include "data.h"
 
 using namespace std::filesystem;
@@ -172,8 +173,14 @@ void UI::show_rom_dialog()
         if ( nes->run( outPath ) )
         {
             state = UIState::PAUSE;
-            needs_update = true;
-        }
+			cart_error = false;
+		}
+		else
+		{
+			state = UIState::MAIN;
+			cart_error = true;
+		}
+		needs_update = true;
     }
 }
 
@@ -219,6 +226,11 @@ void UI::draw()
 			{
 				draw_text( "PRESS ENTER TO SELECT ROM", 512, 480, 2,
 				           HAlign::CENTER, VAlign::CENTER );
+				if ( cart_error )
+				{
+					std::string error_str = nes->get_cart()->get_error();
+					draw_text( error_str, 512, 640, 1, HAlign::CENTER, VAlign::CENTER, Color::RED );
+				}
 			}
 		}
 		needs_update = false;

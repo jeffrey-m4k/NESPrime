@@ -11,6 +11,7 @@ Mapper::Mapper( Cartridge *cart ) : cartridge( cart )
 	chr_rom = cartridge->get_chr_rom()->get_mem();
 	prg_ram = cartridge->get_prg_ram()->get_mem();
 	chr_ram = cartridge->get_chr_ram()->get_mem();
+	nt_ram = cartridge->get_nt_ram()->get_mem();
 	mirroring = Horizontal;
 }
 
@@ -52,25 +53,24 @@ u8 *Mapper::map_ppu( u16 addr )
 	}
 	addr &= ~0x1000; // $3000-$3FFF is a mirror of $2000-$2FFF
 	addr -= 0x2000;
-	u8 *base = ppu_mem;
 	switch ( mirroring )
 	{
 		case Horizontal:
-			return base + (addr & ~0x400) % 0x800 + 0x400 * (addr / 0x800);
+			return ppu_mem + (addr & ~0x400) % 0x800 + 0x400 * (addr / 0x800);
 		case Vertical:
-			return base + (addr & ~0x800);
+			return ppu_mem + (addr & ~0x800);
 		case OneScreen_LB:
-			return base + addr % 0x400;
+			return ppu_mem + addr % 0x400;
 		case OneScreen_HB:
-			return base + addr % 0x400 + 0x400;
+			return ppu_mem + addr % 0x400 + 0x400;
 		case FourScreen:
-			if ( addr < 0x2000 )
+			if ( addr < 0x800 )
 			{
-				return base + addr;
+				return ppu_mem + addr;
 			}
 			else
 			{
-				return chr_ram + addr;
+				return nt_ram + (addr - 0x800);
 			}
 		default:
 			return nullptr;

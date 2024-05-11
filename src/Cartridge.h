@@ -7,6 +7,15 @@
 #include "Memory.h"
 #include "Component.h"
 
+enum class CartError
+{
+	NONE,
+	FILE_OPEN,
+	FILE_READ,
+	FILE_HEADER,
+	MAPPER,
+};
+
 class Mapper;
 
 class Cartridge : public Component
@@ -18,7 +27,7 @@ public:
 
 	~Cartridge();
 
-	void load();
+	bool load();
 
 	bool open_file( const nfdchar_t *filename );
 
@@ -34,7 +43,7 @@ public:
 
 	u32 get_chr_size() const
 	{
-		return chr_size;
+		return chr_size == 0 ? chr_ram_size : chr_size;
 	}
 
 	Memory *get_prg_rom()
@@ -57,12 +66,19 @@ public:
 		return &chr_ram;
 	}
 
+	Memory *get_nt_ram()
+	{
+		return &nt_ram;
+	}
+
 	Mapper *get_mapper()
 	{
 		return mapper;
 	}
 
 	void dump_sram();
+
+	std::string get_error();
 
 private:
 	bool read_next( u32 bytes = 1 );
@@ -82,9 +98,9 @@ private:
 	u8 buffer[BUFFER_SIZE];
 	std::ifstream file;
 	u32 pos = 0;
-	u32 prg_size;
-	u32 chr_size;
-	u8 mapper_num;
+	uint64_t prg_size;
+	uint64_t chr_size;
+	u16 mapper_num;
 	bool flags[2][4];
 
 	Memory prg_rom;
@@ -94,5 +110,15 @@ private:
 	Memory chr_ram;
 	Mapper *mapper = nullptr;
 
+	Memory nt_ram;
+
 	bool battery_ram = false;
+
+	CartError err = CartError::NONE;
+
+	// === NES2.0 ===
+	bool nes2 = false;
+	u32 prg_ram_size = 0;
+	u32 chr_ram_size = 0;
+	u8 submapper_num = 0;
 };

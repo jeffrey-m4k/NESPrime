@@ -85,7 +85,7 @@ public:
 
 protected:
 	Cartridge *cartridge;
-	MIRRORING mirroring;
+	MIRRORING mirroring = Horizontal;
 	u8 bank_prg = 0;
 	u8 bank_chr = 0;
 	u32 prg_size;
@@ -97,6 +97,7 @@ protected:
 	u8 *chr_rom;
 	u8 *prg_ram;
 	u8 *chr_ram;
+	u8 *nt_ram;
 
 	bool force_mirroring = false;
 	bool irq_pending = false;

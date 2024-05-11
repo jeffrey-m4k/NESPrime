@@ -81,9 +81,8 @@ bool NES::run( const nfdchar_t *fn )
 	filename = fn;
 	filename = filename.substr( filename.find_last_of( "/\\" ) + 1 );
 	filename = filename.substr( 0, filename.find_last_of( '.' ) );
-	if ( cart->open_file( fn ) )
+	if ( cart->open_file( fn ) && cart->load() )
 	{
-		cart->load();
 		cpu->init();
 		apu->init();
 		display->reset();
@@ -101,7 +100,7 @@ void NES::check_refresh()
 	Uint32 t = SDL_GetTicks();
 	if ( t - display->last_update >= 1000 / FPS && SDL_GetQueuedAudioSize( apu->audio_device ) < 8192 )
 	{
-		auto *keystate = const_cast<Uint8 *>(SDL_GetKeyboardState( nullptr ));
+		//auto *keystate = const_cast<Uint8 *>(SDL_GetKeyboardState( nullptr ));
 		//EMU_SPEED = keystate[ SDL_SCANCODE_GRAVE ] ? 2.0 : 1.0;
 
 		SDL_Event event;
