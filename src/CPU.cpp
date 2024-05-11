@@ -39,6 +39,15 @@ void CPU::init()
 
 bool CPU::run()
 {
+	if ( oam_cycles > 0 )
+	{
+		skip_cycles( 1, READ );
+		int i = 256 - oam_cycles--;
+		nes->get_ppu()->write_oam( i, read( create_address( i, memory_regs[0x14]), false));
+		skip_cycles( 1, WRITE );
+		return true;
+	}
+
 	oper_set = false;
 	polled_interrupt = false;
 	pending_interrupt = -1;
@@ -877,16 +886,10 @@ bool CPU::write( const u16 addr, const u8 data )
 	else if ( addr == 0x4014 )
 	{
 		// OAM DMA
-
 		memory_regs[0x14] = data;
 		// TODO properly check get/put cycles using APU clock sync (using even-get odd-put for now)
-		skip_cycles( 1 + (cycle % 2 != 0), READ );
-
-		for ( int i = 0; i <= 0xFF; i++ )
-		{
-			nes->get_ppu()->write_oam( i, read( create_address( i, data ), false ) );
-		}
-		skip_cycles( 512, WRITE );
+		skip_cycles( 1 + (cycle % 2 != 0), HALT );
+		oam_cycles = 256;
 	}
 	else if ( addr >= 0x4000 && addr < 0x4018 )
 	{

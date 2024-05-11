@@ -431,4 +431,6 @@ private:
 
 	std::ostringstream regs_log;
 	static constexpr bool logging = false;
+
+	int oam_cycles = 0;
 };
