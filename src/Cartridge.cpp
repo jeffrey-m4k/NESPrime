@@ -213,6 +213,9 @@ bool Cartridge::load()
 			case 69:
 				mapper = new Mapper69( this );
 				break;
+			case 184:
+				mapper = new Mapper184( this );
+				break;
 			case 228:
 				mapper = new Mapper228( this );
 				break;

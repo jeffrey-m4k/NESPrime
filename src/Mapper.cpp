@@ -551,6 +551,31 @@ void Mapper69::handle_cpu_cycle()
 	}
 }
 
+// === MAPPER 184 (Sunsoft-1) ===
+
+u8 *Mapper184::map_ppu( u16 address )
+{
+	if ( address >= 0x2000 )
+	{
+		return Mapper::map_ppu( address );
+	}
+
+	u8 *chr_mem = chr_ram == nullptr ? chr_rom : chr_ram;
+
+	return chr_mem + 0x1000 * (address < 0x1000 ? bank_chr : bank_chr_2) + (address & ~0x1000);
+}
+
+void Mapper184::handle_write( u8 data, u16 addr )
+{
+	if ( addr >= 0x8000 || addr < 0x6000 )
+	{
+		return;
+	}
+
+	bank_chr = GET_BITS( data, 0, 3 ) % (chr_size / 0x1000);
+	bank_chr_2 = (GET_BITS( data, 4, 3 ) | 0x4) % (chr_size / 0x1000);
+}
+
 // === MAPPER 228 (Active Enterprises) ===
 
 u8 *Mapper228::map_cpu( u16 address )

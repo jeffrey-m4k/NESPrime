@@ -18,6 +18,8 @@ enum class SCType
 
 class SoundChip;
 
+// === MAPPER 0 (NROM) ===
+
 class Mapper
 {
 public:
@@ -106,6 +108,7 @@ protected:
 	SoundChip *sound_chip = nullptr;
 };
 
+// === MAPPER 1 (MMC1) ===
 
 class Mapper1 : public Mapper
 {
@@ -133,6 +136,7 @@ private:
 	long last_write = 0;
 };
 
+// === MAPPER 2 (UNROM) ===
 
 class Mapper2 : public Mapper
 {
@@ -167,6 +171,7 @@ public:
 	}
 };
 
+// === MAPPER 3 (CNROM) ===
 
 // TODO emulate bus conflicts (e.g. Cybernoid)
 class Mapper3 : public Mapper
@@ -195,6 +200,7 @@ public:
 	}
 };
 
+// === MAPPER 4 (MMC3) ===
 
 class Mapper4 : public Mapper
 {
@@ -225,6 +231,7 @@ private:
 	bool irq_reload = false;
 };
 
+// === MAPPER 7 (AxROM) ===
 
 class Mapper7 : public Mapper
 {
@@ -237,6 +244,7 @@ public:
 	void handle_write( u8 data, u16 addr ) override;
 };
 
+// === MAPPER 11 (Color Dreams) ===
 
 class Mapper11 : public Mapper
 {
@@ -251,6 +259,7 @@ public:
 	void handle_write( u8 data, u16 addr ) override;
 };
 
+// === MAPPER 69 (FME-7) ===
 
 class Mapper69 : public Mapper
 {
@@ -285,6 +294,23 @@ private:
 	bool sound_chip_write_enable = true;
 };
 
+// === MAPPER 184 (Sunsoft-1) ===
+
+class Mapper184 : public Mapper
+{
+public:
+	explicit Mapper184( Cartridge *cart ) : Mapper( cart )
+	{};
+
+	u8 *map_ppu( u16 address ) override;
+
+	void handle_write( u8 data, u16 addr ) override;
+
+private:
+	u8 bank_chr_2 = 1;
+};
+
+// === MAPPER 228 (Active Enterprises) ===
 
 class Mapper228 : public Mapper
 {

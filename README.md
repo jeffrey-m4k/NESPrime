@@ -50,8 +50,9 @@ NESPrime is a simple NES emulator written in C++ using the SDL2 library.
 | 3 (CNROM) | *Back to the Future, Ghostbusters, Friday the 13th* |
 | 4 (MMC3) | *Mega Man 3-6, Super Mario Bros 2+3, Kirby's Adventure* |
 | 7 (AxROM) | *Battletoads, Solstice* |
-| 11 (Color Dreams) | *Spiritual Warfare, Exodus...* |
+| 11 (Color Dreams) | *Spiritual Warfare, Exodus* |
 | 69 (Sunsoft FME-7) | *Batman: Return of the Joker, Gimmick!* |
+| 184 (Sunsoft-1) | *The Wing of Madoola, Atlantis no Nazo* |
 | 228 (Active Ent.) | *Action 52* |
 
 ### Roadmap:
