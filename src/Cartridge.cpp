@@ -144,7 +144,6 @@ bool Cartridge::read_header()
 
 		battery_ram = flags[ 0 ][ 1 ];
 
-		flush_hex( nes->out, buffer, 16 );
 		return true;
 	}
 	err = CartError::FILE_READ;
@@ -247,10 +246,16 @@ bool Cartridge::load()
 
 void Cartridge::print_metadata()
 {
+	nes->out << "Header: ";
+	flush_hex( nes->out, buffer, 16 );
+	nes->out << "Header format: " << (nes2 ? "NES2.0" : "iNES") << "\n\n";
 	nes->out << "PRG ROM size: " << prg_size << " bytes\n";
+	nes->out << "PRG RAM size: " << prg_ram_size << " bytes\n";
 	nes->out << "CHR ROM size: " << chr_size << " bytes\n";
+	nes->out << "CHR RAM size: " << chr_ram_size << " bytes\n\n";
 	nes->out << "Mapper: " << (int) mapper_num << "\n";
-	nes->out << "Flags:\n";
+	if ( submapper_num ) { nes->out << "\tSubmapper: " << submapper_num << "\n"; }
+	nes->out << "\nFlags:\n";
 	nes->out << "0: ";
 	for ( int i = 0; i < 4; i++ )
 	{

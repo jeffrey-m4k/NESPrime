@@ -31,10 +31,7 @@ void CPU::init()
 	}
 
 	reg.pc = create_address( read( 0xFFFC ), read( 0xFFFD ) );
-	//reg.pc = 0xC000;// uncomment for nestest
 	reg.p = 0x24; // Initialize STATUS register to 00100100
-
-	nes->out << "\n\n===== CPU INITIALIZED =====";
 }
 
 bool CPU::run()

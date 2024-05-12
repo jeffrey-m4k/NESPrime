@@ -27,8 +27,7 @@ inline void flush_hex( std::ostream &out, u8 *buffer, const u16 &size )
 		{
 			out << setw( 2 ) << hex << (int) buffer[row * 16 + col] << " ";
 		}
-		out << endl;
+		out << dec << endl;
 	}
-	out << dec << endl;
 	out.fill( ' ' );
 }
