@@ -28,6 +28,8 @@ bool Display::init()
 		SDL_Log( "Unable to create window: %s", SDL_GetError() );
 		return false;
 	}
+	SDL_SetWindowMinimumSize( window_pt, 512, 256 );
+	SDL_SetWindowMinimumSize( window_nt, 512, 480 );
 
 	renderer_main = SDL_CreateRenderer( window_main, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE );
 	renderer_pt = SDL_CreateRenderer( window_pt, -1, SDL_RENDERER_ACCELERATED );
@@ -267,7 +269,7 @@ void Display::create_apu_base_texture()
 			double out;
 			if ( h / (apu_window_width * 3) == (get_apu_channel_height() / 2) )
 				out = 50.0;
-			else if ( h / 3 % apu_window_width == (apu_window_width / 2) ) 
+			else if ( h / 3 % apu_window_width == (apu_window_width / 2) )
 				out = 20.0;
 			else 
 				out = apu_chip_colors[ get_chip_number( c ) ][ (z % 3) ] * (odd ? 0.06 : 0.03) * (1 - 0.3 * (h / (apu_window_width * 3) / (float)get_apu_channel_height()));
@@ -315,11 +317,20 @@ bool Display::update_apu()
 
 			for ( int d = 0; d <= abs(diff); ++d )
 			{
-				int y = start_y + d;
-				if ( (y < (apu_window_height)) && (y >= 0) && y >= get_channel_top_y( c ) && y < (get_channel_top_y( c ) + get_apu_channel_height()) )
+				for ( int dy = 0; dy < 2; ++dy )
 				{
-					int buf_idx_a = (s + apu_window_width * (start_y + d)) * 3;
-					std::copy( rgb.begin(), rgb.end(), apu_pixels + buf_idx_a );
+					int y = start_y + d + dy;
+					if ( (y < (apu_window_height)) && (y >= 0) && y >= get_channel_top_y( c ) && y < (get_channel_top_y( c ) + get_apu_channel_height()) )
+					{
+						for ( int dx = 0; dx < 2; ++dx )
+						{
+							if ( s + dx < apu_window_width )
+							{
+								int buf_idx_a = (s + dx + apu_window_width * y) * 3;
+								std::copy( rgb.begin(), rgb.end(), apu_pixels + buf_idx_a );
+							}
+						}
+					}
 				}
 			}
 
@@ -466,6 +477,13 @@ const void Display::push_apu_samples( std::vector< float > &samples )
 
 void Display::enqueue_sample( int channel, float sample )
 {
+	if ( channel != apu_channels && waveform_buffers[ channel ].size() > 0 )
+	{
+		// Artificially low-pass the displayed channel waveforms
+		float omega_c = 2 * M_PI * 18000.0 / 44100.0;
+		float alpha = omega_c / (omega_c + 1.0f);
+		sample = alpha * sample + (1 - alpha) * waveform_buffers[ channel ].back();
+	}
 	waveform_buffers[ channel ].push_back( sample );
 	if ( waveform_buffers[ channel ].size() > APU_BUFFER_SIZE )
 	{
@@ -480,53 +498,56 @@ int Display::get_waveform_trigger( int channel )
 		return -1;
 	}
 
-	float rise = 0;
-	int grace = 0;
-	bool zero_crossed = false;
-	int crossed_at = 0;
-
-	float greatest_rise = 0;
-	int greatest_crossing = get_apu_trigger_window_start();
+	// Adapted from SidWizPlus's peak speed trigger
+	// https://github.com/maxim-zhao/SidWizPlus/blob/master/LibSidWiz/Triggers/PeakSpeedTrigger.cs
 
 	float start = get_apu_trigger_window_start();
 	float end = start + get_apu_trigger_window();
 	float last = waveform_buffers[ channel ][ start ];
 
-	for ( int i = start + 1; i < end; ++i )
-	{
-		float sample = waveform_buffers[ channel ][ i ];
-		if ( sample >= last )
-		{
-			rise += sample - last;
-			grace = 0;
+	float peak_value = FLT_MIN;
+	int shortest_dist = INT_MAX;
+	int result = start;
+	int i = start;
 
-			if ( sample > 0 && last <= 0 && !zero_crossed )
-			{
-				zero_crossed = true;
-				crossed_at = i;
-				if ( !apu_channel_complex[ channel ] )
-				{
-					return crossed_at;
-			}
-		}
-		}
-		else
+	float lowest_dip = 0.0;
+
+	while ( i < end )
+	{
+		float dip = 0.0;
+		while ( waveform_buffers[ channel ][ i ] > lowest_dip && i < end ) ++i;
+		while ( waveform_buffers[ channel ][ i ] <= 0 && i < end )
 		{
-			if ( ++grace >= 2 )
-			{
-				if ( zero_crossed && rise > greatest_rise )
-				{
-					greatest_rise = rise;
-					greatest_crossing = crossed_at;
-				}
-			rise = 0;
-				zero_crossed = false;
-			}
+			dip = std::min( dip, waveform_buffers[ channel ][ i ] );
+			++i;
 		}
-		last = sample;
+
+		if ( !apu_channel_complex[ channel ] )
+			return i;
+
+		int last_crossing = i;
+
+		for ( float sample = waveform_buffers[ channel ][ i ]; sample > 0 && i < end; ++i )
+		{
+			if ( sample > peak_value || dip < lowest_dip )
+			{
+				peak_value = sample;
+				result = last_crossing;
+				shortest_dist = i - last_crossing;
+			}
+			else if ( sample == peak_value && (i - last_crossing) < shortest_dist )
+			{
+				result = last_crossing;
+				shortest_dist = i - last_crossing;
+			}
+
+			sample = waveform_buffers[ channel ][ i ];
+		}
+
+		lowest_dip = std::min( dip, lowest_dip );
 	}
 
-	return greatest_crossing;
+	return result;
 }
 
 void Display::apu_debug_mute_set( int channel, bool mute )

@@ -98,7 +98,7 @@ void APU::low_pass()
 
 void APU::downsample()
 {
-	sample_buffer.push_back( sample_buffer_raw[0]);
+	sample_buffer.push_back( sample_buffer_raw[0] * 5 );
 }
 
 float APU::get_mixer()
