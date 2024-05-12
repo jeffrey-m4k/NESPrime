@@ -3,6 +3,7 @@
 #include <deque>
 #include <vector>
 #include <array>
+#include <map>
 #include <SDL.h>
 #include "BitUtils.h"
 #include "Component.h"
@@ -155,6 +156,8 @@ private:
 	std::vector<std::string> apu_channel_names;
 	std::vector<SoundChip *> apu_chips;
 	std::vector<bool> apu_channel_complex;
+
+	std::map<double, std::string> apu_note_freqs;
 
 	static const int APU_BUFFER_SIZE = 4000;
 	std::deque< float > waveform_buffers[ 20 ];

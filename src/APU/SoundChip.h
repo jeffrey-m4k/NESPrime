@@ -1,12 +1,15 @@
 #pragma once
 
 #include <array>
+#include <algorithm>
 #include "Channel.h"
 #include "../BitUtils.h"
 
 class SoundChip
 {
 public:
+	SoundChip();
+
 	virtual Channel* get_channel( int channel ) = 0;
 
 	float peek_output( int channel )
@@ -33,4 +36,11 @@ public:
 	virtual bool is_waveform_complex( int channel ) = 0;
 
 	virtual float get_debug_damping( int channel ) = 0;
+
+	virtual std::string get_debug_note_name( int channel ) = 0;
+
+protected:
+	std::map<double, std::string> note_freqs;
+
+	std::string freq_to_note( double freq );
 };

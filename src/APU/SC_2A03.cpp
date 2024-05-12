@@ -123,3 +123,9 @@ float SC_2A03::get_output()
 		0.00494 * noise.get_output() +
 		0.00285 * dmc.get_output();
 }
+
+std::string SC_2A03::get_debug_note_name( int channel )
+{
+	if ( channel > 2 ) return "";
+	return get_channel(channel)->is_playing() ? freq_to_note( 1789773.0 / 16 / (channel < 2 ? (pulse[ channel ].get_period()) : (triangle.get_period() * 2)) ) : "";
+}

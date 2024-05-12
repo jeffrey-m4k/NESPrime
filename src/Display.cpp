@@ -338,6 +338,8 @@ bool Display::update_apu()
 		}
 	}
 
+	SDL_SetRenderTarget( renderer_apu, nullptr );
+
 	int texture_pitch = 0;
 	void* texture_pixels = nullptr;
 	if ( SDL_LockTexture( texture_apu, nullptr, &texture_pixels, &texture_pitch ) == 0 )
@@ -351,6 +353,15 @@ bool Display::update_apu()
 	SDL_SetRenderTarget( renderer_apu, texture_apu_base );
 	SDL_RenderCopy( renderer_apu, texture_apu, nullptr, nullptr );
 	SDL_RenderCopy( renderer_apu, texture_apu_overlay, nullptr, nullptr );
+	float text_scale = get_apu_channel_height() >= 80 ? 0.75 : 0.5;
+	for ( int c = 0; c < apu_channels; ++c )
+	{
+		std::string note_name = apu_chips[ get_chip_number( c ) ]->get_debug_note_name( get_channel_number( c ) );
+		if ( !note_name.empty() )
+		{
+			draw_apu_text( note_name, 0, get_channel_top_y( c ) + 10, text_scale, 0.8 );
+		}
+	}
 
 	SDL_SetRenderTarget( renderer_apu, nullptr );
 	SDL_RenderCopy( renderer_apu, texture_apu_base, nullptr, nullptr );

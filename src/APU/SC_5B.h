@@ -28,6 +28,11 @@ public:
 		env_volume = vol;
 	}
 
+	u16 get_period()
+	{
+		return period;
+	}
+
 	u8 get_dac_in() override
 	{
 		return seq_out * env_volume;
@@ -37,7 +42,7 @@ public:
 
 	bool is_playing() override
 	{
-		return enabled;
+		return enabled && timer > 0 && env_volume > 0;
 	}
 
 private:
@@ -107,6 +112,8 @@ public:
 	{
 		return 2.0;
 	}
+
+	virtual std::string get_debug_note_name( int channel ) override;
 private:
 	Square_5B square[ 3 ];
 };

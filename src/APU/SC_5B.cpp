@@ -78,3 +78,9 @@ void SC_5B::clock()
 		square[ i ].tick_timer();
 	}
 }
+
+std::string SC_5B::get_debug_note_name( int channel )
+{
+	if ( channel >= get_channel_count() ) return "";
+	return get_channel( channel )->is_playing() ? freq_to_note( 1789773.0 / 16 / square[ channel ].get_period() / 2 ) : "--";
+}

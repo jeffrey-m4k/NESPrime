@@ -46,6 +46,11 @@ public:
 		envelope.set_param( v );
 	}
 
+	int get_period()
+	{
+		return timer.get_period();
+	}
+
 	bool get_length_halt()
 	{
 		return length_halt;
@@ -141,7 +146,7 @@ public:
 
 	bool is_playing() override
 	{
-		return enabled && timer.get_period() > 8 && !muted && length > 0;
+		return enabled && timer.get_period() > 8 && !muted && length > 0 && envelope.get_volume() > 0;
 	}
 
 private:

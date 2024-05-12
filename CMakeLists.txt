@@ -4,7 +4,7 @@ project(NESPrime)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(${PROJECT_NAME} WIN32 main.cpp src/Cartridge.cpp src/util.h src/Processor.cpp src/Memory.cpp src/Processor.cpp src/NES.cpp src/CPU.cpp src/PPU.cpp src/Component.cpp src/Display.cpp src/IO.cpp src/Mapper.cpp src/UI.cpp src/APU/APU.cpp src/APU/Units.cpp src/APU/Channel.cpp app.rc src/APU/SC_2A03.cpp src/APU/SC_5B.cpp)
+add_executable(${PROJECT_NAME} WIN32 main.cpp src/Cartridge.cpp src/util.h src/Processor.cpp src/Memory.cpp src/Processor.cpp src/NES.cpp src/CPU.cpp src/PPU.cpp src/Component.cpp src/Display.cpp src/IO.cpp src/Mapper.cpp src/UI.cpp src/APU/APU.cpp src/APU/Units.cpp src/APU/Channel.cpp app.rc src/APU/SC_2A03.cpp src/APU/SC_5B.cpp src/APU/SoundChip.cpp)
 
 find_package(SDL2 CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME}

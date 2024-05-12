@@ -77,6 +77,9 @@ public:
 	{
 		return 1.0;
 	}
+
+	virtual std::string get_debug_note_name( int channel ) override;
+
 private:
 	Pulse pulse[ 2 ];
 	Triangle triangle;
