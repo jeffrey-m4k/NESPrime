@@ -308,11 +308,11 @@ void Mapper4::handle_write( u8 data, u16 addr )
 				data &= 0x3F;				// ignore top two bits for prg banks (max 512kb)
 				if ( bank_select - 6 == 0 )
 				{
-					bank_prg = data;
+					bank_prg = data % (prg_size / 0x2000);
 				}
 				else
 				{
-					bank_prg_2 = data;
+					bank_prg_2 = data % (prg_size / 0x2000);
 				}
 			}
 		}
