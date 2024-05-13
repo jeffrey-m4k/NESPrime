@@ -181,7 +181,11 @@ void UI::show_rom_dialog()
 			cart_error = true;
 		}
 		needs_update = true;
-    }
+	}
+	else if ( result == NFD_ERROR )
+	{
+		nes->out << NFD_GetError() << "\n";
+	}
 }
 
 void UI::draw()
