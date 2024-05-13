@@ -1,6 +1,6 @@
 {
   "name" : "nesprime",
-  "version-string" : "1.0.0",
+  "version-string" : "latest",
   "builtin-baseline" : "3135b990681223c46d2bce0793e04036d88f307c",
   "dependencies" : [ {
     "name" : "sdl2-ttf",

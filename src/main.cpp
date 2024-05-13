@@ -1,4 +1,4 @@
-#include "src/NES.h"
+#include "NES.h"
 
 #include <iostream>
 #include "SDL.h"

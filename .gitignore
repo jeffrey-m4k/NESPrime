@@ -5,3 +5,7 @@ out
 *.gch
 *.aps
 CMakeSettings.json
+
+/vcpkg
+/builds
+/build

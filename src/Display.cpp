@@ -84,7 +84,8 @@ void Display::reset()
 
 		for ( int i = 0; i < APU_BUFFER_SIZE; ++i )
 		{
-			push_apu_samples( std::vector<float> { 0, 0, 0, 0, 0 } );
+			std::vector<float> dummy = { 0, 0, 0, 0, 0 };
+			push_apu_samples( dummy );
 		}
 	}
 }

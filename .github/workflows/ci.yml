@@ -1,0 +1,36 @@
+name: CMake + vcpkg cross-platform
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.os }}-${{ github.workflow }}  
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - uses: lukka/get-cmake@latest
+  
+    - name: Restore from cache and setup vcpkg and data files
+      uses: lukka/run-vcpkg@v11
+      with: 
+        vcpkgJsonGlob: 'vcpkg.json'
+
+    - name: Run CMake, vcpkg, and Ninja to build packages and generate/build the code
+      uses: lukka/run-cmake@v10
+      with:
+        configurePreset: 'ninja-multi-vcpkg'
+        buildPreset: 'ninja-vcpkg-release'
