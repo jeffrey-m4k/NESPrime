@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
 
@@ -39,3 +39,46 @@ jobs:
       with:
         configurePreset: 'ninja-multi-vcpkg'
         buildPreset: 'ninja-vcpkg-release'
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: nesprime-${{ matrix.os }}
+        path: builds/ninja-multi-vcpkg/*
+        retention-days: 1
+
+  release:
+    name: Draft Release  
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+  
+      - name: Display Fetched Artifacts
+        run: ls -R artifacts
+
+      - name: Compress Artifacts
+        run: |
+          cd artifacts
+          for folder in */; do
+            base=$(basename "$folder")
+            zip -r "${base}.zip" "$folder"
+          done
+
+      - name: Create Draft Release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            artifacts/*.zip
+
+
+      
+    
