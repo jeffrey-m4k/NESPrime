@@ -4,7 +4,6 @@
 
 APU::APU()
 {
-	SDL_setenv( "SDL_AUDIODRIVER", "directsound", 1 );
 	SDL_zero( audio_spec );
 	audio_spec.freq = SAMPLE_RATE * 1;
 	audio_spec.format = AUDIO_F32SYS;
