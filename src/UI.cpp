@@ -1,6 +1,7 @@
 #include "UI.h"
 #include "Cartridge.h"
 #include "data.h"
+#include <iostream>
 
 using namespace std::filesystem;
 
@@ -166,6 +167,7 @@ void UI::handle_global( SDL_Event &e )
 
 void UI::show_rom_dialog()
 {
+	std::cout << "Opening file picker\n";
     nfdresult_t result = NFD_OpenDialog( "nes", nullptr, &outPath );
 
     if ( result == NFD_OKAY )
@@ -181,14 +183,15 @@ void UI::show_rom_dialog()
 			cart_error = true;
 		}
 		needs_update = true;
+		std::cout << "NFD_OKAY\n";
 	}
 	else if ( result == NFD_ERROR )
 	{
-		nes->out << "An error occurred: " << NFD_GetError() << "\n";
+		std::cout << "An error occurred: " << NFD_GetError() << "\n";
 	}
 	else
 	{
-		nes->out << "Unknown thing happened\n";
+		std::cout << "Unknown thing happened\n";
 	}
 }
 

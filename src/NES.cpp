@@ -19,6 +19,7 @@ NES::NES()
 		SDL_Log( "Unable to initialize SDL: %s", SDL_GetError() );
 		exit( EXIT_FAILURE );
 	}
+	SDL_Log( "SDL initialized " );
 
 	EMU_SPEED = 1.0;
 
@@ -40,6 +41,7 @@ NES::~NES()
 
 void NES::run()
 {
+	std::cout << "Initializing UI...\n";
 	ui->init();
 
 	while ( !quit )
