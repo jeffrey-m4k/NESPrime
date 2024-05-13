@@ -17,19 +17,26 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
 
+
+
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
       with:
         submodules: true
 
-    - uses: lukka/get-cmake@latest
+    - name: Convert to Full Clone
+      run: git fetch --unshallow
+
+    - name: Get CMake
+      uses: lukka/get-cmake@latest
   
-    - name: Restore from cache and setup vcpkg and data files
+    - name: Setup vcpkg
       uses: lukka/run-vcpkg@v11
       with: 
         vcpkgJsonGlob: 'vcpkg.json'
 
-    - name: Run CMake, vcpkg, and Ninja to build packages and generate/build the code
+    - name: Run CMake
       uses: lukka/run-cmake@v10
       with:
         configurePreset: 'ninja-multi-vcpkg'
