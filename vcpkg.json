@@ -1,18 +1,23 @@
 {
-  "name" : "nesprime",
-  "version-string" : "latest",
-  "builtin-baseline" : "3135b990681223c46d2bce0793e04036d88f307c",
-  "dependencies" : [ {
-    "name" : "sdl2-ttf",
-    "version>=" : "2.20.2"
-  }, {
-    "name" : "sdl2",
-    "version>=" : "2.28.5"
-  }, {
-    "name" : "sdl2-image",
-    "version>=" : "2.6.3"
-  }, {
-    "name" : "nativefiledialog",
-    "version>=" : "2022-01-20"
-  } ]
+  "name": "nesprime",
+  "version-string": "latest",
+  "builtin-baseline": "a1212c93cabaa9c5c36c1ffdb4bddd59fdf31e43",
+  "dependencies": [
+    {
+      "name": "sdl2-ttf",
+      "version>=": "2.20.2"
+    },
+    {
+      "name": "sdl2",
+      "version>=": "2.28.5"
+    },
+    {
+      "name": "sdl2-image",
+      "version>=": "2.6.3"
+    },
+    {
+      "name": "nativefiledialog",
+      "version>=": "2022-01-20"
+    }
+  ]
 }
