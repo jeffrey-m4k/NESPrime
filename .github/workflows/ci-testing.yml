@@ -1,10 +1,10 @@
-name: CMake + vcpkg cross-platform
+name: Linux test build
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "testing" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "testing" ]
   workflow_dispatch:
 
 jobs:
@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
 
 
 
@@ -73,9 +73,9 @@ jobs:
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest"
+          automatic_release_tag: "test"
           prerelease: true
-          title: "Development Build"
+          title: "Test Build"
           files: |
             artifacts/*.zip
 

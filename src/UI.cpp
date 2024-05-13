@@ -184,7 +184,11 @@ void UI::show_rom_dialog()
 	}
 	else if ( result == NFD_ERROR )
 	{
-		nes->out << NFD_GetError() << "\n";
+		nes->out << "An error occurred: " << NFD_GetError() << "\n";
+	}
+	else
+	{
+		nes->out << "Unknown thing happened\n";
 	}
 }
 
