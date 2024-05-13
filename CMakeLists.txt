@@ -9,7 +9,7 @@ target_sources(${PROJECT_NAME} PRIVATE src/main.cpp src/Cartridge.cpp src/util.h
 find_package(SDL2 CONFIG REQUIRED)
 find_package(SDL2_ttf CONFIG REQUIRED)
 find_package(SDL2_image CONFIG REQUIRED)
-find_package(unofficial-nativefiledialog CONFIG REQUIRED)
+add_subdirectory(nativefiledialog-extended)
 
 target_link_libraries(${PROJECT_NAME}
         PRIVATE
@@ -18,4 +18,4 @@ target_link_libraries(${PROJECT_NAME}
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>)
 target_link_libraries(${PROJECT_NAME} PRIVATE $<IF:$<TARGET_EXISTS:SDL2_image::SDL2_image>,SDL2_image::SDL2_image,SDL2_image::SDL2_image-static>)
-target_link_libraries(${PROJECT_NAME} PRIVATE $<IF:$<TARGET_EXISTS:unofficial::nativefiledialog::nfd>,unofficial::nativefiledialog::nfd,unofficial::nativefiledialog::nfd-static>)
+target_link_libraries(${PROJECT_NAME} PRIVATE nfd)

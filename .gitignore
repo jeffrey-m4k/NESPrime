@@ -6,6 +6,7 @@ out
 *.aps
 CMakeSettings.json
 
+/nativefiledialog-extended
 /vcpkg
 /builds
 /build

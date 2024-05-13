@@ -168,7 +168,8 @@ void UI::handle_global( SDL_Event &e )
 void UI::show_rom_dialog()
 {
 	std::cout << "Opening file picker\n";
-    nfdresult_t result = NFD_OpenDialog( "nes", nullptr, &outPath );
+	nfdfilteritem_t filterItem[ 1 ] = { { "ROM files ", "nes" } };
+	nfdresult_t result = NFD_OpenDialog( &outPath, filterItem, 1, NULL );
 
     if ( result == NFD_OKAY )
     {
@@ -184,6 +185,7 @@ void UI::show_rom_dialog()
 		}
 		needs_update = true;
 		std::cout << "NFD_OKAY\n";
+		NFD_FreePath( outPath );
 	}
 	else if ( result == NFD_ERROR )
 	{

@@ -2,11 +2,14 @@
 
 #include <iostream>
 #include "SDL.h"
+#include <nfd.h>
 
 int main(int argc, char *argv[]) {
-    NES* nes = new NES();
+    NFD_Init();
 
+    NES* nes = new NES();
     nes->run();
 
+    NFD_Quit();
     return EXIT_SUCCESS;
 }
