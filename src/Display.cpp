@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <climits>
 #include "Display.h"
 #include "APU/APU.h"
 #include "APU/SoundChip.h"
