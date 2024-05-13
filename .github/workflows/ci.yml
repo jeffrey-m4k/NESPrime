@@ -23,10 +23,8 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
       with:
-        submodules: true
-
-    - name: Convert to Full Clone
-      run: git fetch --unshallow
+        fetch-depth: 0
+        submodules: 'recursive'
 
     - name: Get CMake
       uses: lukka/get-cmake@latest
