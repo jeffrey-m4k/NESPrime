@@ -1,4 +1,3 @@
-#include <format>
 #include <algorithm>
 #include "Display.h"
 #include "APU/APU.h"
