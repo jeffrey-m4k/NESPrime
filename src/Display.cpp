@@ -238,7 +238,7 @@ void Display::draw_apu_text( const std::string &text, int x, int y, float scale,
 	SDL_SetSurfaceAlphaMod( text_surf, opacity * 255.0 );
 	SDL_Texture *text_texture = SDL_CreateTextureFromSurface( renderer_apu, text_surf );
 	TTF_SizeText( font_ui, text.c_str(), &text_w, &text_h );
-	SDL_Rect text_rect{ x, y - 4 * scale, text_w * scale, text_h * scale };
+	SDL_Rect text_rect{ x, static_cast<int>(y - 4 * scale), static_cast<int>(text_w * scale), static_cast<int>(text_h * scale) };
 	SDL_RenderCopy( renderer_apu, text_texture, nullptr, &text_rect );
 	SDL_FreeSurface( text_surf );
 	SDL_DestroyTexture( text_texture );

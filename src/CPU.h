@@ -67,7 +67,7 @@ public:
 
 	void init() override;
 
-	bool run();
+	bool run() override;
 
 	void trigger_nmi()
 	{

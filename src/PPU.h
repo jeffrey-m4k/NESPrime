@@ -26,11 +26,11 @@ public:
 		std::fill( palette, palette + 32, 0x1D );
 	}
 
-	virtual void reset() override;
+	void reset() override;
 
-	virtual void init() override;
+	void init() override;
 
-	virtual bool run() override;
+	bool run() override;
 
 	u8 read_reg( u8 reg_id, int cycle );
 
