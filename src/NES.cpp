@@ -14,13 +14,6 @@
 
 NES::NES()
 {
-	if ( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_AUDIO ) != 0 || TTF_Init() != 0 )
-	{
-		SDL_Log( "Unable to initialize SDL: %s", SDL_GetError() );
-		exit( EXIT_FAILURE );
-	}
-	SDL_Log( "SDL initialized " );
-
 	EMU_SPEED = 1.0;
 
 	set_cpu( new CPU() );
