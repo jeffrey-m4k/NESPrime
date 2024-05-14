@@ -9,7 +9,8 @@
     },
     {
       "name": "sdl2",
-      "version>=": "2.28.5"
+      "version>=": "2.28.5",
+      "features": [ "alsa" ]
     },
     {
       "name": "sdl2-image",
