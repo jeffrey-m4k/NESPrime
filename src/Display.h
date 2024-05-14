@@ -39,7 +39,7 @@ public:
 
 	void black();
 
-	void set_pixel_buffer( u8 x, u8 y, const u8 rgb[3] );
+	void set_pixel_buffer( u8 x, u8 y, const u8 rgb[3], float mod1, float mod2, float mod3 );
 
 	void write_pt_pixel( u8 tile, u8 x, u8 y, bool pt2, const u8 rgb[3] );
 

@@ -1,20 +1,16 @@
 {
   "name": "nesprime",
   "version-string": "latest",
-  "builtin-baseline": "a1212c93cabaa9c5c36c1ffdb4bddd59fdf31e43",
   "dependencies": [
     {
-      "name": "sdl2-ttf",
-      "version>=": "2.20.2"
+      "name": "sdl2-ttf"
     },
     {
       "name": "sdl2",
-      "version>=": "2.28.5",
       "features": [ "alsa" ]
     },
     {
-      "name": "sdl2-image",
-      "version>=": "2.6.3"
+      "name": "sdl2-image"
     }
   ]
 }

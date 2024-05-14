@@ -178,25 +178,24 @@ bool PPU::run()
 					final_rgb = bgr_base_rgb();
 				}
 
-				u8 rgb_cpy[3];
-				std::copy(final_rgb, final_rgb + 3, rgb_cpy);
+				float mod[ 3 ] = { 1.0, 1.0, 1.0 };
 				if (emphasis_r)
 				{
-					rgb_cpy[1] *= 0.85;
-					rgb_cpy[2] *= 0.85;
+					mod[1] *= 0.85;
+					mod[2] *= 0.85;
 				}
 				if (emphasis_g)
 				{
-					rgb_cpy[0] *= 0.85;
-					rgb_cpy[2] *= 0.85;
+					mod[0] *= 0.85;
+					mod[2] *= 0.85;
 				}
 				if (emphasis_b)
 				{
-					rgb_cpy[0] *= 0.85;
-					rgb_cpy[1] *= 0.85;
+					mod[0] *= 0.85;
+					mod[1] *= 0.85;
 				}
 
-				nes->get_display()->set_pixel_buffer( scan_cycle - 1, scanline, rgb_cpy );
+				nes->get_display()->set_pixel_buffer(scan_cycle - 1, scanline, final_rgb, mod[0], mod[1], mod[2]);
 			}
 		}
 
@@ -382,7 +381,7 @@ bool PPU::run()
 		if ( (v & 0x3F00) == 0x3F00 && scan_cycle >= 1 && scan_cycle <= 256 && scanline >= 0 && scanline <= 239 )
 		{
 			// Background palette_data hack
-			nes->get_display()->set_pixel_buffer( scan_cycle - 1, scanline, rgb_palette[ read( v ) ] );
+			nes->get_display()->set_pixel_buffer( scan_cycle - 1, scanline, rgb_palette[ read( v ) ], 1.0, 1.0, 1.0 );
 		}
 		set_a12( v );
 	}

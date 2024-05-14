@@ -445,11 +445,11 @@ void Display::close()
 	SDL_Quit();
 }
 
-void Display::set_pixel_buffer( u8 x, u8 y, const u8 rgb[3] )
+void Display::set_pixel_buffer( u8 x, u8 y, const u8 rgb[3], float mod1, float mod2, float mod3 )
 {
-	buffer[(x + (y * WIDTH)) * 3] = rgb[0];
-	buffer[(x + (y * WIDTH)) * 3 + 1] = rgb[1];
-	buffer[(x + (y * WIDTH)) * 3 + 2] = rgb[2];
+	buffer[(x + (y * WIDTH)) * 3] = rgb[0] * mod1;
+	buffer[(x + (y * WIDTH)) * 3 + 1] = rgb[1] * mod2;
+	buffer[(x + (y * WIDTH)) * 3 + 2] = rgb[2] * mod3;
 }
 
 void Display::push_buffer()

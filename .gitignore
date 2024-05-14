@@ -8,5 +8,6 @@ CMakeSettings.json
 
 /nativefiledialog-extended
 /vcpkg
+/vcpkg_installed
 /builds
 /build
